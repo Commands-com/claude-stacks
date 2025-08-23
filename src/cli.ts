@@ -1181,12 +1181,16 @@ program
       const stack = await exportCurrentStack(options);
       const stackContent = JSON.stringify(stack, null, 2);
       
-      // Save to current directory as {directory-name}-stack.json
+      // Save to ~/.claude/stacks/ directory
+      const stacksDir = path.join(os.homedir(), '.claude', 'stacks');
+      await fs.ensureDir(stacksDir);
+      
       const fileName = `${path.basename(process.cwd())}-stack.json`;
-      await fs.writeFile(path.join(process.cwd(), fileName), stackContent);
+      const stackPath = path.join(stacksDir, fileName);
+      await fs.writeFile(stackPath, stackContent);
       
       console.log(chalk.green.bold('✅ Stack exported successfully!'));
-      console.log(chalk.gray(`  File: ${fileName}`));
+      console.log(chalk.gray(`  File: ~/.claude/stacks/${fileName}`));
       console.log(chalk.gray(`  Components: ${(stack.commands?.length || 0) + (stack.agents?.length || 0)} items`));
       console.log(chalk.gray(`  MCP Servers: ${stack.mcpServers?.length || 0} items`));
       
