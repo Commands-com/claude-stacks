@@ -750,15 +750,20 @@ function extractMcpServersFromClaudeJson(jsonContent: string, currentProjectPath
 
 async function listLocalStacks(): Promise<DeveloperStack[]> {
   const stacks: DeveloperStack[] = [];
-  const currentDir = process.cwd();
+  const stacksDir = path.join(os.homedir(), '.claude', 'stacks');
   
-  // Look for stack files in current directory
-  const files = await fs.readdir(currentDir);
-  const stackFiles = files.filter(f => f.includes('stack') && f.endsWith('.json'));
+  // Check if stacks directory exists
+  if (!await fs.pathExists(stacksDir)) {
+    return stacks;
+  }
+  
+  // Look for stack files in ~/.claude/stacks/
+  const files = await fs.readdir(stacksDir);
+  const stackFiles = files.filter(f => f.endsWith('.json'));
   
   for (const stackFile of stackFiles) {
     try {
-      const stackPath = path.join(currentDir, stackFile);
+      const stackPath = path.join(stacksDir, stackFile);
       const stackData = await fs.readJson(stackPath);
       stackData.filePath = stackPath;
       stacks.push(stackData);
