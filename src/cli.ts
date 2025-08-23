@@ -27,7 +27,6 @@ interface DeveloperStack {
   version: string;
   commands?: StackCommand[];
   agents?: StackAgent[];
-  prompts?: StackPrompt[];
   mcpServers?: StackMcpServer[];
   settings?: StackSettings;
   metadata?: {
@@ -52,12 +51,6 @@ interface StackAgent {
   content: string;
 }
 
-interface StackPrompt {
-  name: string;
-  description?: string;
-  filePath: string;
-  content: string;
-}
 
 interface StackMcpServer {
   name: string;
@@ -346,7 +339,6 @@ async function publishStack(stackFilePath?: string, options: { public?: boolean;
     version: stack.version,
     commands: stack.commands || [],
     agents: stack.agents || [],
-    prompts: stack.prompts || [],
     mcpServers: stack.mcpServers || [],
     settings: stack.settings || {},
     tags: tags,
@@ -467,7 +459,6 @@ async function installRemoteStack(stackId: string, options: { overwrite?: boolea
     version: remoteStack.version || '1.0.0',
     commands: remoteStack.commands || [],
     agents: remoteStack.agents || [],
-    prompts: remoteStack.prompts || [],
     mcpServers: remoteStack.mcpServers || [],
     settings: remoteStack.settings || {},
     metadata: {
@@ -531,7 +522,6 @@ async function exportCurrentStack(options: { name?: string; description?: string
     version: '1.0.0',
     commands: [],
     agents: [],
-    prompts: [],
     mcpServers: [],
     settings: {},
     metadata: {
@@ -544,7 +534,6 @@ async function exportCurrentStack(options: { name?: string; description?: string
   // Use Maps to ensure uniqueness
   const commandsMap = new Map<string, StackCommand>();
   const agentsMap = new Map<string, StackAgent>();
-  const promptsMap = new Map<string, StackPrompt>();
 
   // Scan global ~/.claude directory
   const globalCommandsDir = path.join(claudeDir, 'commands');
@@ -582,23 +571,6 @@ async function exportCurrentStack(options: { name?: string; description?: string
     }
   }
 
-  // Scan global ~/.claude/prompts directory
-  const globalPromptsDir = path.join(claudeDir, 'prompts');
-  if (await fs.pathExists(globalPromptsDir)) {
-    const prompts = await fs.readdir(globalPromptsDir);
-    for (const promptFile of prompts.filter(f => f.endsWith('.md'))) {
-      const filePath = path.join(globalPromptsDir, promptFile);
-      const content = await fs.readFile(filePath, 'utf-8');
-      const name = promptFile.replace('.md', '');
-      
-      promptsMap.set(name, {
-        name,
-        filePath: `~/.claude/prompts/${promptFile}`,
-        content,
-        description: extractDescriptionFromContent(content)
-      });
-    }
-  }
 
   // Scan project-local .claude directory if it exists
   const localClaudeDir = path.join(currentDir, '.claude');
@@ -679,7 +651,6 @@ async function exportCurrentStack(options: { name?: string; description?: string
   // Convert Maps to arrays to ensure uniqueness
   stack.commands = Array.from(commandsMap.values());
   stack.agents = Array.from(agentsMap.values());
-  stack.prompts = Array.from(promptsMap.values());
 
   return stack;
 }
@@ -853,32 +824,6 @@ async function restoreStack(stackFilePath: string, options: { overwrite?: boolea
     console.log();
   }
 
-  // Restore prompts
-  if (stack.prompts && stack.prompts.length > 0 && !options.localOnly) {
-    console.log(chalk.yellow.bold('Restoring Prompts:'));
-    const promptsDir = path.join(claudeDir, 'prompts');
-    await fs.ensureDir(promptsDir);
-
-    for (const prompt of stack.prompts) {
-      const spinner = ora(`Restoring prompt: ${prompt.name}`).start();
-      try {
-        const filename = `${prompt.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}.md`;
-        const filepath = path.join(promptsDir, filename);
-        
-        if (await fs.pathExists(filepath) && !options.overwrite) {
-          spinner.warn(`Prompt already exists (skipped): ${chalk.yellow(prompt.name)}`);
-          continue;
-        }
-        
-        await fs.writeFile(filepath, prompt.content);
-        spinner.succeed(`Prompt restored: ${chalk.yellow(prompt.name)}`);
-      } catch (error) {
-        spinner.fail(`Failed to restore prompt: ${prompt.name}`);
-        console.error(chalk.red('  Error:'), error instanceof Error ? error.message : String(error));
-      }
-    }
-    console.log();
-  }
 
   // Restore local project settings
   if (stack.settings && !options.globalOnly) {
@@ -929,7 +874,6 @@ async function restoreStack(stackFilePath: string, options: { overwrite?: boolea
   console.log(chalk.blue.bold('Restore Summary:'));
   console.log(chalk.gray(`✓ Commands: ${stack.commands?.length || 0} items`));
   console.log(chalk.gray(`✓ Agents: ${stack.agents?.length || 0} items`));
-  console.log(chalk.gray(`✓ Prompts: ${stack.prompts?.length || 0} items`));
   console.log(chalk.gray(`✓ MCP Servers: ${stack.mcpServers?.length || 0} configurations`));
   console.log(chalk.gray(`✓ Settings: ${stack.settings ? 'Restored' : 'None'}`));
 }
@@ -987,26 +931,6 @@ async function installLocalStack(stackFilePath: string): Promise<void> {
     console.log();
   }
 
-  // Install prompts
-  if (stack.prompts && stack.prompts.length > 0) {
-    console.log(chalk.yellow.bold('Installing Prompts:'));
-    const promptsDir = path.join(claudeDir, 'prompts');
-    await fs.ensureDir(promptsDir);
-
-    for (const prompt of stack.prompts) {
-      const spinner = ora(`Installing prompt: ${prompt.name}`).start();
-      try {
-        const filename = `${prompt.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}.md`;
-        const filepath = path.join(promptsDir, filename);
-        await fs.writeFile(filepath, prompt.content);
-        spinner.succeed(`Prompt installed: ${chalk.yellow(prompt.name)}`);
-      } catch (error) {
-        spinner.fail(`Failed to install prompt: ${prompt.name}`);
-        console.error(chalk.red('  Error:'), error instanceof Error ? error.message : String(error));
-      }
-    }
-    console.log();
-  }
 
   // Note about MCP servers (they would need manual installation)
   if (stack.mcpServers && stack.mcpServers.length > 0) {
@@ -1138,34 +1062,6 @@ async function installAgent(id: string) {
   }
 }
 
-async function installPrompt(id: string) {
-  const spinner = ora(`Installing prompt: ${id}`).start();
-  
-  try {
-    // Fetch prompt from Commands.com via MCP server  
-    const asset = await fetchAssetViaMCP('prompt', id);
-    
-    // Create ~/.claude/prompts directory
-    const claudeDir = path.join(os.homedir(), '.claude');
-    const promptsDir = path.join(claudeDir, 'prompts');
-    await fs.ensureDir(promptsDir);
-    
-    // Create prompt file
-    const filename = `${asset.name.toLowerCase().replace(/\s+/g, '-')}.md`;
-    const filepath = path.join(promptsDir, filename);
-    
-    await fs.writeFile(filepath, asset.content);
-    
-    spinner.succeed(`Prompt installed: ${chalk.cyan(asset.name)}`);
-    console.log(chalk.gray(`  File: ${filepath}`));
-    console.log(chalk.gray(`  Usage: Use in conversations with Claude`));
-    
-  } catch (error) {
-    spinner.fail(`Failed to install prompt: ${id}`);
-    console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
-    process.exit(1);
-  }
-}
 
 // CLI setup
 program
@@ -1338,12 +1234,9 @@ legacyCommand
       case 'agent':
         await installAgent(id);
         break;
-      case 'prompt':
-        await installPrompt(id);
-        break;
       default:
         console.error(chalk.red('Error:'), `Unknown type: ${type}`);
-        console.log(chalk.gray('Valid types: command, agent, prompt'));
+        console.log(chalk.gray('Valid types: command, agent'));
         process.exit(1);
     }
   });

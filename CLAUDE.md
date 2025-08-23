@@ -9,10 +9,10 @@ Claude Stacks is a CLI tool that enables developers to capture, share, and resto
 ## Key Features
 
 - **Zero-login stack management**: Export and restore stacks without authentication
-- **Comprehensive introspection**: Captures commands, agents, prompts, MCP servers, and settings
+- **Comprehensive introspection**: Captures commands, agents, MCP servers, and settings
 - **OAuth integration**: Publish stacks to Commands.com marketplace using secure authentication
 - **Project-scoped**: Automatically filters configurations relevant to the current project
-- **Deduplication**: Ensures unique entries for commands, agents, and prompts
+- **Deduplication**: Ensures unique entries for commands and agents
 
 ## CLI Commands
 
@@ -21,7 +21,7 @@ Exports the current Claude Code environment to a JSON stack file.
 - Auto-generates filename from current directory if not specified
 - Captures global and local configurations
 - Filters MCP servers to current project only
-- Deduplicates commands/agents/prompts using Maps
+- Deduplicates commands/agents using Maps
 
 ### `claude-stacks restore <filename> [options]`
 Restores a stack from JSON file to the current directory.
@@ -60,7 +60,6 @@ Installs a remote stack from the marketplace.
     }
   ],
   "agents": [...],
-  "prompts": [...],
   "mcpServers": [...],
   "settings": {...},
   "metadata": {
@@ -83,10 +82,8 @@ Installs a remote stack from the marketplace.
 2. **Local Commands**: `./.claude/commands/*.md`
 3. **Global Agents**: `~/.claude/agents/*.md`
 4. **Local Agents**: `./.claude/agents/*.md`
-5. **Global Prompts**: `~/.claude/prompts/*.md`
-6. **Local Prompts**: `./.claude/prompts/*.md`
-7. **MCP Servers**: `~/.claude.json` (filtered by project path)
-8. **Settings**: Global `~/.claude/settings.json` + Local `./.claude/settings.local.json`
+5. **MCP Servers**: `~/.claude.json` (filtered by project path)
+6. **Settings**: Global `~/.claude/settings.json` + Local `./.claude/settings.local.json`
 
 ## Key Technical Solutions
 
@@ -102,7 +99,6 @@ const mcpServers = projectConfig?.mcpServers || [];
 ```typescript
 const commandsMap = new Map<string, StackCommand>();
 const agentsMap = new Map<string, StackAgent>();
-const promptsMap = new Map<string, StackPrompt>();
 
 // Convert to arrays after deduplication
 const commands = Array.from(commandsMap.values());

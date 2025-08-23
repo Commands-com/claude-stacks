@@ -27,7 +27,6 @@ Claude Stacks captures your complete Claude Code development environment includi
 
 - **Commands** (`~/.claude/commands/` and `./.claude/commands/`)
 - **Agents** (`~/.claude/agents/` and `./.claude/agents/`)  
-- **Prompts** (`~/.claude/prompts/` and `./.claude/prompts/`)
 - **MCP Servers** (project-scoped from `~/.claude.json`)
 - **Settings** (global + local configurations)
 
