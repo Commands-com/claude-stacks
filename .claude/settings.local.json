@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(node dist/cli.js stack export:*)",
+      "Bash(grep:*)",
+      "Bash(sed:*)",
+      "Bash(timeout 10 node dist/cli.js stack export:*)",
+      "Bash(jq:*)",
+      "Bash(npm install)",
+      "Bash(node dist/cli.js --help)",
+      "Bash(node:*)",
+      "Read(//Users/dtannen/Code/commands-com-app/**)",
+      "Read(//Users/dtannen/Code/commands-com-app/**)",
+      "Read(//Users/dtannen/Code/commands-com-app/**)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
