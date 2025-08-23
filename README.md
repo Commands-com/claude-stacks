@@ -1,92 +1,88 @@
-# Commands.com Setup CLI
+# Claude Stacks
 
-Bootstrap CLI for Commands.com ecosystem. One command to install the MCP server and set up intelligent project tooling.
+**Share your Claude Code environment in seconds - export and restore development stacks**
 
 ## Quick Start
 
 ```bash
-# Bootstrap everything
-npx commands-setup
+# Export current environment
+claude-stacks export
 
-# Now you can use project setup anywhere
-cd ~/my-project
-claude --prompt "/setup-project"
+# Restore from a stack file  
+claude-stacks restore my-stack.json
+
+# Publish to marketplace (requires auth)
+claude-stacks publish my-stack.json
+
+# Browse marketplace
+claude-stacks browse
 ```
 
 ## What it does
 
-### 1. `npx commands-setup`
-- Installs Commands.com MCP server
-- Creates global `/setup-project` command in `~/.claude/commands/`
-- Sets up the `commands` CLI tool
+Claude Stacks captures your complete Claude Code development environment including:
 
-### 2. `/setup-project` (global command)
-- Analyzes current project directory
-- Gets AI-powered tool recommendations
-- Shows install options with explanations
-- Installs selected tools
+- **Commands** (`~/.claude/commands/` and `./.claude/commands/`)
+- **Agents** (`~/.claude/agents/` and `./.claude/agents/`)  
+- **Prompts** (`~/.claude/prompts/` and `./.claude/prompts/`)
+- **MCP Servers** (project-scoped from `~/.claude.json`)
+- **Settings** (global + local configurations)
 
-### 3. `commands` CLI
+## Commands
+
+### `claude-stacks export [filename]`
+Export your current Claude Code environment to a portable JSON stack.
+
 ```bash
-# Install specific tools
-commands install command ap_dev/sentiment-analyzer
-commands install agent commands-com/backend-architect
-commands install prompt user123/react-optimizer
+# Auto-generates filename from current directory
+claude-stacks export
 
-# List installed tools
-commands list
+# Custom filename
+claude-stacks export my-react-stack.json
 ```
 
-## User Workflow
+### `claude-stacks restore <filename> [options]`
+Restore a stack to your current directory.
 
-1. **One-time setup**:
-   ```bash
-   npx commands-setup
-   ```
+```bash
+# Add to existing configuration  
+claude-stacks restore stack.json
 
-2. **Use in any project**:
-   ```bash
-   cd ~/my-react-app
-   claude --prompt "/setup-project"
-   ```
+# Overwrite existing configuration
+claude-stacks restore stack.json --mode overwrite
+```
 
-3. **Get recommendations**:
-   ```
-   🔍 PROJECT ANALYSIS COMPLETE
-   
-   📊 Detected: React + TypeScript + Stripe
-   🎯 Recommendations:
-   
-   ## Essential Security (Required for payments)
-   - Bruce Schneier Agent - Security expert
-   - Security Audit Command - Vulnerability scanning  
-   - Stripe MCP - Payment integration
-   
-   Install essential tools? (y/n)
-   ```
+### `claude-stacks publish [filename]`  
+Publish your stack to the Commands.com marketplace.
 
-4. **Tools get installed automatically**:
-   ```bash
-   commands install agent commands-com/bruce-schneier
-   commands install command security/audit
-   claude mcp add stripe -- docker run -i --rm mcp/stripe:latest
-   ```
+```bash
+# Publish with OAuth authentication
+claude-stacks publish my-stack.json
+```
 
-## Architecture
+### `claude-stacks browse`
+Open the Commands.com stacks marketplace in your browser.
 
-- **Bootstrap**: `npx commands-setup` (one-time)
-- **Global Command**: `~/.claude/commands/setup-project.md`
-- **MCP Integration**: Uses Commands.com MCP for recommendations
-- **CLI Tool**: `commands install` for asset management
+### `claude-stacks install-remote <stack-id>`
+Install a remote stack from the marketplace.
 
-## Benefits
+```bash
+claude-stacks install-remote user123/react-dev-stack
+```
 
-✅ **One-time setup**: `npx commands-setup`  
-✅ **Works anywhere**: `claude --prompt "/setup-project"` in any directory  
-✅ **Intelligent**: AI-powered recommendations  
-✅ **Interactive**: User approves before installing  
-✅ **Namespaced**: Proper `user/tool-name` format  
-✅ **Mixed installs**: MCP servers + Commands/Agents  
+## Use Cases
+
+- **Team Onboarding**: New developers get the full environment instantly
+- **Project Templates**: Create reusable stacks for common setups  
+- **Environment Backup**: Version control your Claude Code configurations
+- **Cross-Machine Sync**: Keep environments consistent across devices
+- **Community Sharing**: Share useful command/agent combinations  
+
+## Installation
+
+```bash
+npm install -g claude-stacks
+```
 
 ## Development
 
@@ -96,13 +92,10 @@ npm run build
 npm run dev  # Test locally
 ```
 
-## Publishing
+## Technical Details
 
-```bash
-npm publish
-```
-
-Then users can run:
-```bash
-npx commands-setup
-```
+- **Zero-login required** for basic export/restore operations
+- **OAuth 2.0 with PKCE** for secure marketplace publishing  
+- **Project-scoped filtering** for MCP servers
+- **Automatic deduplication** of commands, agents, and prompts
+- **Dynamic port allocation** for OAuth callbacks
