@@ -5,10 +5,13 @@
 ## Quick Start
 
 ```bash
-# Export current environment
-claude-stacks export
+# Export current environment (saves to ~/.claude/stacks/)
+claude-stacks export [filename] [--name "Custom Name"]
 
-# Restore from a stack file  
+# List available stacks
+claude-stacks list
+
+# Restore from a stack
 claude-stacks restore my-stack.json
 
 # Publish to marketplace (requires auth)
@@ -30,34 +33,47 @@ Claude Stacks captures your complete Claude Code development environment includi
 
 ## Commands
 
-### `claude-stacks export [filename]`
-Export your current Claude Code environment to a portable JSON stack.
+### `claude-stacks export [filename] [options]`
+Export your current Claude Code environment to a portable JSON stack (saved to `~/.claude/stacks/`).
 
 ```bash
 # Auto-generates filename from current directory
 claude-stacks export
 
-# Custom filename
+# Custom filename  
 claude-stacks export my-react-stack.json
+
+# Override stack name and description
+claude-stacks export --name "My React Development Stack" --description "Complete React setup with TypeScript and testing"
+```
+
+### `claude-stacks list`
+List all available stacks in `~/.claude/stacks/`.
+
+```bash
+claude-stacks list
 ```
 
 ### `claude-stacks restore <filename> [options]`
-Restore a stack to your current directory.
+Restore a stack to your current directory (looks in `~/.claude/stacks/` for filename).
 
 ```bash
 # Add to existing configuration  
-claude-stacks restore stack.json
+claude-stacks restore my-react-stack.json
 
 # Overwrite existing configuration
-claude-stacks restore stack.json --mode overwrite
+claude-stacks restore my-react-stack.json --overwrite
 ```
 
-### `claude-stacks publish [filename]`  
-Publish your stack to the Commands.com marketplace.
+### `claude-stacks publish [filename] [options]`  
+Publish your stack to the Commands.com marketplace (reads from `~/.claude/stacks/`).
 
 ```bash
 # Publish with OAuth authentication
-claude-stacks publish my-stack.json
+claude-stacks publish my-react-stack.json
+
+# Override description and add tags
+claude-stacks publish my-react-stack.json --description "Production-ready React stack" --tags "react,typescript,testing" --public
 ```
 
 ### `claude-stacks browse`
@@ -94,6 +110,7 @@ npm run dev  # Test locally
 
 ## Technical Details
 
+- **Centralized storage** in `~/.claude/stacks/` for easy management
 - **Zero-login required** for basic export/restore operations
 - **OAuth 2.0 with PKCE** for secure marketplace publishing  
 - **Project-scoped filtering** for MCP servers

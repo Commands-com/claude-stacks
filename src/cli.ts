@@ -771,11 +771,19 @@ async function listLocalStacks(): Promise<DeveloperStack[]> {
 }
 
 async function restoreStack(stackFilePath: string, options: { overwrite?: boolean; globalOnly?: boolean; localOnly?: boolean }): Promise<void> {
-  if (!await fs.pathExists(stackFilePath)) {
-    throw new Error(`Stack file not found: ${stackFilePath}`);
+  let resolvedPath = stackFilePath;
+  
+  // If it's just a filename, look in ~/.claude/stacks/
+  if (!path.isAbsolute(stackFilePath) && !stackFilePath.includes('/')) {
+    const stacksDir = path.join(os.homedir(), '.claude', 'stacks');
+    resolvedPath = path.join(stacksDir, stackFilePath);
   }
-
-  const stack: DeveloperStack = await fs.readJson(stackFilePath);
+  
+  if (!await fs.pathExists(resolvedPath)) {
+    throw new Error(`Stack file not found: ${resolvedPath}`);
+  }
+  
+  const stack: DeveloperStack = await fs.readJson(resolvedPath);
   const claudeDir = path.join(os.homedir(), '.claude');
   const currentDir = process.cwd();
   const localClaudeDir = path.join(currentDir, '.claude');
@@ -1268,25 +1276,30 @@ program
 
 program
   .command('list')
-  .description('List all local stacks available for restoration')
+  .description('List all stacks in ~/.claude/stacks/ available for restoration')
   .action(async () => {
-    console.log(chalk.blue.bold('📋 Local Development Stacks\n'));
+    console.log(chalk.blue.bold('📋 Available Development Stacks\n'));
     
     try {
       const stacks = await listLocalStacks();
       
       if (stacks.length === 0) {
-        console.log(chalk.yellow('No local stacks found. Export your first stack with:'));
+        console.log(chalk.yellow('No stacks found in ~/.claude/stacks/'));
+        console.log(chalk.gray('Export your first stack with:'));
         console.log(chalk.gray('  claude-stacks export'));
         return;
       }
       
+      console.log(chalk.gray(`Found ${stacks.length} stack(s) in ~/.claude/stacks/\n`));
+      
       stacks.forEach((stack, index) => {
+        const filename = path.basename(stack.filePath || '');
         console.log(chalk.cyan.bold(`${index + 1}. ${stack.name}`));
         console.log(chalk.gray(`   Description: ${stack.description}`));
-        console.log(chalk.gray(`   File: ${stack.filePath}`));
+        console.log(chalk.gray(`   File: ${filename}`));
         console.log(chalk.gray(`   Components: ${(stack.commands?.length || 0) + (stack.agents?.length || 0)} items`));
         console.log(chalk.gray(`   Created: ${new Date(stack.metadata?.created_at || Date.now()).toLocaleDateString()}`));
+        console.log(chalk.blue(`   Restore: claude-stacks restore ${filename}`));
         console.log();
       });
       
