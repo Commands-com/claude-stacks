@@ -12,14 +12,6 @@ import * as crypto from 'crypto';
 import open from 'open';
 import * as http from 'http';
 
-interface CommandsComAsset {
-  id: string;
-  name: string;
-  description: string;
-  type: 'command' | 'agent' | 'prompt';
-  content: string;
-  documentation?: string;
-}
 
 interface DeveloperStack {
   name: string;
@@ -493,14 +485,14 @@ async function installRemoteStack(stackId: string, options: { overwrite?: boolea
   }
 }
 
-async function exportCurrentStack(options: { name?: string; description?: string }): Promise<DeveloperStack> {
+async function exportCurrentStack(options: { name?: string; description?: string; localOnly?: boolean }): Promise<DeveloperStack> {
   const claudeDir = path.join(os.homedir(), '.claude');
   const currentDir = process.cwd();
   
   // Auto-generate stack name and description from current directory
   const dirName = path.basename(currentDir);
-  const stackName = options.name || `${dirName} Development Stack`;
-  const stackDescription = options.description || `Development stack for ${dirName} project`;
+  const stackName = options.name || `${dirName}${options.localOnly ? ' Local' : ''} Development Stack`;
+  const stackDescription = options.description || `${options.localOnly ? 'Local-only d' : 'D'}evelopment stack for ${dirName} project`;
   
   // Try to read package.json or other project files for better description
   let autoDescription = stackDescription;
@@ -535,39 +527,41 @@ async function exportCurrentStack(options: { name?: string; description?: string
   const commandsMap = new Map<string, StackCommand>();
   const agentsMap = new Map<string, StackAgent>();
 
-  // Scan global ~/.claude directory
-  const globalCommandsDir = path.join(claudeDir, 'commands');
-  if (await fs.pathExists(globalCommandsDir)) {
-    const commands = await fs.readdir(globalCommandsDir);
-    for (const commandFile of commands.filter(f => f.endsWith('.md'))) {
-      const filePath = path.join(globalCommandsDir, commandFile);
-      const content = await fs.readFile(filePath, 'utf-8');
-      const name = commandFile.replace('.md', '');
-      
-      commandsMap.set(name, {
-        name,
-        filePath: `~/.claude/commands/${commandFile}`,
-        content,
-        description: extractDescriptionFromContent(content)
-      });
+  // Scan global ~/.claude directory (unless localOnly is specified)
+  if (!options.localOnly) {
+    const globalCommandsDir = path.join(claudeDir, 'commands');
+    if (await fs.pathExists(globalCommandsDir)) {
+      const commands = await fs.readdir(globalCommandsDir);
+      for (const commandFile of commands.filter(f => f.endsWith('.md'))) {
+        const filePath = path.join(globalCommandsDir, commandFile);
+        const content = await fs.readFile(filePath, 'utf-8');
+        const name = commandFile.replace('.md', '');
+        
+        commandsMap.set(name, {
+          name,
+          filePath: `~/.claude/commands/${commandFile}`,
+          content,
+          description: extractDescriptionFromContent(content)
+        });
+      }
     }
-  }
 
-  // Scan global ~/.claude/agents directory
-  const globalAgentsDir = path.join(claudeDir, 'agents');
-  if (await fs.pathExists(globalAgentsDir)) {
-    const agents = await fs.readdir(globalAgentsDir);
-    for (const agentFile of agents.filter(f => f.endsWith('.md'))) {
-      const filePath = path.join(globalAgentsDir, agentFile);
-      const content = await fs.readFile(filePath, 'utf-8');
-      const name = agentFile.replace('.md', '');
-      
-      agentsMap.set(name, {
-        name,
-        filePath: `~/.claude/agents/${agentFile}`,
-        content,
-        description: extractDescriptionFromContent(content)
-      });
+    // Scan global ~/.claude/agents directory
+    const globalAgentsDir = path.join(claudeDir, 'agents');
+    if (await fs.pathExists(globalAgentsDir)) {
+      const agents = await fs.readdir(globalAgentsDir);
+      for (const agentFile of agents.filter(f => f.endsWith('.md'))) {
+        const filePath = path.join(globalAgentsDir, agentFile);
+        const content = await fs.readFile(filePath, 'utf-8');
+        const name = agentFile.replace('.md', '');
+        
+        agentsMap.set(name, {
+          name,
+          filePath: `~/.claude/agents/${agentFile}`,
+          content,
+          description: extractDescriptionFromContent(content)
+        });
+      }
     }
   }
 
@@ -625,14 +619,16 @@ async function exportCurrentStack(options: { name?: string; description?: string
     }
   }
 
-  // Read global settings
-  const globalSettingsFile = path.join(claudeDir, 'settings.json');
-  if (await fs.pathExists(globalSettingsFile)) {
-    try {
-      const globalSettings = await fs.readJson(globalSettingsFile);
-      stack.settings = { ...globalSettings, ...stack.settings };
-    } catch (error) {
-      console.warn(chalk.yellow('Warning: Could not parse global settings.json'));
+  // Read global settings (unless localOnly is specified)
+  if (!options.localOnly) {
+    const globalSettingsFile = path.join(claudeDir, 'settings.json');
+    if (await fs.pathExists(globalSettingsFile)) {
+      try {
+        const globalSettings = await fs.readJson(globalSettingsFile);
+        stack.settings = { ...globalSettings, ...stack.settings };
+      } catch (error) {
+        console.warn(chalk.yellow('Warning: Could not parse global settings.json'));
+      }
     }
   }
 
@@ -851,23 +847,18 @@ async function restoreStack(stackFilePath: string, options: { overwrite?: boolea
     console.log();
   }
 
-  // Note about MCP servers (manual installation required)
+  // Handle MCP servers based on stack source (local vs remote)
   if (stack.mcpServers && stack.mcpServers.length > 0) {
-    console.log(chalk.blue.bold('MCP Servers Configuration:'));
-    console.log(chalk.yellow('Note: MCP servers require manual installation using `claude mcp add`'));
-    console.log(chalk.gray('Run these commands to configure MCP servers for this project:\n'));
+    const stacksDir = path.join(os.homedir(), '.claude', 'stacks');
+    const isLocalStack = resolvedPath.startsWith(stacksDir);
     
-    for (const mcpServer of stack.mcpServers) {
-      if (mcpServer.type === 'http') {
-        console.log(chalk.cyan(`claude mcp add --transport http ${mcpServer.name} ${mcpServer.url}`));
-      } else if (mcpServer.type === 'stdio' && mcpServer.command) {
-        const args = mcpServer.args ? ` ${mcpServer.args.join(' ')}` : '';
-        console.log(chalk.cyan(`claude mcp add --transport stdio ${mcpServer.name} -- ${mcpServer.command}${args}`));
-      } else if (mcpServer.type === 'sse') {
-        console.log(chalk.cyan(`claude mcp add --transport sse ${mcpServer.name} ${mcpServer.url}`));
-      }
+    if (isLocalStack) {
+      // Local stack (from ~/.claude/stacks/): Direct .claude.json modification
+      await installMcpServersDirectly(stack.mcpServers);
+    } else {
+      // Remote stack: Validate dependencies and provide scripts
+      await handleRemoteMcpServers(stack.mcpServers);
     }
-    console.log();
   }
 
   // Create a restore summary
@@ -932,136 +923,546 @@ async function installLocalStack(stackFilePath: string): Promise<void> {
   }
 
 
-  // Note about MCP servers (they would need manual installation)
+  // Handle MCP servers (installLocalStack is always for local stacks)
   if (stack.mcpServers && stack.mcpServers.length > 0) {
-    console.log(chalk.blue.bold('MCP Servers Found:'));
-    console.log(chalk.yellow('Note: MCP servers require manual installation using `claude mcp add`'));
-    for (const mcpServer of stack.mcpServers) {
-      console.log(chalk.gray(`  - ${mcpServer.name}: ${mcpServer.type}`));
-      if (mcpServer.url) {
-        console.log(chalk.gray(`    URL: ${mcpServer.url}`));
+    await installMcpServersDirectly(stack.mcpServers);
+  }
+}
+
+async function cleanClaudeJson(dryRun: boolean): Promise<void> {
+  const claudeJsonPath = path.join(os.homedir(), '.claude.json');
+  
+  if (!await fs.pathExists(claudeJsonPath)) {
+    console.log(chalk.yellow('No ~/.claude.json file found'));
+    return;
+  }
+  
+  try {
+    const content = await fs.readFile(claudeJsonPath, 'utf-8');
+    const claudeConfig = JSON.parse(content);
+    
+    if (!claudeConfig.projects || typeof claudeConfig.projects !== 'object') {
+      console.log(chalk.yellow('No "projects" section found in .claude.json'));
+      return;
+    }
+    
+    const allProjects = Object.keys(claudeConfig.projects);
+    const existingProjects: string[] = [];
+    const missingProjects: string[] = [];
+    
+    console.log(chalk.gray(`Checking ${allProjects.length} project paths...\n`));
+    
+    // Check which directories exist
+    for (const projectPath of allProjects) {
+      const spinner = ora(`Checking: ${projectPath}`).start();
+      
+      if (await fs.pathExists(projectPath)) {
+        existingProjects.push(projectPath);
+        spinner.succeed(chalk.green(`✓ ${projectPath}`));
+      } else {
+        missingProjects.push(projectPath);
+        spinner.fail(chalk.red(`✗ ${projectPath}`));
       }
-      if (mcpServer.command) {
-        console.log(chalk.gray(`    Command: ${mcpServer.command} ${mcpServer.args?.join(' ') || ''}`));
-      }
+    }
+    
+    console.log();
+    console.log(chalk.green(`Found ${existingProjects.length} existing directories`));
+    console.log(chalk.red(`Found ${missingProjects.length} missing directories`));
+    
+    if (missingProjects.length === 0) {
+      console.log(chalk.green('\n✅ All project directories exist - nothing to clean!'));
+      return;
+    }
+    
+    console.log(chalk.red.bold(`\nDirectories to remove:`));
+    missingProjects.forEach((projectPath, index) => {
+      const mcpCount = claudeConfig.projects[projectPath]?.mcpServers ? 
+        Object.keys(claudeConfig.projects[projectPath].mcpServers).length : 0;
+      console.log(chalk.red(`${index + 1}. ${projectPath} (${mcpCount} MCP servers)`));
+    });
+    
+    if (dryRun) {
+      console.log(chalk.yellow('\n🔍 DRY RUN - No changes made'));
+      console.log(chalk.gray('Run without --dry-run to actually remove these entries'));
+      return;
+    }
+    
+    // Create new config without missing projects
+    const cleanedConfig = {
+      ...claudeConfig,
+      projects: {}
+    };
+    
+    // Keep only existing projects
+    for (const projectPath of existingProjects) {
+      cleanedConfig.projects[projectPath] = claudeConfig.projects[projectPath];
+    }
+    
+    // Write back to file
+    await fs.writeFile(claudeJsonPath, JSON.stringify(cleanedConfig, null, 2));
+    
+    // Calculate file size change
+    const newContent = JSON.stringify(cleanedConfig, null, 2);
+    const oldSizeKB = Math.round(content.length / 1024 * 100) / 100;
+    const newSizeKB = Math.round(newContent.length / 1024 * 100) / 100;
+    const savedKB = Math.round((oldSizeKB - newSizeKB) * 100) / 100;
+    
+    console.log(chalk.green.bold('\n✅ Cleanup complete!'));
+    console.log(chalk.gray(`Removed ${missingProjects.length} project entries`));
+    console.log(chalk.gray(`File size: ${oldSizeKB} KB → ${newSizeKB} KB (saved ${savedKB} KB)`));
+    
+  } catch (error) {
+    throw new Error(`Failed to clean ~/.claude.json: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+async function showStackInfo(stackFile?: string, showCurrent: boolean = false): Promise<void> {
+  let stack: DeveloperStack;
+  
+  if (showCurrent) {
+    // Show current directory environment without exporting
+    console.log(chalk.cyan('🎯 Current Directory Environment'));
+    console.log(chalk.gray(`Path: ${process.cwd()}\n`));
+    
+    stack = await exportCurrentStack({ localOnly: false });
+  } else {
+    // Load from stack file
+    let resolvedPath = stackFile;
+    
+    if (!stackFile) {
+      // Look for default stack file in ~/.claude/stacks/
+      const currentDir = process.cwd();
+      const dirName = path.basename(currentDir);
+      const stacksDir = path.join(os.homedir(), '.claude', 'stacks');
+      resolvedPath = path.join(stacksDir, `${dirName}-stack.json`);
+    } else if (!path.isAbsolute(stackFile) && !stackFile.includes('/')) {
+      // If it's just a filename, look in ~/.claude/stacks/
+      const stacksDir = path.join(os.homedir(), '.claude', 'stacks');
+      resolvedPath = path.join(stacksDir, stackFile);
+    } else {
+      resolvedPath = path.resolve(stackFile);
+    }
+    
+    if (!await fs.pathExists(resolvedPath)) {
+      throw new Error(`Stack file not found: ${resolvedPath}`);
+    }
+    
+    stack = await fs.readJson(resolvedPath);
+    
+    console.log(chalk.cyan.bold(`📦 ${stack.name}`));
+    if (stack.metadata?.exported_from) {
+      console.log(chalk.gray(`Exported from: ${stack.metadata.exported_from}`));
+    }
+    if (stack.metadata?.created_at) {
+      const date = new Date(stack.metadata.created_at);
+      console.log(chalk.gray(`Created: ${date.toLocaleDateString()}`));
     }
     console.log();
   }
-}
-
-async function getCliToken(): Promise<{ token: string; apiBase: string }> {
-  // Token can be provided via environment variable (from /setup-project command)
-  const token = process.env.COMMANDS_CLI_TOKEN;
-  const apiBase = process.env.COMMANDS_API_BASE || 'https://api.commands.com';
   
-  if (!token) {
-    throw new Error('No authentication token provided. This command should be called from the /setup-project Claude command with COMMANDS_CLI_TOKEN environment variable.');
-  }
+  console.log(chalk.gray(`Description: ${stack.description}`));
+  console.log();
   
-  return { token, apiBase };
-}
-
-async function fetchAssetViaMCP(type: string, id: string): Promise<CommandsComAsset> {
-  try {
-    // Get token from MCP server
-    const { token, apiBase } = await getCliToken();
+  // Categorize components by global vs local
+  const global = {
+    commands: (stack.commands || []).filter(c => c.filePath?.startsWith('~')),
+    agents: (stack.agents || []).filter(a => a.filePath?.startsWith('~'))
+  };
+  
+  const local = {
+    commands: (stack.commands || []).filter(c => c.filePath?.startsWith('.')),
+    agents: (stack.agents || []).filter(a => a.filePath?.startsWith('.'))
+  };
+  
+  // Show global components
+  if (global.commands.length > 0 || global.agents.length > 0) {
+    console.log(chalk.cyan.bold('GLOBAL (~/.claude/):'));
     
-    // Parse the ID to extract org and name (format: org/name)
-    const [organizationUsername, name] = id.split('/');
-    if (!organizationUsername || !name) {
-      throw new Error('Invalid asset ID format. Expected: org/name');
+    if (global.commands.length > 0) {
+      console.log(chalk.blue(`  Commands (${global.commands.length}):`));
+      global.commands.forEach(cmd => {
+        const description = cmd.description || 'No description available';
+        console.log(chalk.green(`    ✓ ${cmd.name}`), chalk.gray(`- ${description}`));
+      });
+      console.log();
     }
     
-    // Use the unified /api/assets endpoint
-    const endpoint = `${apiBase}/api/assets/${type}/${organizationUsername}/${name}`;
+    if (global.agents.length > 0) {
+      console.log(chalk.blue(`  Agents (${global.agents.length}):`));
+      global.agents.forEach(agent => {
+        const description = agent.description || 'No description available';
+        console.log(chalk.green(`    ✓ ${agent.name}`), chalk.gray(`- ${description}`));
+      });
+      console.log();
+    }
+  }
+  
+  // Show local components
+  if (local.commands.length > 0 || local.agents.length > 0 || (stack.mcpServers && stack.mcpServers.length > 0)) {
+    console.log(chalk.cyan.bold('LOCAL (./.claude/):'));
     
-    // Fetch asset using gateway JWT token
-    const response = await fetch(endpoint, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+    if (local.commands.length > 0) {
+      console.log(chalk.blue(`  Commands (${local.commands.length}):`));
+      local.commands.forEach(cmd => {
+        const description = cmd.description || 'No description available';
+        console.log(chalk.green(`    ✓ ${cmd.name}`), chalk.gray(`- ${description}`));
+      });
+      console.log();
+    }
+    
+    if (local.agents.length > 0) {
+      console.log(chalk.blue(`  Agents (${local.agents.length}):`));
+      local.agents.forEach(agent => {
+        const description = agent.description || 'No description available';
+        console.log(chalk.green(`    ✓ ${agent.name}`), chalk.gray(`- ${description}`));
+      });
+      console.log();
+    }
+    
+    if (stack.mcpServers && stack.mcpServers.length > 0) {
+      console.log(chalk.blue(`  MCP Servers (${stack.mcpServers.length}):`));
+      stack.mcpServers.forEach(mcp => {
+        let serverInfo = mcp.name;
+        if (mcp.type) serverInfo += ` (${mcp.type})`;
+        if (mcp.command) serverInfo += ` - ${mcp.command}`;
+        else if (mcp.url) serverInfo += ` - ${mcp.url}`;
+        
+        console.log(chalk.green(`    ✓ ${serverInfo}`));
+      });
+      console.log();
+    }
+  }
+  
+  // Show settings info
+  if (stack.settings && Object.keys(stack.settings).length > 0) {
+    console.log(chalk.cyan.bold('SETTINGS:'));
+    Object.entries(stack.settings).forEach(([key, value]) => {
+      if (typeof value === 'object') {
+        console.log(chalk.blue(`  ${key}:`), chalk.gray(JSON.stringify(value, null, 2).replace(/\n/g, '\n    ')));
+      } else {
+        console.log(chalk.blue(`  ${key}:`), chalk.gray(String(value)));
       }
     });
+    console.log();
+  }
+  
+  // Show summary
+  const totalCommands = (stack.commands || []).length;
+  const totalAgents = (stack.agents || []).length;
+  const totalMcpServers = (stack.mcpServers || []).length;
+  const totalComponents = totalCommands + totalAgents + totalMcpServers;
+  
+  console.log(chalk.cyan.bold('SUMMARY:'));
+  console.log(chalk.gray(`  Total components: ${totalComponents}`));
+  console.log(chalk.gray(`  Commands: ${totalCommands} (${global.commands.length} global, ${local.commands.length} local)`));
+  console.log(chalk.gray(`  Agents: ${totalAgents} (${global.agents.length} global, ${local.agents.length} local)`));
+  console.log(chalk.gray(`  MCP Servers: ${totalMcpServers}`));
+  
+  if (stack.settings && Object.keys(stack.settings).length > 0) {
+    console.log(chalk.gray(`  Settings: ${Object.keys(stack.settings).length} entries`));
+  }
+  
+  if (!showCurrent && !stackFile) {
+    console.log();
+    console.log(chalk.blue('Install this stack with:'));
+    const currentDir = process.cwd();
+    const dirName = path.basename(currentDir);
+    console.log(chalk.cyan(`  claude-stacks restore ${dirName}-stack.json`));
+  }
+}
+
+async function installMcpServersDirectly(mcpServers: StackMcpServer[]): Promise<void> {
+  console.log(chalk.blue.bold('MCP Servers Configuration:'));
+  
+  try {
+    const claudeJsonPath = path.join(os.homedir(), '.claude.json');
+    let claudeConfig: any = {};
     
-    if (!response.ok) {
-      const errorBody = await response.text();
-      throw new Error(`API returned ${response.status}: ${response.statusText}\n${errorBody}`);
+    // Read existing .claude.json
+    if (await fs.pathExists(claudeJsonPath)) {
+      const content = await fs.readFile(claudeJsonPath, 'utf-8');
+      claudeConfig = JSON.parse(content);
     }
     
-    const asset = await response.json() as any;
+    // Initialize projects structure if needed
+    if (!claudeConfig.projects) {
+      claudeConfig.projects = {};
+    }
     
-    // Transform to CLI format
-    return {
-      id: `${organizationUsername}/${name}`,
-      name: asset.name || name,
-      description: asset.description || '',
-      type: type as 'command' | 'agent' | 'prompt',
-      content: asset.content || '',
-      documentation: asset.instructions || asset.documentation
-    };
+    const currentProjectPath = process.cwd();
+    if (!claudeConfig.projects[currentProjectPath]) {
+      claudeConfig.projects[currentProjectPath] = {};
+    }
+    if (!claudeConfig.projects[currentProjectPath].mcpServers) {
+      claudeConfig.projects[currentProjectPath].mcpServers = {};
+    }
+    
+    const existingMcpServers = claudeConfig.projects[currentProjectPath].mcpServers || {};
+    const newServers: StackMcpServer[] = [];
+    const existingServers: string[] = [];
+    const updatedServers: StackMcpServer[] = [];
+    
+    // Check which servers already exist and which are new/different
+    for (const mcpServer of mcpServers) {
+      const existingServer = existingMcpServers[mcpServer.name];
+      
+      if (!existingServer) {
+        // Completely new server
+        newServers.push(mcpServer);
+      } else {
+        // Check if configuration is different
+        const configMatches = 
+          existingServer.type === mcpServer.type &&
+          existingServer.url === mcpServer.url &&
+          existingServer.command === mcpServer.command &&
+          JSON.stringify(existingServer.args || []) === JSON.stringify(mcpServer.args || []) &&
+          JSON.stringify(existingServer.env || {}) === JSON.stringify(mcpServer.env || {});
+        
+        if (!configMatches) {
+          // Configuration changed
+          updatedServers.push(mcpServer);
+        } else {
+          // Already exists with same configuration
+          existingServers.push(mcpServer.name);
+        }
+      }
+    }
+    
+    // Show status of existing servers
+    if (existingServers.length > 0) {
+      console.log(chalk.green(`✅ Already configured (${existingServers.length}):`));
+      existingServers.forEach(serverName => {
+        const serverConfig = existingMcpServers[serverName];
+        console.log(chalk.gray(`  ✓ ${serverName} (${serverConfig.type})`));
+      });
+    }
+    
+    // Configure new servers
+    if (newServers.length > 0) {
+      console.log(chalk.cyan(`🔧 Auto-configuring new MCP servers (${newServers.length})...`));
+      
+      for (const mcpServer of newServers) {
+        claudeConfig.projects[currentProjectPath].mcpServers[mcpServer.name] = {
+          type: mcpServer.type,
+          ...(mcpServer.url && { url: mcpServer.url }),
+          ...(mcpServer.command && { command: mcpServer.command }),
+          ...(mcpServer.args && { args: mcpServer.args }),
+          ...(mcpServer.env && { env: mcpServer.env })
+        };
+      }
+      
+      // Write back to .claude.json
+      await fs.writeFile(claudeJsonPath, JSON.stringify(claudeConfig, null, 2));
+      
+      console.log(chalk.green(`✅ New MCP servers configured successfully!`));
+      newServers.forEach(server => {
+        console.log(chalk.green(`  + ${server.name} (${server.type})`));
+      });
+    }
+    
+    // Update changed servers
+    if (updatedServers.length > 0) {
+      console.log(chalk.yellow(`🔄 Updating changed MCP servers (${updatedServers.length})...`));
+      
+      for (const mcpServer of updatedServers) {
+        claudeConfig.projects[currentProjectPath].mcpServers[mcpServer.name] = {
+          type: mcpServer.type,
+          ...(mcpServer.url && { url: mcpServer.url }),
+          ...(mcpServer.command && { command: mcpServer.command }),
+          ...(mcpServer.args && { args: mcpServer.args }),
+          ...(mcpServer.env && { env: mcpServer.env })
+        };
+      }
+      
+      // Write back to .claude.json
+      await fs.writeFile(claudeJsonPath, JSON.stringify(claudeConfig, null, 2));
+      
+      console.log(chalk.green(`✅ MCP servers updated successfully!`));
+      updatedServers.forEach(server => {
+        console.log(chalk.yellow(`  ↻ ${server.name} (${server.type})`));
+      });
+    }
+    
+    // Show summary if no changes needed
+    if (newServers.length === 0 && updatedServers.length === 0 && existingServers.length > 0) {
+      console.log(chalk.green('✅ All MCP servers are already configured correctly!'));
+    }
+    
+    console.log();
+    
   } catch (error) {
-    throw new Error(`Failed to fetch ${type}: ${id} - ${error instanceof Error ? error.message : String(error)}`);
+    console.error(chalk.red('Failed to configure MCP servers automatically:'), error instanceof Error ? error.message : String(error));
+    console.log(chalk.yellow('Falling back to manual installation instructions...'));
+    await showManualMcpInstructions(mcpServers);
   }
 }
 
-async function installCommand(id: string) {
-  const spinner = ora(`Installing command: ${id}`).start();
+async function handleRemoteMcpServers(mcpServers: StackMcpServer[]): Promise<void> {
+  console.log(chalk.blue.bold('MCP Servers Configuration:'));
   
-  try {
-    // Fetch command from Commands.com via MCP server
-    const asset = await fetchAssetViaMCP('command', id);
-    
-    // Create ~/.claude/commands directory
-    const claudeDir = path.join(os.homedir(), '.claude');
-    const commandsDir = path.join(claudeDir, 'commands');
-    await fs.ensureDir(commandsDir);
-    
-    // Create command file
-    const filename = `${asset.name.toLowerCase().replace(/\s+/g, '-')}.md`;
-    const filepath = path.join(commandsDir, filename);
-    
-    await fs.writeFile(filepath, asset.content);
-    
-    spinner.succeed(`Command installed: ${chalk.cyan(asset.name)}`);
-    console.log(chalk.gray(`  File: ${filepath}`));
-    console.log(chalk.gray(`  Usage: /${asset.name.toLowerCase().replace(/\s+/g, '-')}`));
-    
-  } catch (error) {
-    spinner.fail(`Failed to install command: ${id}`);
-    console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
-    process.exit(1);
-  }
-}
-
-async function installAgent(id: string) {
-  const spinner = ora(`Installing agent: ${id}`).start();
+  // Check for required dependencies
+  const dependencies = new Set<string>();
+  const missingDeps: string[] = [];
   
-  try {
-    // Fetch agent from Commands.com via MCP server
-    const asset = await fetchAssetViaMCP('agent', id);
+  for (const server of mcpServers) {
+    if (server.command) {
+      dependencies.add(server.command);
+    }
+  }
+  
+  // Validate dependencies
+  for (const dep of dependencies) {
+    try {
+      execSync(`which ${dep}`, { stdio: 'ignore' });
+    } catch {
+      missingDeps.push(dep);
+    }
+  }
+  
+  if (missingDeps.length > 0) {
+    console.log(chalk.yellow('⚠️  Missing dependencies detected:'));
+    missingDeps.forEach(dep => {
+      console.log(chalk.red(`  ✗ ${dep} not found`));
+    });
+    console.log();
     
-    // Create ~/.claude/agents directory  
-    const claudeDir = path.join(os.homedir(), '.claude');
-    const agentsDir = path.join(claudeDir, 'agents');
-    await fs.ensureDir(agentsDir);
+    // Generate installation script
+    await generateMcpInstallationScript(mcpServers, missingDeps);
+  } else {
+    console.log(chalk.green('✅ All dependencies available'));
     
-    // Create agent file
-    const filename = `${asset.name.toLowerCase().replace(/\s+/g, '-')}.md`;
-    const filepath = path.join(agentsDir, filename);
+    // Ask user if they want auto-installation or manual commands
+    console.log(chalk.blue('Choose MCP server installation method:'));
+    console.log(chalk.gray('1. Auto-configure (modifies ~/.claude.json)'));
+    console.log(chalk.gray('2. Show manual commands'));
+    console.log();
     
-    await fs.writeFile(filepath, asset.content);
-    
-    spinner.succeed(`Agent installed: ${chalk.cyan(asset.name)}`);
-    console.log(chalk.gray(`  File: ${filepath}`));
-    console.log(chalk.gray(`  Usage: @${asset.name.toLowerCase().replace(/\s+/g, '-')}`));
-    
-  } catch (error) {
-    spinner.fail(`Failed to install agent: ${id}`);
-    console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
-    process.exit(1);
+    // For now, default to manual (could add inquirer prompt later)
+    await showManualMcpInstructions(mcpServers);
   }
 }
 
+async function showManualMcpInstructions(mcpServers: StackMcpServer[]): Promise<void> {
+  console.log(chalk.yellow('Run these commands to configure MCP servers for this project:\n'));
+  
+  for (const mcpServer of mcpServers) {
+    if (mcpServer.type === 'http') {
+      console.log(chalk.cyan(`claude mcp add --transport http ${mcpServer.name} ${mcpServer.url}`));
+    } else if (mcpServer.type === 'stdio' && mcpServer.command) {
+      const args = mcpServer.args ? ` ${mcpServer.args.join(' ')}` : '';
+      console.log(chalk.cyan(`claude mcp add --transport stdio ${mcpServer.name} -- ${mcpServer.command}${args}`));
+    } else if (mcpServer.type === 'sse') {
+      console.log(chalk.cyan(`claude mcp add --transport sse ${mcpServer.name} ${mcpServer.url}`));
+    }
+  }
+  console.log();
+}
+
+async function generateMcpInstallationScript(mcpServers: StackMcpServer[], missingDeps: string[]): Promise<void> {
+  const scriptPath = path.join(process.cwd(), 'install-mcp-setup.sh');
+  
+  let script = '#!/bin/bash\n\n';
+  script += '# MCP Server Installation Script\n';
+  script += '# Generated by claude-stacks\n\n';
+  script += 'echo "🔧 Installing MCP server dependencies and configuration..."\n\n';
+  
+  // Add dependency installation
+  script += '# Install missing dependencies\n\n';
+  
+  if (missingDeps.includes('npx') || missingDeps.includes('node')) {
+    script += '# Install Node.js (includes npx)\n';
+    script += 'if ! command -v node &> /dev/null; then\n';
+    script += '  echo "Installing Node.js..."\n';
+    script += '  # macOS\n';
+    script += '  if [[ "$OSTYPE" == "darwin"* ]]; then\n';
+    script += '    if command -v brew &> /dev/null; then\n';
+    script += '      brew install node\n';
+    script += '    else\n';
+    script += '      echo "Please install Homebrew first: https://brew.sh/"\n';
+    script += '      exit 1\n';
+    script += '    fi\n';
+    script += '  # Linux\n';
+    script += '  elif [[ "$OSTYPE" == "linux-gnu"* ]]; then\n';
+    script += '    curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -\n';
+    script += '    sudo apt-get install -y nodejs\n';
+    script += '  fi\n';
+    script += 'fi\n\n';
+  }
+  
+  if (missingDeps.includes('uvx')) {
+    script += '# Install uv (includes uvx)\n';
+    script += 'if ! command -v uvx &> /dev/null; then\n';
+    script += '  echo "Installing uv..."\n';
+    script += '  curl -LsSf https://astral.sh/uv/install.sh | sh\n';
+    script += '  source $HOME/.cargo/env\n';
+    script += 'fi\n\n';
+  }
+  
+  if (missingDeps.includes('docker')) {
+    script += '# Install Docker\n';
+    script += 'if ! command -v docker &> /dev/null; then\n';
+    script += '  echo "Installing Docker..."\n';
+    script += '  # macOS\n';
+    script += '  if [[ "$OSTYPE" == "darwin"* ]]; then\n';
+    script += '    if command -v brew &> /dev/null; then\n';
+    script += '      brew install --cask docker\n';
+    script += '      echo "Please start Docker Desktop application"\n';
+    script += '    else\n';
+    script += '      echo "Please install Docker Desktop: https://www.docker.com/products/docker-desktop/"\n';
+    script += '    fi\n';
+    script += '  # Linux\n';
+    script += '  elif [[ "$OSTYPE" == "linux-gnu"* ]]; then\n';
+    script += '    curl -fsSL https://get.docker.com -o get-docker.sh\n';
+    script += '    sudo sh get-docker.sh\n';
+    script += '    sudo usermod -aG docker $USER\n';
+    script += '    echo "Please log out and back in for Docker permissions"\n';
+    script += '  fi\n';
+    script += 'fi\n\n';
+  }
+  
+  // Add MCP server configuration commands
+  script += 'echo "Configuring MCP servers..."\n\n';
+  for (const mcpServer of mcpServers) {
+    if (mcpServer.type === 'http') {
+      script += `claude mcp add --transport http ${mcpServer.name} ${mcpServer.url}\n`;
+    } else if (mcpServer.type === 'stdio' && mcpServer.command) {
+      const args = mcpServer.args ? ` ${mcpServer.args.join(' ')}` : '';
+      script += `claude mcp add --transport stdio ${mcpServer.name} -- ${mcpServer.command}${args}\n`;
+    } else if (mcpServer.type === 'sse') {
+      script += `claude mcp add --transport sse ${mcpServer.name} ${mcpServer.url}\n`;
+    }
+  }
+  
+  // Add generic dependency installation for unknown commands
+  const knownDeps = ['npx', 'node', 'uvx', 'docker'];
+  const unknownDeps = missingDeps.filter(dep => !knownDeps.includes(dep));
+  
+  if (unknownDeps.length > 0) {
+    script += '# Install other missing dependencies\n';
+    for (const dep of unknownDeps) {
+      script += `# Please install ${dep} manually\n`;
+      script += `echo "Please install ${dep} and ensure it's in your PATH"\n`;
+      script += `echo "Then re-run this script"\n`;
+      script += `if ! command -v ${dep} &> /dev/null; then\n`;
+      script += `  echo "❌ ${dep} is still missing - please install it manually"\n`;
+      script += `  exit 1\n`;
+      script += `fi\n\n`;
+    }
+  }
+  
+  script += '\necho "✅ MCP setup complete!"\n';
+  
+  // Write script
+  await fs.writeFile(scriptPath, script);
+  await fs.chmod(scriptPath, 0o755); // Make executable
+  
+  console.log(chalk.green(`📝 Generated installation script: ${scriptPath}`));
+  console.log(chalk.blue('To install dependencies and configure MCP servers:'));
+  console.log(chalk.cyan(`  bash ${scriptPath}`));
+  console.log();
+  console.log(chalk.yellow('Or install dependencies manually and run these commands:'));
+  await showManualMcpInstructions(mcpServers);
+}
 
 // CLI setup
 program
@@ -1074,6 +1475,7 @@ program
   .command('export')
   .option('--name <name>', 'Override the default stack name (derived from directory)')
   .option('--description <description>', 'Override the default description')
+  .option('--local-only', 'Export only local .claude/ directory (skip global ~/.claude/)')
   .description('Export current development environment as a stack')
   .action(async (options) => {
     console.log(chalk.blue.bold('📤 Exporting Current Development Stack\n'));
@@ -1086,7 +1488,7 @@ program
       const stacksDir = path.join(os.homedir(), '.claude', 'stacks');
       await fs.ensureDir(stacksDir);
       
-      const fileName = `${path.basename(process.cwd())}-stack.json`;
+      const fileName = `${path.basename(process.cwd())}${options.localOnly ? '-local' : ''}-stack.json`;
       const stackPath = path.join(stacksDir, fileName);
       await fs.writeFile(stackPath, stackContent);
       
@@ -1214,32 +1616,37 @@ program
     }
   });
 
-// Legacy Commands.com compatibility
-const legacyCommand = program
-  .command('legacy')
-  .description('Legacy Commands.com installation tools');
-
-legacyCommand
-  .command('install')
-  .argument('<type>', 'Type: command, agent, or prompt')
-  .argument('<id>', 'Namespaced ID (e.g., user/tool-name)')
-  .description('Install a Commands.com asset')
-  .action(async (type: string, id: string) => {
-    console.log(chalk.blue.bold('📦 Commands.com Installer\n'));
+program
+  .command('info')
+  .argument('[stack-file]', 'Path to stack JSON file (defaults to current directory stack)')
+  .option('--current', 'Show info for current directory environment (without exporting)')
+  .description('Show detailed information about a stack or current environment')
+  .action(async (stackFile: string, options: { current?: boolean }) => {
+    console.log(chalk.blue.bold('📋 Stack Information\n'));
     
-    switch (type) {
-      case 'command':
-        await installCommand(id);
-        break;
-      case 'agent':
-        await installAgent(id);
-        break;
-      default:
-        console.error(chalk.red('Error:'), `Unknown type: ${type}`);
-        console.log(chalk.gray('Valid types: command, agent'));
-        process.exit(1);
+    try {
+      await showStackInfo(stackFile, options.current || false);
+      
+    } catch (error) {
+      console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
+      process.exit(1);
     }
   });
 
+program
+  .command('clean')
+  .option('--dry-run', 'Show what would be removed without making changes')
+  .description('Remove project entries for directories that no longer exist')
+  .action(async (options: { dryRun?: boolean }) => {
+    console.log(chalk.blue.bold('🧹 Cleaning ~/.claude.json\n'));
+    
+    try {
+      await cleanClaudeJson(options.dryRun || false);
+      
+    } catch (error) {
+      console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
 
 program.parse();
