@@ -34,14 +34,23 @@ Publishes a stack to the Commands.com marketplace.
 - Uses OAuth 2.0 with PKCE for secure authentication
 - Opens browser for authentication flow
 - Dynamic port allocation to avoid conflicts
-- **Note**: Backend API endpoints not yet implemented
+- Looks for stack file in `~/.claude/stacks/` by default
 
 ### `claude-stacks browse`
-Opens the Commands.com stacks marketplace in browser.
+Browse and discover published stacks from the marketplace.
+- Supports search filtering with `--search` parameter
+- Use `--my-stacks` to view only your published stacks
 
 ### `claude-stacks install-remote <stack-id>`
 Installs a remote stack from the marketplace.
-- **Note**: Backend API endpoints not yet implemented
+- Downloads stack and restores to current project
+- Tracks installation analytics
+- Supports same options as `restore` command
+
+### `claude-stacks delete <stack-id>`
+Deletes a published stack from the marketplace.
+- Requires authentication and ownership
+- Permanent deletion - cannot be undone
 
 ## Technical Architecture
 
@@ -129,23 +138,72 @@ function findAvailablePort(): Promise<number> {
 
 ## Development
 
+### Building the CLI
 ```bash
-# Build
+# Build TypeScript to JavaScript
 npm run build
 
-# Development mode
+# Development mode (auto-rebuild)
 npm run dev
-
-# Test locally
-node dist/cli.js stack export
 ```
+
+### Local Backend Testing
+
+The CLI supports testing against a local backend server running on port 3000. Set the environment variable to enable development mode:
+
+```bash
+# Enable local development mode
+export CLAUDE_STACKS_DEV=true
+
+# Or prefix individual commands
+CLAUDE_STACKS_DEV=true node dist/cli.js browse
+```
+
+#### Local Development Workflow
+
+1. **Start local backend** (assumes backend server running on `localhost:3000`)
+
+2. **Export a stack for testing**:
+   ```bash
+   node dist/cli.js export --name "Test Stack" --description "Local testing"
+   ```
+
+3. **Publish to local backend**:
+   ```bash
+   CLAUDE_STACKS_DEV=true node dist/cli.js publish --public
+   ```
+
+4. **Browse stacks on local backend**:
+   ```bash
+   CLAUDE_STACKS_DEV=true node dist/cli.js browse
+   ```
+
+5. **Install stack from local backend**:
+   ```bash
+   CLAUDE_STACKS_DEV=true node dist/cli.js install-remote <stack-id>
+   ```
+
+6. **Delete test stacks**:
+   ```bash
+   CLAUDE_STACKS_DEV=true node dist/cli.js delete <stack-id>
+   ```
+
+#### Backend Configuration
+
+- **Local Development**: `http://localhost:3000`
+- **Production**: `https://backend.commands.com`
+- **Authentication**: Always uses `https://api.commands.com/oauth/*` (both modes)
+
+The CLI automatically detects the environment and shows which backend it's connecting to in development mode.
 
 ## Known Issues & Future Work
 
-### Backend Integration
-- API endpoints `/v1/stacks` not yet implemented on Commands.com
-- Need to register `claude-stacks-cli` as valid OAuth client ID
-- Publish and install-remote commands ready but need backend support
+### Backend Integration Status
+- ✅ **Local Development**: Fully working with local backend on port 3000
+- ✅ **API Endpoints**: All CRUD operations implemented (`/v1/stacks/*`)
+- ✅ **Authentication**: OAuth 2.0 + PKCE flow working with Commands.com API gateway
+- ✅ **Install Tracking**: Analytics tracking for stack installations
+- 🚧 **Production Deployment**: Production backend not yet deployed to `backend.commands.com`
 
 ### Character Encoding
 - Resolved emoji display issues in terminal output
@@ -159,10 +217,11 @@ node dist/cli.js stack export
 ## OAuth Client Configuration
 
 The tool is configured to authenticate with the Commands.com API gateway:
-- **Auth URL**: `https://api.commands.com/auth/login`
-- **Token URL**: `https://api.commands.com/auth/token`
+- **Auth URL**: `https://api.commands.com/oauth/authorize`
+- **Token URL**: `https://api.commands.com/oauth/token`
 - **Client ID**: `claude-stacks-cli`
 - **Redirect**: `http://localhost:{dynamic-port}/callback`
+- **Flow**: Authorization Code with PKCE (S256)
 
 ## Package Information
 

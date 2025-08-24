@@ -21,6 +21,16 @@ interface DeveloperStack {
   agents?: StackAgent[];
   mcpServers?: StackMcpServer[];
   settings?: StackSettings;
+  claudeMd?: {
+    global?: {
+      content: string;
+      path: string;
+    };
+    local?: {
+      content: string;
+      path: string;
+    };
+  };
   metadata?: {
     created_at: string;
     updated_at: string;
@@ -91,6 +101,16 @@ function findAvailablePort(): Promise<number> {
     });
     server.on('error', reject);
   });
+}
+
+// API Configuration
+function getApiConfig() {
+  const isDev = process.env.CLAUDE_STACKS_DEV === 'true' || process.env.NODE_ENV === 'development';
+  return {
+    baseUrl: isDev ? 'http://localhost:3000' : 'https://backend.commands.com',
+    authUrl: 'https://api.commands.com/oauth/authorize',
+    tokenUrl: 'https://api.commands.com/oauth/token'
+  };
 }
 
 const OAUTH_CONFIG: OAuthConfig = {
@@ -299,11 +319,12 @@ async function publishStack(stackFilePath?: string, options: { public?: boolean;
   if (stackFilePath) {
     stackPath = path.resolve(stackFilePath);
   } else {
-    // Look for stack file in current directory
+    // Look for stack file in ~/.claude/stacks/ directory
     const currentDir = process.cwd();
     const dirName = path.basename(currentDir);
+    const stacksDir = path.join(os.homedir(), '.claude', 'stacks');
     const defaultStackFile = `${dirName}-stack.json`;
-    stackPath = path.join(currentDir, defaultStackFile);
+    stackPath = path.join(stacksDir, defaultStackFile);
   }
   
   if (!await fs.pathExists(stackPath)) {
@@ -333,6 +354,7 @@ async function publishStack(stackFilePath?: string, options: { public?: boolean;
     agents: stack.agents || [],
     mcpServers: stack.mcpServers || [],
     settings: stack.settings || {},
+    ...(stack.claudeMd && { claudeMd: stack.claudeMd }),
     tags: tags,
     public: options.public || false,
     metadata: {
@@ -342,10 +364,14 @@ async function publishStack(stackFilePath?: string, options: { public?: boolean;
     }
   };
   
+  const apiConfig = getApiConfig();
   console.log(chalk.blue('📤 Uploading stack to Commands.com...'));
+  if (apiConfig.baseUrl.includes('localhost')) {
+    console.log(chalk.gray(`   Using local backend: ${apiConfig.baseUrl}`));
+  }
   
   // Upload to Commands.com API
-  const response = await fetch('https://api.commands.com/v1/stacks', {
+  const response = await fetch(`${apiConfig.baseUrl}/v1/stacks`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
@@ -356,15 +382,19 @@ async function publishStack(stackFilePath?: string, options: { public?: boolean;
   });
   
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Publishing failed: ${response.statusText}\n${error}`);
+    let errorDetails = '';
+    try {
+      const errorBody = await response.text();
+      errorDetails = errorBody ? `\n${errorBody}` : '';
+    } catch {}
+    throw new Error(`Publishing failed: ${response.status} ${response.statusText}${errorDetails}`);
   }
   
   const result = await response.json() as any;
   
   console.log(chalk.green('✅ Stack published successfully!'));
-  console.log(chalk.gray(`  Stack ID: ${result.id}`));
-  console.log(chalk.gray(`  URL: https://commands.com/stacks/${result.id}`));
+  console.log(chalk.gray(`  Stack ID: ${result.stackId}`));
+  console.log(chalk.gray(`  URL: ${result.url || `https://commands.com/stacks/${result.stackId}`}`));
   console.log(chalk.gray(`  Components: ${stackPayload.commands.length + stackPayload.agents.length} items`));
   console.log(chalk.gray(`  Visibility: ${options.public ? 'Public' : 'Private'}`));
 }
@@ -379,9 +409,9 @@ async function browseStacks(options: { category?: string; search?: string; mySta
   
   // Build query parameters
   const params = new URLSearchParams();
-  if (options.category) params.set('category', options.category);
   if (options.search) params.set('search', options.search);
-  if (options.myStacks) params.set('my_stacks', 'true');
+  if (options.myStacks) params.set('myStacks', 'true');
+  // Note: category not supported in current API, removing for now
   
   const headers: Record<string, string> = {
     'User-Agent': 'claude-stacks-cli/1.0.0'
@@ -391,15 +421,23 @@ async function browseStacks(options: { category?: string; search?: string; mySta
     headers['Authorization'] = `Bearer ${accessToken}`;
   }
   
+  const apiConfig = getApiConfig();
   console.log(chalk.blue('🔍 Fetching stacks from Commands.com...'));
-  
-  const response = await fetch(`https://api.commands.com/v1/stacks?${params.toString()}`, {
+  if (apiConfig.baseUrl.includes('localhost')) {
+    console.log(chalk.gray(`   Using local backend: ${apiConfig.baseUrl}`));
+  }
+  const response = await fetch(`${apiConfig.baseUrl}/v1/stacks?${params.toString()}`, {
     method: 'GET',
     headers
   });
   
   if (!response.ok) {
-    throw new Error(`Browse failed: ${response.statusText}`);
+    let errorDetails = '';
+    try {
+      const errorBody = await response.text();
+      errorDetails = errorBody ? `\n${errorBody}` : '';
+    } catch {}
+    throw new Error(`Browse failed: ${response.status} ${response.statusText}${errorDetails}`);
   }
   
   const result = await response.json() as any;
@@ -415,20 +453,57 @@ async function browseStacks(options: { category?: string; search?: string; mySta
   stacks.forEach((stack: any, index: number) => {
     console.log(chalk.cyan.bold(`${index + 1}. ${stack.name}`));
     console.log(chalk.gray(`   Description: ${stack.description}`));
-    console.log(chalk.gray(`   Author: ${stack.author?.name || 'Unknown'}`));
-    console.log(chalk.gray(`   Components: ${(stack.commands?.length || 0) + (stack.agents?.length || 0)} items`));
-    console.log(chalk.gray(`   Tags: ${stack.tags?.join(', ') || 'None'}`));
-    console.log(chalk.gray(`   URL: https://commands.com/stacks/${stack.id}`));
-    console.log(chalk.blue(`   Install: claude-stacks install-remote ${stack.id}`));
+    console.log(chalk.gray(`   Author: ${stack.author || 'Unknown'}`));
+    console.log(chalk.gray(`   Components: ${(stack.commandCount || 0) + (stack.agentCount || 0) + (stack.mcpServerCount || 0)} items`));
+    console.log(chalk.gray(`   Views: ${stack.viewCount || 0}, Installs: ${stack.installCount || 0}`));
+    console.log(chalk.gray(`   Created: ${stack.createdAt ? new Date(stack.createdAt).toLocaleDateString() : 'Unknown'}`));
+    console.log(chalk.gray(`   URL: https://commands.com/stacks/${stack.stackId}`));
+    console.log(chalk.blue(`   Install: claude-stacks install-remote ${stack.stackId}`));
     console.log();
   });
 }
 
-async function installRemoteStack(stackId: string, options: { overwrite?: boolean; globalOnly?: boolean; localOnly?: boolean } = {}): Promise<void> {
+async function deleteStack(stackId: string): Promise<void> {
+  const apiConfig = getApiConfig();
+  console.log(chalk.blue(`🗑️ Deleting stack ${stackId}...`));
+  if (apiConfig.baseUrl.includes('localhost')) {
+    console.log(chalk.gray(`   Using local backend: ${apiConfig.baseUrl}`));
+  }
+  
+  // Authenticate
+  const accessToken = await authenticate();
+  
+  const response = await fetch(`${apiConfig.baseUrl}/v1/stacks/${stackId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'User-Agent': 'claude-stacks-cli/1.0.0'
+    }
+  });
+  
+  if (!response.ok) {
+    let errorDetails = '';
+    try {
+      const errorBody = await response.text();
+      errorDetails = errorBody ? `\n${errorBody}` : '';
+    } catch {}
+    throw new Error(`Failed to delete stack: ${response.status} ${response.statusText}${errorDetails}`);
+  }
+  
+  const result = await response.json() as any;
+  console.log(chalk.green(`✅ Stack deleted successfully!`));
+  console.log(chalk.gray(`   Stack ID: ${result.stackId || stackId}`));
+}
+
+async function installRemoteStack(stackId: string, options: { overwrite?: boolean; globalOnly?: boolean; localOnly?: boolean; skipClaudeMd?: boolean } = {}): Promise<void> {
+  const apiConfig = getApiConfig();
   console.log(chalk.blue(`📥 Fetching stack ${stackId} from Commands.com...`));
+  if (apiConfig.baseUrl.includes('localhost')) {
+    console.log(chalk.gray(`   Using local backend: ${apiConfig.baseUrl}`));
+  }
   
   // Fetch stack from Commands.com
-  const response = await fetch(`https://api.commands.com/v1/stacks/${stackId}`, {
+  const response = await fetch(`${apiConfig.baseUrl}/v1/stacks/${stackId}`, {
     method: 'GET',
     headers: {
       'User-Agent': 'claude-stacks-cli/1.0.0'
@@ -436,10 +511,16 @@ async function installRemoteStack(stackId: string, options: { overwrite?: boolea
   });
   
   if (!response.ok) {
+    let errorDetails = '';
+    try {
+      const errorBody = await response.text();
+      errorDetails = errorBody ? `\n${errorBody}` : '';
+    } catch {}
+    
     if (response.status === 404) {
-      throw new Error(`Stack ${stackId} not found. It may be private or not exist.`);
+      throw new Error(`Stack ${stackId} not found. It may be private or not exist.${errorDetails}`);
     }
-    throw new Error(`Failed to fetch stack: ${response.statusText}`);
+    throw new Error(`Failed to fetch stack: ${response.status} ${response.statusText}${errorDetails}`);
   }
   
   const remoteStack = await response.json() as any;
@@ -461,7 +542,7 @@ async function installRemoteStack(stackId: string, options: { overwrite?: boolea
   };
   
   console.log(chalk.cyan(`Installing: ${stack.name}`));
-  console.log(chalk.gray(`By: ${remoteStack.author?.name || 'Unknown'}`));
+  console.log(chalk.gray(`By: ${remoteStack.author || 'Unknown'}`));
   console.log(chalk.gray(`Description: ${stack.description}\n`));
   
   // Use the existing restore function to install the stack
@@ -473,9 +554,22 @@ async function installRemoteStack(stackId: string, options: { overwrite?: boolea
     await restoreStack(tempStackPath, options);
     
     // Track successful installation
+    try {
+      const apiConfig = getApiConfig();
+      await fetch(`${apiConfig.baseUrl}/v1/stacks/${stackId}/install`, {
+        method: 'POST',
+        headers: {
+          'User-Agent': 'claude-stacks-cli/1.0.0'
+        }
+      });
+    } catch (trackingError) {
+      // Silently fail tracking - don't block installation
+      console.log(chalk.gray('   (Install tracking unavailable)'));
+    }
+    
     console.log(chalk.green(`\n✅ Successfully installed "${stack.name}" from Commands.com!`));
     console.log(chalk.gray(`   Stack ID: ${stackId}`));
-    console.log(chalk.gray(`   Author: ${remoteStack.author?.name || 'Unknown'}`));
+    console.log(chalk.gray(`   Author: ${remoteStack.author || 'Unknown'}`));
     
   } finally {
     // Clean up temp file
@@ -485,14 +579,14 @@ async function installRemoteStack(stackId: string, options: { overwrite?: boolea
   }
 }
 
-async function exportCurrentStack(options: { name?: string; description?: string; localOnly?: boolean }): Promise<DeveloperStack> {
+async function exportCurrentStack(options: { name?: string; description?: string; includeGlobal?: boolean; includeClaudeMd?: boolean }): Promise<DeveloperStack> {
   const claudeDir = path.join(os.homedir(), '.claude');
   const currentDir = process.cwd();
   
   // Auto-generate stack name and description from current directory
   const dirName = path.basename(currentDir);
-  const stackName = options.name || `${dirName}${options.localOnly ? ' Local' : ''} Development Stack`;
-  const stackDescription = options.description || `${options.localOnly ? 'Local-only d' : 'D'}evelopment stack for ${dirName} project`;
+  const stackName = options.name || `${dirName}${options.includeGlobal ? ' Full' : ''} Development Stack`;
+  const stackDescription = options.description || `${options.includeGlobal ? 'Full d' : 'Local d'}evelopment stack for ${dirName} project`;
   
   // Try to read package.json or other project files for better description
   let autoDescription = stackDescription;
@@ -527,8 +621,8 @@ async function exportCurrentStack(options: { name?: string; description?: string
   const commandsMap = new Map<string, StackCommand>();
   const agentsMap = new Map<string, StackAgent>();
 
-  // Scan global ~/.claude directory (unless localOnly is specified)
-  if (!options.localOnly) {
+  // Scan global ~/.claude directory (only if includeGlobal is specified)
+  if (options.includeGlobal) {
     const globalCommandsDir = path.join(claudeDir, 'commands');
     if (await fs.pathExists(globalCommandsDir)) {
       const commands = await fs.readdir(globalCommandsDir);
@@ -619,8 +713,8 @@ async function exportCurrentStack(options: { name?: string; description?: string
     }
   }
 
-  // Read global settings (unless localOnly is specified)
-  if (!options.localOnly) {
+  // Read global settings (only if includeGlobal is specified)
+  if (options.includeGlobal) {
     const globalSettingsFile = path.join(claudeDir, 'settings.json');
     if (await fs.pathExists(globalSettingsFile)) {
       try {
@@ -641,6 +735,44 @@ async function exportCurrentStack(options: { name?: string; description?: string
       stack.mcpServers = mcpServers;
     } catch (error) {
       console.warn(chalk.yellow('Warning: Could not parse ~/.claude.json for MCP servers'));
+    }
+  }
+
+  // Read CLAUDE.md files if requested
+  if (options.includeClaudeMd) {
+    const claudeMd: NonNullable<DeveloperStack['claudeMd']> = {};
+    
+    // Read global CLAUDE.md
+    const globalClaudeMd = path.join(claudeDir, 'CLAUDE.md');
+    if (await fs.pathExists(globalClaudeMd)) {
+      try {
+        const content = await fs.readFile(globalClaudeMd, 'utf-8');
+        claudeMd.global = {
+          content,
+          path: '~/.claude/CLAUDE.md'
+        };
+      } catch (error) {
+        console.warn(chalk.yellow('Warning: Could not read ~/.claude/CLAUDE.md'));
+      }
+    }
+    
+    // Read local CLAUDE.md
+    const localClaudeMd = path.join(currentDir, '.claude', 'CLAUDE.md');
+    if (await fs.pathExists(localClaudeMd)) {
+      try {
+        const content = await fs.readFile(localClaudeMd, 'utf-8');
+        claudeMd.local = {
+          content,
+          path: './.claude/CLAUDE.md'
+        };
+      } catch (error) {
+        console.warn(chalk.yellow('Warning: Could not read ./.claude/CLAUDE.md'));
+      }
+    }
+    
+    // Only add claudeMd if we found at least one file
+    if (claudeMd.global || claudeMd.local) {
+      stack.claudeMd = claudeMd;
     }
   }
 
@@ -742,7 +874,7 @@ async function listLocalStacks(): Promise<DeveloperStack[]> {
   return stacks;
 }
 
-async function restoreStack(stackFilePath: string, options: { overwrite?: boolean; globalOnly?: boolean; localOnly?: boolean }): Promise<void> {
+async function restoreStack(stackFilePath: string, options: { overwrite?: boolean; globalOnly?: boolean; localOnly?: boolean; skipClaudeMd?: boolean }): Promise<void> {
   let resolvedPath = stackFilePath;
   
   // If it's just a filename, look in ~/.claude/stacks/
@@ -861,12 +993,64 @@ async function restoreStack(stackFilePath: string, options: { overwrite?: boolea
     }
   }
 
+  // Restore CLAUDE.md files
+  if (stack.claudeMd && !options.skipClaudeMd) {
+    console.log(chalk.blue.bold('Restoring CLAUDE.md Files:'));
+    
+    // Restore global CLAUDE.md (with confirmation)
+    if (stack.claudeMd.global && !options.localOnly) {
+      const globalClaudeMdPath = path.join(claudeDir, 'CLAUDE.md');
+      
+      if (await fs.pathExists(globalClaudeMdPath) && !options.overwrite) {
+        console.log(chalk.yellow('⚠️  Global CLAUDE.md already exists'));
+        console.log(chalk.gray('  Use --overwrite to replace existing global CLAUDE.md'));
+        console.log(chalk.gray('  (This affects all Claude Code projects)'));
+      } else {
+        const spinner = ora('Restoring global CLAUDE.md').start();
+        try {
+          await fs.ensureDir(claudeDir);
+          await fs.writeFile(globalClaudeMdPath, stack.claudeMd.global.content);
+          spinner.succeed(`Global CLAUDE.md ${options.overwrite ? 'overwritten' : 'restored'}: ~/.claude/CLAUDE.md`);
+        } catch (error) {
+          spinner.fail('Failed to restore global CLAUDE.md');
+          console.error(chalk.red('  Error:'), error instanceof Error ? error.message : String(error));
+        }
+      }
+    }
+    
+    // Restore local CLAUDE.md
+    if (stack.claudeMd.local && !options.globalOnly) {
+      const localClaudeMdPath = path.join(localClaudeDir, 'CLAUDE.md');
+      const spinner = ora('Restoring local CLAUDE.md').start();
+      try {
+        await fs.ensureDir(localClaudeDir);
+        
+        if (await fs.pathExists(localClaudeMdPath) && !options.overwrite) {
+          spinner.warn('Local CLAUDE.md already exists (skipped)');
+          console.log(chalk.gray('  Use --overwrite to replace existing local CLAUDE.md'));
+        } else {
+          await fs.writeFile(localClaudeMdPath, stack.claudeMd.local.content);
+          spinner.succeed(`Local CLAUDE.md ${options.overwrite ? 'overwritten' : 'restored'}: ./.claude/CLAUDE.md`);
+        }
+      } catch (error) {
+        spinner.fail('Failed to restore local CLAUDE.md');
+        console.error(chalk.red('  Error:'), error instanceof Error ? error.message : String(error));
+      }
+    }
+    console.log();
+  }
+
   // Create a restore summary
   console.log(chalk.blue.bold('Restore Summary:'));
   console.log(chalk.gray(`✓ Commands: ${stack.commands?.length || 0} items`));
   console.log(chalk.gray(`✓ Agents: ${stack.agents?.length || 0} items`));
   console.log(chalk.gray(`✓ MCP Servers: ${stack.mcpServers?.length || 0} configurations`));
   console.log(chalk.gray(`✓ Settings: ${stack.settings ? 'Restored' : 'None'}`));
+  
+  if (stack.claudeMd) {
+    const claudeMdCount = (stack.claudeMd.global ? 1 : 0) + (stack.claudeMd.local ? 1 : 0);
+    console.log(chalk.gray(`✓ CLAUDE.md: ${claudeMdCount} file${claudeMdCount > 1 ? 's' : ''}`));
+  }
 }
 
 async function installLocalStack(stackFilePath: string): Promise<void> {
@@ -1024,7 +1208,7 @@ async function showStackInfo(stackFile?: string, showCurrent: boolean = false): 
     console.log(chalk.cyan('🎯 Current Directory Environment'));
     console.log(chalk.gray(`Path: ${process.cwd()}\n`));
     
-    stack = await exportCurrentStack({ localOnly: false });
+    stack = await exportCurrentStack({ includeGlobal: true });
   } else {
     // Load from stack file
     let resolvedPath = stackFile;
@@ -1075,7 +1259,7 @@ async function showStackInfo(stackFile?: string, showCurrent: boolean = false): 
   };
   
   // Show global components
-  if (global.commands.length > 0 || global.agents.length > 0) {
+  if (global.commands.length > 0 || global.agents.length > 0 || stack.claudeMd?.global) {
     console.log(chalk.cyan.bold('GLOBAL (~/.claude/):'));
     
     if (global.commands.length > 0) {
@@ -1095,10 +1279,17 @@ async function showStackInfo(stackFile?: string, showCurrent: boolean = false): 
       });
       console.log();
     }
+    
+    // Show global CLAUDE.md
+    if (stack.claudeMd?.global) {
+      console.log(chalk.blue(`  CLAUDE.md:`));
+      console.log(chalk.green(`    ✓ ${stack.claudeMd.global.path}`), chalk.gray(`- Global project instructions`));
+      console.log();
+    }
   }
   
   // Show local components
-  if (local.commands.length > 0 || local.agents.length > 0 || (stack.mcpServers && stack.mcpServers.length > 0)) {
+  if (local.commands.length > 0 || local.agents.length > 0 || (stack.mcpServers && stack.mcpServers.length > 0) || stack.claudeMd?.local) {
     console.log(chalk.cyan.bold('LOCAL (./.claude/):'));
     
     if (local.commands.length > 0) {
@@ -1129,6 +1320,13 @@ async function showStackInfo(stackFile?: string, showCurrent: boolean = false): 
         
         console.log(chalk.green(`    ✓ ${serverInfo}`));
       });
+      console.log();
+    }
+    
+    // Show local CLAUDE.md
+    if (stack.claudeMd?.local) {
+      console.log(chalk.blue(`  CLAUDE.md:`));
+      console.log(chalk.green(`    ✓ ${stack.claudeMd.local.path}`), chalk.gray(`- Local project instructions`));
       console.log();
     }
   }
@@ -1475,8 +1673,9 @@ program
   .command('export')
   .option('--name <name>', 'Override the default stack name (derived from directory)')
   .option('--description <description>', 'Override the default description')
-  .option('--local-only', 'Export only local .claude/ directory (skip global ~/.claude/)')
-  .description('Export current development environment as a stack')
+  .option('--include-global', 'Include global ~/.claude/ configurations (default: local-only)')
+  .option('--include-claude-md', 'Include CLAUDE.md files in the stack')
+  .description('Export current development environment as a stack (local project configs by default)')
   .action(async (options) => {
     console.log(chalk.blue.bold('📤 Exporting Current Development Stack\n'));
     
@@ -1488,7 +1687,7 @@ program
       const stacksDir = path.join(os.homedir(), '.claude', 'stacks');
       await fs.ensureDir(stacksDir);
       
-      const fileName = `${path.basename(process.cwd())}${options.localOnly ? '-local' : ''}-stack.json`;
+      const fileName = `${path.basename(process.cwd())}${options.includeGlobal ? '-full' : ''}-stack.json`;
       const stackPath = path.join(stacksDir, fileName);
       await fs.writeFile(stackPath, stackContent);
       
@@ -1509,8 +1708,9 @@ program
   .option('--overwrite', 'Overwrite existing files (default: add/merge)')
   .option('--global-only', 'Only restore to global ~/.claude (skip local project files)')
   .option('--local-only', 'Only restore to local ./.claude (skip global files)')
+  .option('--skip-claude-md', 'Skip restoring CLAUDE.md files')
   .description('Restore a development stack to the current project')
-  .action(async (stackFile: string, options: { overwrite?: boolean; globalOnly?: boolean; localOnly?: boolean }) => {
+  .action(async (stackFile: string, options: { overwrite?: boolean; globalOnly?: boolean; localOnly?: boolean; skipClaudeMd?: boolean }) => {
     console.log(chalk.blue.bold('🔄 Restoring Development Stack\n'));
     
     try {
@@ -1567,8 +1767,9 @@ program
   .option('--overwrite', 'Overwrite existing files (default: add/merge)')
   .option('--global-only', 'Only install to global ~/.claude (skip local project files)')
   .option('--local-only', 'Only install to local ./.claude (skip global files)')
+  .option('--skip-claude-md', 'Skip restoring CLAUDE.md files')
   .description('Install a development stack from Commands.com marketplace')
-  .action(async (stackId: string, options: { overwrite?: boolean; globalOnly?: boolean; localOnly?: boolean }) => {
+  .action(async (stackId: string, options: { overwrite?: boolean; globalOnly?: boolean; localOnly?: boolean; skipClaudeMd?: boolean }) => {
     console.log(chalk.blue.bold('📦 Installing Stack from Commands.com\n'));
     
     try {
@@ -1626,6 +1827,22 @@ program
     
     try {
       await showStackInfo(stackFile, options.current || false);
+      
+    } catch (error) {
+      console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('delete')
+  .argument('<stack-id>', 'Stack ID to delete from Commands.com marketplace')
+  .description('Delete a published stack from Commands.com marketplace')
+  .action(async (stackId: string) => {
+    console.log(chalk.blue.bold('🗑️ Deleting Stack from Commands.com\n'));
+    
+    try {
+      await deleteStack(stackId);
       
     } catch (error) {
       console.error(chalk.red('Error:'), error instanceof Error ? error.message : String(error));
