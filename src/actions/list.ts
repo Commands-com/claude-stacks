@@ -79,6 +79,28 @@ async function showStackList(stacks: DeveloperStack[]): Promise<boolean> {
   return true; // Continue showing list
 }
 
+/**
+ * Lists and manages local development stacks with interactive navigation
+ *
+ * @returns Promise that resolves when user exits the list interface
+ *
+ * @throws {@link Error} When file system errors occur reading stack files
+ *
+ * @example
+ * ```typescript
+ * // Show interactive stack list
+ * await listAction();
+ * // User can browse, select, and manage stacks
+ * ```
+ *
+ * @remarks
+ * Provides an interactive terminal interface for browsing local stacks.
+ * Automatically refreshes the list after stack operations.
+ * Shows helpful messages when no stacks are found.
+ *
+ * @since 1.0.0
+ * @public
+ */
 export async function listAction(): Promise<void> {
   try {
     // Keep showing the list until user exits

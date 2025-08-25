@@ -1,6 +1,5 @@
 import fs from 'fs-extra';
-import * as path from 'path';
-import { CLAUDE_CONFIG_PATH } from '../constants/paths.js';
+import { AUTH_TOKEN_PATH } from '../constants/paths.js';
 import * as crypto from 'crypto';
 import * as http from 'http';
 import { setTimeout } from 'timers';
@@ -45,7 +44,7 @@ export function generatePKCE(): { codeVerifier: string; codeChallenge: string } 
 
 // Store/retrieve tokens
 export async function getStoredToken(): Promise<AuthToken | null> {
-  const tokenPath = path.join(CLAUDE_CONFIG_PATH, '.claude-stacks-auth.json');
+  const tokenPath = AUTH_TOKEN_PATH;
   if (await fs.pathExists(tokenPath)) {
     try {
       return (await fs.readJson(tokenPath)) as AuthToken;
@@ -57,12 +56,12 @@ export async function getStoredToken(): Promise<AuthToken | null> {
 }
 
 export async function storeToken(token: AuthToken): Promise<void> {
-  const tokenPath = path.join(CLAUDE_CONFIG_PATH, '.claude-stacks-auth.json');
+  const tokenPath = AUTH_TOKEN_PATH;
   await fs.writeJson(tokenPath, token, { spaces: 2 });
 }
 
 export async function clearStoredToken(): Promise<void> {
-  const tokenPath = path.join(CLAUDE_CONFIG_PATH, '.claude-stacks-auth.json');
+  const tokenPath = AUTH_TOKEN_PATH;
   if (await fs.pathExists(tokenPath)) {
     await fs.remove(tokenPath);
   }
@@ -249,6 +248,28 @@ async function exchangeCodeForToken(
 }
 
 // OAuth authentication flow
+/**
+ * Authenticates the user with Commands.com using OAuth 2.0 PKCE flow
+ *
+ * @returns Promise resolving to access token for API requests
+ *
+ * @throws {@link Error} When authentication fails, network errors occur, or user cancels
+ *
+ * @example
+ * ```typescript
+ * const token = await authenticate();
+ * // User will be redirected to browser for authentication
+ * console.log('Authenticated successfully');
+ * ```
+ *
+ * @remarks
+ * Checks for existing valid tokens before initiating new OAuth flow.
+ * Opens browser automatically for user authentication.
+ * Stores tokens securely for future use and handles token refresh.
+ *
+ * @since 1.0.0
+ * @public
+ */
 export async function authenticate(): Promise<string> {
   console.log(chalk.blue('🔐 Authenticating with Commands.com...'));
 

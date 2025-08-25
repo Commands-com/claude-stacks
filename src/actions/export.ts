@@ -1,7 +1,15 @@
 import fs from 'fs-extra';
 import * as path from 'path';
-import * as os from 'os';
-import { CLAUDE_CONFIG_PATH, STACKS_PATH } from '../constants/paths.js';
+import {
+  CLAUDE_JSON_PATH,
+  STACKS_PATH,
+  getGlobalAgentsDir,
+  getGlobalCommandsDir,
+  getGlobalSettingsPath,
+  getLocalAgentsDir,
+  getLocalCommandsDir,
+  getLocalSettingsPath,
+} from '../constants/paths.js';
 
 import type {
   DeveloperStack,
@@ -159,27 +167,21 @@ async function collectCommands(includeGlobal: boolean): Promise<Map<string, Stac
   const commandsMap = new Map<string, StackCommand>();
 
   if (includeGlobal) {
-    const globalCommands = await scanDirectory(
-      path.join(CLAUDE_CONFIG_PATH, 'commands'),
-      (name, content) => ({
-        name,
-        filePath: `~/.claude/commands/${name}.md`,
-        content,
-        description: extractDescriptionFromContent(content),
-      })
-    );
+    const globalCommands = await scanDirectory(getGlobalCommandsDir(), (name, content) => ({
+      name,
+      filePath: `~/.claude/commands/${name}.md`,
+      content,
+      description: extractDescriptionFromContent(content),
+    }));
     globalCommands.forEach((command, name) => commandsMap.set(name, command));
   }
 
-  const localCommands = await scanDirectory(
-    path.join(process.cwd(), '.claude', 'commands'),
-    (name, content) => ({
-      name,
-      filePath: `./.claude/commands/${name}.md`,
-      content,
-      description: extractDescriptionFromContent(content),
-    })
-  );
+  const localCommands = await scanDirectory(getLocalCommandsDir(), (name, content) => ({
+    name,
+    filePath: `./.claude/commands/${name}.md`,
+    content,
+    description: extractDescriptionFromContent(content),
+  }));
   localCommands.forEach((command, name) => commandsMap.set(name, command));
 
   return commandsMap;
@@ -192,27 +194,21 @@ async function collectAgents(includeGlobal: boolean): Promise<Map<string, StackA
   const agentsMap = new Map<string, StackAgent>();
 
   if (includeGlobal) {
-    const globalAgents = await scanDirectory(
-      path.join(CLAUDE_CONFIG_PATH, 'agents'),
-      (name, content) => ({
-        name,
-        filePath: `~/.claude/agents/${name}.md`,
-        content,
-        description: extractDescriptionFromContent(content),
-      })
-    );
+    const globalAgents = await scanDirectory(getGlobalAgentsDir(), (name, content) => ({
+      name,
+      filePath: `~/.claude/agents/${name}.md`,
+      content,
+      description: extractDescriptionFromContent(content),
+    }));
     globalAgents.forEach((agent, name) => agentsMap.set(name, agent));
   }
 
-  const localAgents = await scanDirectory(
-    path.join(process.cwd(), '.claude', 'agents'),
-    (name, content) => ({
-      name,
-      filePath: `./.claude/agents/${name}.md`,
-      content,
-      description: extractDescriptionFromContent(content),
-    })
-  );
+  const localAgents = await scanDirectory(getLocalAgentsDir(), (name, content) => ({
+    name,
+    filePath: `./.claude/agents/${name}.md`,
+    content,
+    description: extractDescriptionFromContent(content),
+  }));
   localAgents.forEach((agent, name) => agentsMap.set(name, agent));
 
   return agentsMap;
@@ -225,17 +221,11 @@ async function collectSettings(includeGlobal: boolean): Promise<Record<string, u
   const settings: Record<string, unknown> = {};
 
   if (includeGlobal) {
-    const globalSettings = await readSettingsFile(
-      path.join(CLAUDE_CONFIG_PATH, 'settings.json'),
-      'global settings.json'
-    );
+    const globalSettings = await readSettingsFile(getGlobalSettingsPath(), 'global settings.json');
     Object.assign(settings, globalSettings);
   }
 
-  const localSettings = await readSettingsFile(
-    path.join(process.cwd(), '.claude', 'settings.local.json'),
-    'local settings.local.json'
-  );
+  const localSettings = await readSettingsFile(getLocalSettingsPath(), 'local settings.local.json');
   Object.assign(settings, localSettings);
 
   return settings;
@@ -308,7 +298,7 @@ function convertMcpConfig(
 }
 
 async function collectMcpServers(): Promise<StackMcpServer[]> {
-  const claudeJsonPath = path.join(os.homedir(), '.claude.json');
+  const claudeJsonPath = CLAUDE_JSON_PATH;
   if (!(await fs.pathExists(claudeJsonPath))) {
     return [];
   }
@@ -374,6 +364,36 @@ async function exportCurrentStack(options: {
   return stack;
 }
 
+/**
+ * Exports the current project configuration as a development stack
+ *
+ * @param filename - Optional output filename for the stack file (defaults to directory name)
+ * @param options - Export configuration options including global/local scope and metadata
+ *
+ * @returns Promise that resolves when export is complete
+ *
+ * @throws {@link Error} When stack export fails due to file system or validation errors
+ *
+ * @example
+ * ```typescript
+ * // Export with default settings
+ * await exportAction();
+ *
+ * // Export with custom filename and options
+ * await exportAction('my-stack.json', {
+ *   includeGlobal: true,
+ *   name: 'Custom Stack',
+ *   description: 'Custom development stack'
+ * });
+ * ```
+ *
+ * @remarks
+ * Creates a JSON file containing commands, agents, MCP servers, and settings
+ * from both global (~/.claude) and local (./.claude) directories
+ *
+ * @since 1.0.0
+ * @public
+ */
 export async function exportAction(filename?: string, options: ExportOptions = {}): Promise<void> {
   try {
     const stack = await exportCurrentStack({

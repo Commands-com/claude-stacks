@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import * as path from 'path';
-import { CLAUDE_CONFIG_PATH } from '../constants/paths.js';
+import { METADATA_FILE_PATH } from '../constants/paths.js';
 
 export interface PublishedStackMetadata {
   stack_id: string;
@@ -18,7 +18,7 @@ export interface StacksMetadata {
  * Get the path to the global stacks metadata file
  */
 function getMetadataPath(): string {
-  return path.join(CLAUDE_CONFIG_PATH, '.claude-stacks-meta.json');
+  return METADATA_FILE_PATH;
 }
 
 /**

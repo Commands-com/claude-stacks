@@ -1,7 +1,14 @@
 import fs from 'fs-extra';
 import * as path from 'path';
-import * as os from 'os';
-import { STACKS_PATH } from '../constants/paths.js';
+import {
+  CLAUDE_CONFIG_PATH,
+  CLAUDE_JSON_PATH,
+  STACKS_PATH,
+  getGlobalClaudeMdPath,
+  getLocalClaudeDir,
+  getLocalClaudeMdPath,
+  getLocalSettingsPath,
+} from '../constants/paths.js';
 
 import type {
   DeveloperStack,
@@ -108,7 +115,7 @@ function buildMcpServerConfig(mcpServer: StackMcpServer): McpServerConfig {
 async function restoreMcpServers(stack: DeveloperStack, options: RestoreOptions): Promise<void> {
   if (!stack.mcpServers || stack.mcpServers.length === 0) return;
 
-  const claudeJsonPath = path.join(os.homedir(), '.claude.json');
+  const claudeJsonPath = CLAUDE_JSON_PATH;
   const claudeConfig = await loadClaudeConfig(claudeJsonPath);
   const projectConfig = setupProjectConfig(claudeConfig, options);
 
@@ -135,7 +142,7 @@ async function restoreClaudeMd(
   if (!stack.claudeMd) return;
 
   if (stack.claudeMd.global) {
-    const globalClaudeMdPath = path.join(claudeDir, 'CLAUDE.md');
+    const globalClaudeMdPath = getGlobalClaudeMdPath();
     if (!options.overwrite && (await fs.pathExists(globalClaudeMdPath))) {
       console.log(colors.warning('Skipped existing global CLAUDE.md'));
     } else {
@@ -145,7 +152,7 @@ async function restoreClaudeMd(
   }
 
   if (stack.claudeMd.local) {
-    const localClaudeMdPath = path.join(localClaudeDir, 'CLAUDE.md');
+    const localClaudeMdPath = getLocalClaudeMdPath();
     if (!options.overwrite && (await fs.pathExists(localClaudeMdPath))) {
       console.log(colors.warning('Skipped existing local CLAUDE.md'));
     } else {
@@ -180,6 +187,36 @@ function displayResults(results: RestoreResults): void {
   restoredItems.forEach(item => console.log(colors.meta(`  ${item}`)));
 }
 
+/**
+ * Restores a development stack from a JSON file to local and global Claude directories
+ *
+ * @param stackFilePath - Path to the stack JSON file (supports relative, absolute, or filename-only paths)
+ * @param options - Restoration options including overwrite mode and scope filters
+ *
+ * @returns Promise that resolves when restoration is complete
+ *
+ * @throws {@link Error} When stack file is not found, corrupted, or restoration fails
+ *
+ * @example
+ * ```typescript
+ * // Restore from local stacks directory
+ * await restoreAction('my-stack.json');
+ *
+ * // Restore with overwrite mode
+ * await restoreAction('/path/to/stack.json', {
+ *   overwrite: true,
+ *   localOnly: false
+ * });
+ * ```
+ *
+ * @remarks
+ * Automatically resolves paths by checking ~/.claude/stacks/ directory for filename-only inputs.
+ * Performs dependency validation for MCP servers before restoration.
+ * Creates necessary directories and handles conflicts based on options.
+ *
+ * @since 1.0.0
+ * @public
+ */
 export async function restoreAction(
   stackFilePath: string,
   options: RestoreOptions = {}
@@ -195,9 +232,8 @@ export async function restoreAction(
 
     await checkDependencies(stack);
 
-    const claudeDir = path.join(os.homedir(), '.claude');
-    const currentDir = process.cwd();
-    const localClaudeDir = path.join(currentDir, '.claude');
+    const claudeDir = CLAUDE_CONFIG_PATH;
+    const localClaudeDir = getLocalClaudeDir();
 
     await fs.ensureDir(claudeDir);
     await fs.ensureDir(localClaudeDir);
@@ -237,7 +273,7 @@ async function restoreSettings(
 
   // Check if settings contain global vs local by examining the structure
   // For now, assume all settings go to local unless we can detect otherwise
-  const localSettingsPath = path.join(localClaudeDir, 'settings.local.json');
+  const localSettingsPath = getLocalSettingsPath();
 
   if (options.overwrite) {
     // Replace settings entirely

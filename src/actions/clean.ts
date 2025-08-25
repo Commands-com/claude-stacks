@@ -1,6 +1,5 @@
 import fs from 'fs-extra';
-import * as path from 'path';
-import * as os from 'os';
+import { CLAUDE_JSON_PATH } from '../constants/paths.js';
 
 import type { CleanOptions } from '../types/index.js';
 import { colors } from '../utils/colors.js';
@@ -102,8 +101,34 @@ async function performCleanup(
   console.log(colors.meta(`File size: ${oldSizeKB} KB → ${newSizeKB} KB (saved ${savedKB} KB)`));
 }
 
+/**
+ * Cleans up orphaned project configurations from Claude.json
+ *
+ * @param options - Cleanup options including dry run mode
+ *
+ * @returns Promise that resolves when cleanup is complete
+ *
+ * @throws {@link Error} When configuration file is corrupted or file system errors occur
+ *
+ * @example
+ * ```typescript
+ * // Preview cleanup without making changes
+ * await cleanAction({ dryRun: true });
+ *
+ * // Perform actual cleanup
+ * await cleanAction();
+ * ```
+ *
+ * @remarks
+ * Scans ~/.claude.json for project configurations pointing to non-existent directories.
+ * Removes orphaned entries to keep the configuration file clean and performant.
+ * Provides detailed reporting of cleanup operations and space savings.
+ *
+ * @since 1.0.0
+ * @public
+ */
 export async function cleanAction(options: CleanOptions = {}): Promise<void> {
-  const claudeJsonPath = path.join(os.homedir(), '.claude.json');
+  const claudeJsonPath = CLAUDE_JSON_PATH;
 
   try {
     const validation = await validateClaudeConfig(claudeJsonPath);

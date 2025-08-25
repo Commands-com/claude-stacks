@@ -2,11 +2,31 @@
 
 import type { ApiStackMetadata } from './api.js';
 
-// Re-export new enhanced types
+// Re-export core types
 export type * from './cli.js';
 export type * from './stack.js';
 export type * from './api.js';
 export * from './errors.js';
+
+// Export enhanced utilities (selective to avoid conflicts)
+export type {
+  Brand,
+  StackName,
+  StackVersion,
+  OrganizationName,
+  StackId,
+  FilePath,
+  CommandName,
+  AgentName,
+  McpServerName,
+  PositiveInteger,
+  Port,
+  NonEmptyArray,
+  DeepReadonly,
+  Result,
+  BrandedTypeValidator,
+} from './utilities.js';
+export * from './runtime-validators.js';
 
 export interface DeveloperStack {
   name: string;

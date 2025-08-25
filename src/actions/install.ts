@@ -123,6 +123,36 @@ async function performStackInstallation(
   }
 }
 
+/**
+ * Installs a published development stack from Commands.com
+ *
+ * @param stackId - Stack identifier in format "org/name" (e.g., "claude/typescript-tools")
+ * @param options - Installation options including scope filters and overwrite behavior
+ *
+ * @returns Promise that resolves when installation is complete
+ *
+ * @throws {@link Error} When stack is not found, network errors occur, or installation fails
+ *
+ * @example
+ * ```typescript
+ * // Install a public stack
+ * await installAction('claude/typescript-tools');
+ *
+ * // Install with specific options
+ * await installAction('org/stack-name', {
+ *   localOnly: true,
+ *   overwrite: false
+ * });
+ * ```
+ *
+ * @remarks
+ * Fetches stack metadata and content from Commands.com API.
+ * Validates MCP server dependencies before installation.
+ * Tracks installation statistics with the remote service.
+ *
+ * @since 1.0.0
+ * @public
+ */
 export async function installAction(stackId: string, options: InstallOptions = {}): Promise<void> {
   const apiConfig = getApiConfig();
   console.log(colors.info(`📥 Fetching stack ${stackId} from Commands.com...`));

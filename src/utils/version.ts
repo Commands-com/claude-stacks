@@ -69,6 +69,27 @@ export function bumpVersion(version: string, bumpType: VersionBumpType): string 
 /**
  * Validate that a version string is a valid semantic version
  */
+/**
+ * Validates if a version string follows semantic versioning format
+ *
+ * @param version - Version string to validate
+ * @returns True if version is valid semantic version format
+ *
+ * @example
+ * ```typescript
+ * isValidVersion('1.2.3');    // true
+ * isValidVersion('v1.2.3');   // false (no 'v' prefix)
+ * isValidVersion('1.2');      // false (missing patch version)
+ * isValidVersion('1.2.3-beta'); // false (pre-release not supported)
+ * ```
+ *
+ * @remarks
+ * Accepts only strict semantic versioning format: MAJOR.MINOR.PATCH
+ * Does not support pre-release versions or build metadata.
+ *
+ * @since 1.0.0
+ * @public
+ */
 export function isValidVersion(version: string): boolean {
   try {
     parseVersion(version);
@@ -242,6 +263,33 @@ function hasMinorChanges(oldStack: DeveloperStack, newStack: DeveloperStack): bo
 
 /**
  * Generate a suggested version based on the previous version and detected changes
+ */
+/**
+ * Generates a suggested version number based on previous version and stack changes
+ *
+ * @param previousVersion - Previous version string (e.g., "1.2.3") or null for new stacks
+ * @param oldStack - Optional previous stack configuration for change analysis
+ * @param newStack - Optional new stack configuration for change analysis
+ *
+ * @returns Suggested version string following semantic versioning
+ *
+ * @example
+ * ```typescript
+ * const version = generateSuggestedVersion('1.0.0');
+ * // Returns: '1.0.1' (patch bump by default)
+ *
+ * const smartVersion = generateSuggestedVersion('1.0.0', oldStack, newStack);
+ * // Returns: '1.1.0' (if minor changes detected)
+ * ```
+ *
+ * @remarks
+ * Uses semantic versioning rules:
+ * - Major: Breaking changes or removed components
+ * - Minor: New features or added components
+ * - Patch: Bug fixes or small improvements
+ *
+ * @since 1.0.0
+ * @public
  */
 export function generateSuggestedVersion(
   previousVersion: string | null,

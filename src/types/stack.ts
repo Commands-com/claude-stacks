@@ -21,6 +21,30 @@ export interface StackFile {
   lastModified?: string;
 }
 
+/**
+ * Configuration interface for development stacks
+ *
+ * @remarks
+ * Defines the structure for stack configuration files used by the
+ * Claude Stacks CLI. Contains metadata, dependencies, and settings
+ * for reproducible development environments.
+ *
+ * @example
+ * ```typescript
+ * const config: StackConfig = {
+ *   name: 'typescript-tools',
+ *   version: '1.0.0',
+ *   description: 'TypeScript development tools',
+ *   author: 'developer@example.com',
+ *   dependencies: ['@types/node', 'typescript'],
+ *   scripts: { build: 'tsc', test: 'jest' },
+ *   settings: { strict: true }
+ * };
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 export interface StackConfig {
   name: string;
   version: string;

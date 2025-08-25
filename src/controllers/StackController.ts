@@ -9,6 +9,23 @@ import { colors } from '../utils/colors.js';
  * Controller layer that handles CLI operations and coordinates between services
  * Maintains backward compatibility while providing better error handling
  */
+/**
+ * Controller for managing development stack operations with proper error handling
+ *
+ * @remarks
+ * Provides a high-level interface for stack CRUD operations with consistent
+ * error handling and user-friendly messaging. Coordinates between services
+ * to perform complex stack management tasks.
+ *
+ * @example
+ * ```typescript
+ * const controller = new StackController();
+ * await controller.handleCreate({ name: 'my-stack', description: 'A cool stack' });
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 export class StackController {
   private readonly stackService: StackService;
 

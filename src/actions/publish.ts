@@ -1,6 +1,5 @@
 import fs from 'fs-extra';
 import * as path from 'path';
-import * as os from 'os';
 import { STACKS_PATH } from '../constants/paths.js';
 import fetch from 'node-fetch';
 
@@ -18,6 +17,35 @@ import { getApiConfig, isLocalDev } from '../utils/api.js';
 import { getAllPublishedStacks, savePublishedStackMetadata } from '../utils/metadata.js';
 import { readSingleChar } from '../utils/input.js';
 
+/**
+ * Publishes a development stack to Commands.com for sharing with the community
+ *
+ * @param stackFilePath - Optional path to stack file (defaults to current directory's stack)
+ * @param options - Publishing options including visibility and metadata overrides
+ *
+ * @returns Promise that resolves when publishing is complete
+ *
+ * @throws {@link Error} When authentication fails, stack validation fails, or upload errors occur
+ *
+ * @example
+ * ```typescript
+ * // Publish current directory's stack
+ * await publishAction();
+ *
+ * // Publish specific stack file as public
+ * await publishAction('my-stack.json', {
+ *   public: true
+ * });
+ * ```
+ *
+ * @remarks
+ * Handles both new stack creation and updates to existing published stacks.
+ * Requires authentication with Commands.com and validates stack content before upload.
+ * Updates local metadata with published stack information.
+ *
+ * @since 1.0.0
+ * @public
+ */
 export async function publishAction(
   stackFilePath?: string,
   options: PublishOptions = {}
@@ -264,7 +292,7 @@ async function saveMetadataAndDisplayResult(params: SaveMetadataParams): Promise
   stack.metadata.published_stack_id = stackId;
   stack.metadata.published_version = stack.version ?? '1.0.0';
 
-  const stacksDir = path.join(os.homedir(), '.claude', 'stacks');
+  const stacksDir = STACKS_PATH;
   const stackFileName = `${path.basename(currentDir)}-stack.json`;
   const updatedStackFilePath = path.join(stacksDir, stackFileName);
   await fs.writeJson(updatedStackFilePath, stack, { spaces: 2 });

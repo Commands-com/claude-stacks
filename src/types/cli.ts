@@ -24,6 +24,25 @@ export interface InstallStackArgs extends BaseCommandArgs {
   targetPath?: string;
 }
 
+/**
+ * Command arguments for exporting development stacks
+ *
+ * @remarks
+ * Extends base command arguments with export-specific options.
+ * Used by the CLI parser to validate and type export commands.
+ *
+ * @example
+ * ```typescript
+ * const args: ExportStackArgs = {
+ *   stackName: 'my-project',
+ *   outputPath: './exports/my-project.zip',
+ *   format: 'zip'
+ * };
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 export interface ExportStackArgs extends BaseCommandArgs {
   stackName: string;
   outputPath: string;

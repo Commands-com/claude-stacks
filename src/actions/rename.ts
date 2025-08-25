@@ -93,6 +93,29 @@ async function callRenameApi(
   throw new Error('Invalid API response format');
 }
 
+/**
+ * Renames a published development stack on Commands.com
+ *
+ * @param newTitle - New title for the published stack
+ *
+ * @returns Promise that resolves when rename is complete
+ *
+ * @throws {@link Error} When stack is not published, authentication fails, or API errors occur
+ *
+ * @example
+ * ```typescript
+ * // Rename published stack
+ * await renameAction('My Awesome Stack v2');
+ * ```
+ *
+ * @remarks
+ * Only works with previously published stacks that have a published_stack_id.
+ * Updates both remote stack title and local metadata files.
+ * Maintains URL redirects from old to new stack names.
+ *
+ * @since 1.0.0
+ * @public
+ */
 export async function renameAction(newTitle: string): Promise<void> {
   try {
     const { stack, stackPath, org, oldName, currentDir } = await loadPublishedStack();

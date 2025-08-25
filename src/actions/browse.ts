@@ -625,6 +625,31 @@ async function handleSearchAction(state: BrowseState): Promise<void> {
   }
 }
 
+/**
+ * Interactive browser for discovering and managing development stacks from Commands.com
+ *
+ * @returns Promise that resolves when user exits the browse interface
+ *
+ * @throws {@link Error} When network errors occur or API requests fail
+ *
+ * @example
+ * ```typescript
+ * // Start interactive stack browser
+ * await browseAction();
+ * // User can browse, search, install, and manage stacks
+ * ```
+ *
+ * @remarks
+ * Provides a full-featured terminal interface for:
+ * - Browsing public stacks from the community
+ * - Managing your own published stacks
+ * - Searching stacks by keyword
+ * - Installing stacks directly
+ * - Managing stack visibility and metadata
+ *
+ * @since 1.0.0
+ * @public
+ */
 export async function browseAction(): Promise<void> {
   const state: BrowseState = {};
 
