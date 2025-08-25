@@ -43,12 +43,21 @@ export async function showStackInfo(stackFile?: string, showCurrent: boolean = f
     stack = await fs.readJson(resolvedPath);
     
     console.log(chalk.cyan.bold(`📦 ${stack.name}`));
+    if (stack.version) {
+      console.log(`Version: ${colors.meta(stack.version)}`);
+    }
     if (stack.metadata?.exported_from) {
       console.log(`Exported from: ${stack.metadata.exported_from}`);
     }
     if (stack.metadata?.created_at) {
       const date = new Date(stack.metadata.created_at);
       console.log(`Created: ${date.toLocaleDateString()}`);
+    }
+    if (stack.metadata?.published_stack_id) {
+      console.log(`Published ID: ${colors.id(stack.metadata.published_stack_id)}`);
+      if (stack.metadata.published_version) {
+        console.log(`Published Version: ${colors.meta(stack.metadata.published_version)}`);
+      }
     }
     console.log();
   }
@@ -75,7 +84,8 @@ export async function showStackInfo(stackFile?: string, showCurrent: boolean = f
       console.log(chalk.blue(`  Commands (${global.commands.length}):`));
       global.commands.forEach(cmd => {
         const description = cmd.description || 'No description available';
-        console.log(chalk.green(`    ✓ ${cmd.name}`), `- ${description}`);
+        const truncatedDescription = description.length > 80 ? description.substring(0, 77) + '...' : description;
+        console.log(chalk.green(`    ✓ ${cmd.name}`), `- ${truncatedDescription}`);
       });
       console.log();
     }
@@ -84,7 +94,8 @@ export async function showStackInfo(stackFile?: string, showCurrent: boolean = f
       console.log(chalk.blue(`  Agents (${global.agents.length}):`));
       global.agents.forEach(agent => {
         const description = agent.description || 'No description available';
-        console.log(chalk.green(`    ✓ ${agent.name}`), `- ${description}`);
+        const truncatedDescription = description.length > 80 ? description.substring(0, 77) + '...' : description;
+        console.log(chalk.green(`    ✓ ${agent.name}`), `- ${truncatedDescription}`);
       });
       console.log();
     }
@@ -105,7 +116,8 @@ export async function showStackInfo(stackFile?: string, showCurrent: boolean = f
       console.log(chalk.blue(`  Commands (${local.commands.length}):`));
       local.commands.forEach(cmd => {
         const description = cmd.description || 'No description available';
-        console.log(chalk.green(`    ✓ ${cmd.name}`), `- ${description}`);
+        const truncatedDescription = description.length > 80 ? description.substring(0, 77) + '...' : description;
+        console.log(chalk.green(`    ✓ ${cmd.name}`), `- ${truncatedDescription}`);
       });
       console.log();
     }
@@ -114,7 +126,8 @@ export async function showStackInfo(stackFile?: string, showCurrent: boolean = f
       console.log(chalk.blue(`  Agents (${local.agents.length}):`));
       local.agents.forEach(agent => {
         const description = agent.description || 'No description available';
-        console.log(chalk.green(`    ✓ ${agent.name}`), `- ${description}`);
+        const truncatedDescription = description.length > 80 ? description.substring(0, 77) + '...' : description;
+        console.log(chalk.green(`    ✓ ${agent.name}`), `- ${truncatedDescription}`);
       });
       console.log();
     }
@@ -144,7 +157,48 @@ export async function showStackInfo(stackFile?: string, showCurrent: boolean = f
   if (stack.settings && Object.keys(stack.settings).length > 0) {
     console.log(chalk.cyan.bold('SETTINGS:'));
     Object.entries(stack.settings).forEach(([key, value]) => {
-      if (typeof value === 'object') {
+      // Skip internal/technical settings
+      if (['$schema', 'feedbackSurveyState'].includes(key)) {
+        return;
+      }
+      
+      if (key === 'permissions' && typeof value === 'object' && value !== null) {
+        // Special handling for permissions - show counts instead of full lists
+        const permissions = value as any;
+        console.log(chalk.blue(`  ${key}:`));
+        if (permissions.allow && Array.isArray(permissions.allow)) {
+          console.log(chalk.green(`    allow: ${permissions.allow.length} rules`));
+        }
+        if (permissions.deny && Array.isArray(permissions.deny)) {
+          console.log(chalk.red(`    deny: ${permissions.deny.length} rules`));
+        }
+        if (permissions.ask && Array.isArray(permissions.ask)) {
+          console.log(chalk.yellow(`    ask: ${permissions.ask.length} rules`));
+        }
+        if (permissions.additionalDirectories && Array.isArray(permissions.additionalDirectories)) {
+          console.log(chalk.blue(`    additional directories: ${permissions.additionalDirectories.length} entries`));
+        }
+      } else if (key === 'statusLine' && typeof value === 'object' && value !== null) {
+        // Condense statusLine to show just the essential info
+        const statusLine = value as any;
+        if (statusLine.type === 'command' && statusLine.command) {
+          console.log(chalk.blue(`  ${key}:`), `${statusLine.type}: ${statusLine.command}`);
+        } else {
+          console.log(chalk.blue(`  ${key}:`), `type: ${statusLine.type || 'unknown'}`);
+        }
+      } else if (key === 'hooks' && typeof value === 'object' && value !== null) {
+        // Condense hooks to show counts
+        const hooks = value as any;
+        console.log(chalk.blue(`  ${key}:`));
+        Object.entries(hooks).forEach(([hookName, hookConfig]: [string, any]) => {
+          if (Array.isArray(hookConfig)) {
+            const totalHooks = hookConfig.reduce((sum, matcher) => {
+              return sum + (matcher.hooks ? matcher.hooks.length : 0);
+            }, 0);
+            console.log(chalk.green(`    ✓ ${hookName}:`), `${hookConfig.length} matcher(s), ${totalHooks} hook(s)`);
+          }
+        });
+      } else if (typeof value === 'object') {
         console.log(chalk.blue(`  ${key}:`), JSON.stringify(value, null, 2).replace(/\n/g, '\n    '));
       } else {
         console.log(chalk.blue(`  ${key}:`), String(value));

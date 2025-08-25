@@ -7,6 +7,8 @@ import { DeveloperStack, PublishOptions } from '../types';
 import { colors } from '../utils/colors';
 import { authenticate } from '../utils/auth';
 import { getApiConfig, isLocalDev } from '../utils/api';
+import { savePublishedStackMetadata, getPublishedStackMetadata } from '../utils/metadata';
+import { readSingleChar } from '../utils/input';
 
 export async function publishAction(stackFilePath?: string, options: PublishOptions = {}): Promise<void> {
   try {
@@ -30,11 +32,53 @@ export async function publishAction(stackFilePath?: string, options: PublishOpti
     // Load and validate stack
     const stack: DeveloperStack = await fs.readJson(stackPath);
     
+    // Check if this stack has been published before
+    const isUpdate = stack.metadata?.published_stack_id;
+    if (isUpdate) {
+      console.log(colors.info(`📦 Updating existing stack "${stack.name}" (${stack.metadata?.published_version} → ${stack.version})`));
+      
+      const action = await readSingleChar(colors.stackName('Actions: (u)pdate existing, (n)ew stack, (c)ancel: '));
+      
+      switch (action.toLowerCase()) {
+        case 'c':
+        case '':
+          console.log(colors.meta('Publish cancelled.'));
+          return;
+        case 'n':
+          console.log(colors.info('Creating new stack instead of updating...'));
+          // Remove published metadata so it creates a new stack
+          delete stack.metadata?.published_stack_id;
+          delete stack.metadata?.published_version;
+          break;
+        case 'u':
+          console.log(colors.info('Updating existing stack...'));
+          console.log(colors.meta('💡 Name/description from website will be preserved, only content will be updated'));
+          break;
+        default:
+          console.log(colors.error('Invalid action. Cancelling publish.'));
+          return;
+      }
+    }
+    
     // Authenticate
     const accessToken = await authenticate();
     
     // Prepare stack for upload
-    const stackPayload = {
+    const stackPayload = isUpdate ? {
+      // For updates: Only send content that should be updated (preserve website name/description)
+      version: stack.version,
+      commands: stack.commands || [],
+      agents: stack.agents || [],
+      mcpServers: stack.mcpServers || [],
+      settings: stack.settings || {},
+      ...(stack.claudeMd && { claudeMd: stack.claudeMd }),
+      metadata: {
+        ...stack.metadata,
+        cli_version: '1.0.0',
+        published_at: new Date().toISOString()
+      }
+    } : {
+      // For new stacks: Send everything including name/description
       name: stack.name,
       description: stack.description,
       version: stack.version,
@@ -52,13 +96,18 @@ export async function publishAction(stackFilePath?: string, options: PublishOpti
     };
     
     const apiConfig = getApiConfig();
-    console.log(colors.info('📤 Uploading stack to Commands.com...'));
+    console.log(colors.info(`📤 ${isUpdate ? 'Updating' : 'Uploading'} stack to Commands.com...`));
     if (isLocalDev()) {
       console.log(colors.meta(`   Using local backend: ${apiConfig.baseUrl}`));
     }
     
-    const response = await fetch(`${apiConfig.baseUrl}/v1/stacks`, {
-      method: 'POST',
+    // Use PUT for updates, POST for new stacks
+    const url = isUpdate 
+      ? `${apiConfig.baseUrl}/v1/stacks/${stack.metadata?.published_stack_id}`
+      : `${apiConfig.baseUrl}/v1/stacks`;
+    
+    const response = await fetch(url, {
+      method: isUpdate ? 'PUT' : 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${accessToken}`,
@@ -78,11 +127,27 @@ export async function publishAction(stackFilePath?: string, options: PublishOpti
     
     const result = await response.json() as any;
     
-    console.log(colors.success('✅ Stack published successfully!'));
-    console.log(colors.meta(`  Stack ID: ${result.stackId}`));
-    console.log(colors.meta(`  URL: ${result.url || `https://commands.com/stacks/${result.stackId}`}`));
+    // Save metadata for future updates
+    const stackId = result.stackId || stack.metadata?.published_stack_id;
+    const currentDir = stack.metadata?.exported_from || process.cwd();
+    
+    await savePublishedStackMetadata(currentDir, {
+      stack_id: stackId,
+      stack_name: stack.name,
+      last_published_version: stack.version || '1.0.0',
+      last_published_at: new Date().toISOString()
+    });
+    
+    console.log(colors.success(`✅ Stack ${isUpdate ? 'content updated' : 'published'} successfully!`));
+    console.log(colors.meta(`  Stack ID: ${stackId}`));
+    console.log(colors.meta(`  URL: ${result.url || `https://commands.com/stacks/${stackId}`}`));
+    console.log(colors.meta(`  Version: ${stack.version}`));
     console.log(colors.meta(`  Components: ${stackPayload.commands.length + stackPayload.agents.length} items`));
-    console.log(colors.meta(`  Visibility: ${options.public ? 'Public' : 'Private'}`));
+    if (isUpdate) {
+      console.log(colors.meta(`  📝 Name/description preserved from website`));
+    } else {
+      console.log(colors.meta(`  Visibility: ${options.public ? 'Public' : 'Private'}`));
+    }
     
   } catch (error) {
     console.error(colors.error('Publish failed:'), error instanceof Error ? error.message : String(error));

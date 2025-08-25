@@ -1,25 +1,40 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
-      "Bash(npm run build:*)",
-      "Bash(node dist/cli.js stack export:*)",
-      "Bash(grep:*)",
-      "Bash(sed:*)",
-      "Bash(timeout 10 node dist/cli.js stack export:*)",
-      "Bash(jq:*)",
-      "Bash(npm install)",
-      "Bash(node dist/cli.js --help)",
-      "Bash(node:*)",
-      "Read(//Users/dtannen/Code/commands-com-app/**)",
-      "Read(//Users/dtannen/Code/commands-com-app/**)",
-      "Read(//Users/dtannen/Code/commands-com-app/**)",
-      "Bash(git init:*)",
-      "Bash(git remote add:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "mcp__google-meet__get-current-time",
+      "mcp__google-meet__create-meet-link",
+      "mcp__google-calendar__get-current-time",
+      "mcp__google-calendar__list-calendars",
+      "mcp__google-calendar__create-event",
+      "mcp__google-meet__get-email-addresses",
+      "mcp__google-calendar__update-event",
+      "mcp__google-calendar__list-events",
+      "Read(//Users/dtannen/.claude/stacks/**)"
     ],
     "deny": [],
     "ask": []
+  },
+  "model": "opusplan",
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'json_input=$(cat); cwd=$(echo \"$json_input\" | jq -r \".cwd\" | xargs basename); if command -v osascript >/dev/null 2>&1; then osascript -e \"display notification \\\"Claude completed task in $cwd\\\" with title \\\"Claude Code\\\"\"; elif command -v notify-send >/dev/null 2>&1; then notify-send \"Claude Code\" \"Claude completed task in $cwd\"; fi'"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/ccline/ccline",
+    "padding": 0
+  },
+  "feedbackSurveyState": {
+    "lastShownTime": 1754085414877
   }
 }

@@ -45,7 +45,8 @@ async function showStackList(stacks: DeveloperStack[]): Promise<boolean> {
   stacks.forEach((stack, index) => {
     const filename = path.basename(stack.filePath || '');
     const components = (stack.commands?.length || 0) + (stack.agents?.length || 0) + (stack.mcpServers?.length || 0);
-    const stats = `${components} items`;
+    const version = stack.version || '1.0.0';
+    const stats = `v${version}, ${components} items`;
     console.log(`${colors.number(`${index + 1}.`)} ${colors.stackName(stack.name)} ${colors.meta(`(${filename})`)} ${colors.info(`- ${stats}`)}`);
   });
   
@@ -68,19 +69,20 @@ async function showStackList(stacks: DeveloperStack[]): Promise<boolean> {
 
 export async function listAction(): Promise<void> {
   try {
-    const stacks = await listLocalStacks();
-    
-    if (stacks.length === 0) {
-      console.log(colors.info('📋 Local Development Stacks\n'));
-      console.log(colors.warning('No stacks found in ~/.claude/stacks/'));
-      console.log(colors.meta('Export your first stack with:'));
-      console.log(colors.meta('  claude-stacks export'));
-      return;
-    }
-    
     // Keep showing the list until user exits
     let continueShowing = true;
     while (continueShowing) {
+      // Refresh stack list on each iteration
+      const stacks = await listLocalStacks();
+      
+      if (stacks.length === 0) {
+        console.log(colors.info('📋 Local Development Stacks\n'));
+        console.log(colors.warning('No stacks found in ~/.claude/stacks/'));
+        console.log(colors.meta('Export your first stack with:'));
+        console.log(colors.meta('  claude-stacks export'));
+        return;
+      }
+      
       continueShowing = await showStackList(stacks);
       if (continueShowing) {
         // Clear screen and show list again

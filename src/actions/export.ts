@@ -4,20 +4,35 @@ import * as os from 'os';
 
 import { DeveloperStack, StackCommand, StackAgent, StackMcpServer, ExportOptions } from '../types';
 import { colors } from '../utils/colors';
+import { getPublishedStackMetadata } from '../utils/metadata';
+import { generateSuggestedVersion, isValidVersion } from '../utils/version';
 
 function extractDescriptionFromContent(content: string): string {
-  // Extract first meaningful line as description
+  // Try to extract description from YAML frontmatter first
+  if (content.startsWith('---')) {
+    const frontmatterEnd = content.indexOf('\n---\n', 4);
+    if (frontmatterEnd !== -1) {
+      const frontmatterContent = content.substring(4, frontmatterEnd);
+      const descriptionMatch = frontmatterContent.match(/^description:\s*(.+)$/m);
+      if (descriptionMatch) {
+        const description = descriptionMatch[1].trim().replace(/^['"]|['"]$/g, '');
+        return description.length > 80 ? description.substring(0, 77) + '...' : description;
+      }
+    }
+  }
+  
+  // Fall back to first meaningful line as description
   const lines = content.split('\n');
   for (const line of lines) {
     const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith('#') && !trimmed.startsWith('<!--')) {
-      return trimmed.substring(0, 100); // Limit description length
+    if (trimmed && !trimmed.startsWith('#') && !trimmed.startsWith('<!--') && !trimmed.startsWith('---')) {
+      return trimmed.length > 80 ? trimmed.substring(0, 77) + '...' : trimmed;
     }
   }
   return 'No description available';
 }
 
-async function exportCurrentStack(options: { name?: string; description?: string; includeGlobal?: boolean; includeClaudeMd?: boolean }): Promise<DeveloperStack> {
+async function exportCurrentStack(options: { name?: string; description?: string; includeGlobal?: boolean; includeClaudeMd?: boolean; stackVersion?: string }): Promise<DeveloperStack> {
   const claudeDir = path.join(os.homedir(), '.claude');
   const currentDir = process.cwd();
   
@@ -40,10 +55,27 @@ async function exportCurrentStack(options: { name?: string; description?: string
     }
   }
 
+  // Check for previous publication and determine version
+  const publishedMeta = await getPublishedStackMetadata(currentDir);
+  let stackVersion = '1.0.0';
+  
+  if (options.stackVersion) {
+    // Manual version override
+    if (!isValidVersion(options.stackVersion)) {
+      throw new Error(`Invalid version format: ${options.stackVersion}. Expected format: X.Y.Z`);
+    }
+    stackVersion = options.stackVersion;
+  } else if (publishedMeta) {
+    // Auto-suggest next version based on previous publication
+    stackVersion = generateSuggestedVersion(publishedMeta.last_published_version);
+    console.log(colors.info(`📌 Previously published as "${publishedMeta.stack_name}" (v${publishedMeta.last_published_version})`));
+    console.log(colors.meta(`   Auto-suggesting version: ${stackVersion} (use --version to override)`));
+  }
+
   const stack: DeveloperStack = {
     name: stackName,
     description: autoDescription,
-    version: '1.0.0',
+    version: stackVersion,
     commands: [],
     agents: [],
     mcpServers: [],
@@ -51,7 +83,10 @@ async function exportCurrentStack(options: { name?: string; description?: string
     metadata: {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      exported_from: currentDir
+      exported_from: currentDir,
+      published_stack_id: publishedMeta?.stack_id,
+      published_version: publishedMeta?.last_published_version,
+      local_version: stackVersion
     }
   };
 
@@ -137,6 +172,33 @@ async function exportCurrentStack(options: { name?: string; description?: string
     }
   }
 
+  // Read settings files
+  if (options.includeGlobal) {
+    // Read global settings
+    const globalSettingsPath = path.join(claudeDir, 'settings.json');
+    if (await fs.pathExists(globalSettingsPath)) {
+      try {
+        const globalSettings = await fs.readJson(globalSettingsPath);
+        stack.settings = { ...stack.settings, ...globalSettings };
+      } catch (error) {
+        console.warn('Warning: Could not read global settings.json');
+      }
+    }
+  }
+  
+  // Always try to read local settings if .claude directory exists
+  if (await fs.pathExists(localClaudeDir)) {
+    const localSettingsPath = path.join(localClaudeDir, 'settings.local.json');
+    if (await fs.pathExists(localSettingsPath)) {
+      try {
+        const localSettings = await fs.readJson(localSettingsPath);
+        stack.settings = { ...stack.settings, ...localSettings };
+      } catch (error) {
+        console.warn('Warning: Could not read local settings.local.json');
+      }
+    }
+  }
+
   // Get MCP server configuration for current project
   const claudeJsonPath = path.join(os.homedir(), '.claude.json');
   if (await fs.pathExists(claudeJsonPath)) {
@@ -178,8 +240,9 @@ export async function exportAction(filename?: string, options: ExportOptions = {
     const stack = await exportCurrentStack({ 
       name: options.name,
       description: options.description,
-      includeGlobal: options.includeGlobal !== false,
-      includeClaudeMd: true 
+      includeGlobal: options.includeGlobal || false,
+      includeClaudeMd: options.includeClaudeMd || false,
+      stackVersion: options.stackVersion  // Add version option support
     });
 
     // Determine output filename
@@ -206,6 +269,7 @@ export async function exportAction(filename?: string, options: ExportOptions = {
     
     console.log(colors.success('✅ Stack exported successfully!'));
     console.log(colors.meta(`  File: ~/.claude/stacks/${outputFilename}`));
+    console.log(colors.meta(`  Version: ${stack.version}`));
     console.log(colors.meta(`  Components: ${totalComponents} items`));
     console.log(colors.meta(`  MCP Servers: ${stack.mcpServers?.length || 0} items`));
 

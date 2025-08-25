@@ -46,6 +46,9 @@ program
   .argument('[filename]', 'Output filename for the stack')
   .option('--name <name>', 'Custom name for the stack')
   .option('--description <description>', 'Custom description for the stack')
+  .option('--stack-version <version>', 'Set stack version (default: auto-increment from last published)')
+  .option('--include-global', 'Include global ~/.claude configurations (default: local only)')
+  .option('--include-claude-md', 'Include CLAUDE.md files in the export')
   .description('Export your Claude Code environment to a shareable stack file')
   .action((filename, options) => exportAction(filename, options));
 

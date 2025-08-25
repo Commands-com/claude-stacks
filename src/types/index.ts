@@ -22,6 +22,9 @@ export interface DeveloperStack {
     created_at: string;
     updated_at?: string;
     exported_from?: string;
+    published_stack_id?: string;  // Track if stack was published
+    published_version?: string;    // Last published version
+    local_version?: string;        // Current local version
   };
   filePath?: string; // Added for local stacks
 }
@@ -78,8 +81,10 @@ export interface ApiConfig {
 // Action options interfaces
 export interface ExportOptions {
   includeGlobal?: boolean;
+  includeClaudeMd?: boolean;
   name?: string;
   description?: string;
+  stackVersion?: string;
 }
 
 export interface RestoreOptions {
