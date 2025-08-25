@@ -1,4 +1,4 @@
-import { ApiConfig } from '../types';
+import { ApiConfig } from '../types/index.js';
 
 // API configuration based on environment
 export function getApiConfig(): ApiConfig {

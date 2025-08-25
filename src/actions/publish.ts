@@ -3,12 +3,12 @@ import * as path from 'path';
 import * as os from 'os';
 import fetch from 'node-fetch';
 
-import { DeveloperStack, PublishOptions } from '../types';
-import { colors } from '../utils/colors';
-import { authenticate } from '../utils/auth';
-import { getApiConfig, isLocalDev } from '../utils/api';
-import { savePublishedStackMetadata, getPublishedStackMetadata, getAllPublishedStacks } from '../utils/metadata';
-import { readSingleChar } from '../utils/input';
+import { DeveloperStack, PublishOptions } from '../types/index.js';
+import { colors } from '../utils/colors.js';
+import { authenticate } from '../utils/auth.js';
+import { getApiConfig, isLocalDev } from '../utils/api.js';
+import { savePublishedStackMetadata, getPublishedStackMetadata, getAllPublishedStacks } from '../utils/metadata.js';
+import { readSingleChar } from '../utils/input.js';
 
 export async function publishAction(stackFilePath?: string, options: PublishOptions = {}): Promise<void> {
   try {

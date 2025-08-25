@@ -2,10 +2,10 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
 
-import { DeveloperStack, StackCommand, StackAgent, StackMcpServer, ExportOptions } from '../types';
-import { colors } from '../utils/colors';
-import { getPublishedStackMetadata } from '../utils/metadata';
-import { generateSuggestedVersion, isValidVersion } from '../utils/version';
+import { DeveloperStack, StackCommand, StackAgent, StackMcpServer, ExportOptions } from '../types/index.js';
+import { colors } from '../utils/colors.js';
+import { getPublishedStackMetadata } from '../utils/metadata.js';
+import { generateSuggestedVersion, isValidVersion } from '../utils/version.js';
 
 function extractDescriptionFromContent(content: string): string {
   // Try to extract description from YAML frontmatter first

@@ -1,4 +1,4 @@
-import { DeveloperStack } from '../types';
+import { DeveloperStack } from '../types/index.js';
 
 export type VersionBumpType = 'major' | 'minor' | 'patch';
 

@@ -1,7 +1,14 @@
 #!/usr/bin/env node
 
 import { program } from 'commander';
-import { colors } from './utils/colors';
+import { colors } from './utils/colors.js';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
 
 // Import types
 import { 
@@ -12,34 +19,34 @@ import {
   BrowseOptions, 
   InstallOptions, 
   CleanOptions 
-} from './types';
+} from './types/index.js';
 
 // Import utilities
-import { readSingleChar } from './utils/input';
-import { authenticate } from './utils/auth';
-import { getApiConfig } from './utils/api';
+import { readSingleChar } from './utils/input.js';
+import { authenticate } from './utils/auth.js';
+import { getApiConfig } from './utils/api.js';
 
 // Import action functions
-import { exportAction } from './actions/export';
-import { restoreAction } from './actions/restore';
-import { publishAction } from './actions/publish';
-import { browseAction } from './actions/browse';
-import { installAction } from './actions/install';
-import { listAction } from './actions/list';
-import { deleteAction } from './actions/delete';
-import { cleanAction } from './actions/clean';
-import { renameAction } from './actions/rename';
+import { exportAction } from './actions/export.js';
+import { restoreAction } from './actions/restore.js';
+import { publishAction } from './actions/publish.js';
+import { browseAction } from './actions/browse.js';
+import { installAction } from './actions/install.js';
+import { listAction } from './actions/list.js';
+import { deleteAction } from './actions/delete.js';
+import { cleanAction } from './actions/clean.js';
+import { renameAction } from './actions/rename.js';
 
 // Import UI components  
-import { showStackDetailsAndActions, showLocalStackDetailsAndActions } from './ui/menus';
-import { showStackInfo } from './ui/display';
+import { showStackDetailsAndActions, showLocalStackDetailsAndActions } from './ui/menus.js';
+import { showStackInfo } from './ui/display.js';
 
 
 // Set up CLI structure
 program
   .name('claude-stacks')
   .description('Share your Claude Code environment in seconds - export and restore development stacks')
-  .version('1.0.7');
+  .version(packageJson.version);
 
 // Export command
 program

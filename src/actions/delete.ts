@@ -1,8 +1,8 @@
 import fetch from 'node-fetch';
-import { colors } from '../utils/colors';
-import { authenticate } from '../utils/auth';
-import { getApiConfig, isLocalDev } from '../utils/api';
-import { findStackByStackId, removePublishedStackMetadata } from '../utils/metadata';
+import { colors } from '../utils/colors.js';
+import { authenticate } from '../utils/auth.js';
+import { getApiConfig, isLocalDev } from '../utils/api.js';
+import { findStackByStackId, removePublishedStackMetadata } from '../utils/metadata.js';
 
 export async function deleteAction(stackId: string): Promise<void> {
   const apiConfig = getApiConfig();

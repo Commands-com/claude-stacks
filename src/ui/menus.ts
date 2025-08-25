@@ -1,14 +1,14 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 
-import { DeveloperStack } from '../types';
-import { colors } from '../utils/colors';
-import { readSingleChar } from '../utils/input';
-import { showStackInfo } from './display';
-import { deleteAction } from '../actions/delete';
-import { restoreAction } from '../actions/restore';
-import { installAction } from '../actions/install';
-import { publishAction } from '../actions/publish';
+import { DeveloperStack } from '../types/index.js';
+import { colors } from '../utils/colors.js';
+import { readSingleChar } from '../utils/input.js';
+import { showStackInfo } from './display.js';
+import { deleteAction } from '../actions/delete.js';
+import { restoreAction } from '../actions/restore.js';
+import { installAction } from '../actions/install.js';
+import { publishAction } from '../actions/publish.js';
 import open from 'open';
 
 export async function showLocalStackDetailsAndActions(stack: DeveloperStack): Promise<void> {

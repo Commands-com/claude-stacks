@@ -1,12 +1,12 @@
 import fetch from 'node-fetch';
 
-import { BrowseOptions } from '../types';
-import { colors } from '../utils/colors';
-import { readSingleChar } from '../utils/input';
-import { authenticate } from '../utils/auth';
-import { getApiConfig, isLocalDev } from '../utils/api';
-import { installAction } from './install';
-import { deleteAction } from './delete';
+import { BrowseOptions } from '../types/index.js';
+import { colors } from '../utils/colors.js';
+import { readSingleChar } from '../utils/input.js';
+import { authenticate } from '../utils/auth.js';
+import { getApiConfig, isLocalDev } from '../utils/api.js';
+import { installAction } from './install.js';
+import { deleteAction } from './delete.js';
 import open from 'open';
 
 interface BrowseState {

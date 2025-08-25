@@ -3,11 +3,11 @@ import * as path from 'path';
 import * as os from 'os';
 import fetch from 'node-fetch';
 
-import { DeveloperStack } from '../types';
-import { colors } from '../utils/colors';
-import { authenticate } from '../utils/auth';
-import { getApiConfig, isLocalDev } from '../utils/api';
-import { savePublishedStackMetadata } from '../utils/metadata';
+import { DeveloperStack } from '../types/index.js';
+import { colors } from '../utils/colors.js';
+import { authenticate } from '../utils/auth.js';
+import { getApiConfig, isLocalDev } from '../utils/api.js';
+import { savePublishedStackMetadata } from '../utils/metadata.js';
 
 export async function renameAction(newTitle: string): Promise<void> {
   try {

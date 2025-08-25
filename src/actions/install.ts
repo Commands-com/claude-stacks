@@ -3,11 +3,11 @@ import * as path from 'path';
 import * as os from 'os';
 import fetch from 'node-fetch';
 
-import { DeveloperStack, InstallOptions } from '../types';
-import { colors } from '../utils/colors';
-import { getApiConfig, isLocalDev } from '../utils/api';
+import { DeveloperStack, InstallOptions } from '../types/index.js';
+import { colors } from '../utils/colors.js';
+import { getApiConfig, isLocalDev } from '../utils/api.js';
 
-import { restoreAction } from './restore';
+import { restoreAction } from './restore.js';
 
 export async function installAction(stackId: string, options: InstallOptions = {}): Promise<void> {
   const apiConfig = getApiConfig();

@@ -7,7 +7,7 @@ import open from 'open';
 import fetch from 'node-fetch';
 import chalk from 'chalk';
 
-import { AuthToken, OAuthConfig } from '../types';
+import { AuthToken, OAuthConfig } from '../types/index.js';
 
 const OAUTH_CONFIG: OAuthConfig & { scopes: string[] } = {
   authUrl: 'https://api.commands.com/oauth/authorize',

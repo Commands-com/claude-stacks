@@ -2,8 +2,8 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
 
-import { DeveloperStack, RestoreOptions } from '../types';
-import { colors } from '../utils/colors';
+import { DeveloperStack, RestoreOptions } from '../types/index.js';
+import { colors } from '../utils/colors.js';
 
 export async function restoreAction(stackFilePath: string, options: RestoreOptions = {}): Promise<void> {
   try {

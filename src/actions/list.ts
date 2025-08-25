@@ -2,10 +2,10 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
 
-import { DeveloperStack } from '../types';
-import { colors } from '../utils/colors';
-import { readSingleChar } from '../utils/input';
-import { showLocalStackDetailsAndActions } from '../ui/menus';
+import { DeveloperStack } from '../types/index.js';
+import { colors } from '../utils/colors.js';
+import { readSingleChar } from '../utils/input.js';
+import { showLocalStackDetailsAndActions } from '../ui/menus.js';
 
 export async function listLocalStacks(): Promise<DeveloperStack[]> {
   const stacksDir = path.join(os.homedir(), '.claude', 'stacks');

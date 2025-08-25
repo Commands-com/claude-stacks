@@ -2,8 +2,8 @@ import * as fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
 
-import { CleanOptions } from '../types';
-import { colors } from '../utils/colors';
+import { CleanOptions } from '../types/index.js';
+import { colors } from '../utils/colors.js';
 
 export async function cleanAction(options: CleanOptions = {}): Promise<void> {
   const claudeJsonPath = path.join(os.homedir(), '.claude.json');

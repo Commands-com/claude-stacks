@@ -3,8 +3,8 @@ import * as path from 'path';
 import * as os from 'os';
 import chalk from 'chalk';
 
-import { DeveloperStack } from '../types';
-import { colors } from '../utils/colors';
+import { DeveloperStack } from '../types/index.js';
+import { colors } from '../utils/colors.js';
 
 // Show detailed stack information
 export async function showStackInfo(stackFile?: string, showCurrent: boolean = false): Promise<void> {
