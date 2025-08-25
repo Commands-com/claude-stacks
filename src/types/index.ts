@@ -113,15 +113,13 @@ export interface CleanOptions {
   dryRun?: boolean;
 }
 
-// Remote stack format from API (includes org/name)
+// Remote stack format from API (uses org/name format)
 export interface RemoteStack {
-  organizationUsername: string;
-  name: string;
-  org?: string; // Alternative field name
-  stackId?: string; // Legacy field for backward compatibility
+  org: string; // Organization username
+  name: string; // Stack name (slugified)
   description: string;
   version?: string;
-  author?: string;
+  author?: string; // Display name for org
   public?: boolean;
   commands?: StackCommand[];
   agents?: StackAgent[];

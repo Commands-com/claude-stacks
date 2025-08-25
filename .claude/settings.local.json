@@ -13,8 +13,7 @@
       "Read(//Users/dtannen/.claude/stacks/**)",
       "mcp__serena__read_file",
       "Bash(npm run build:*)",
-      "mcp__serena__replace_regex",
-      "Bash(git add:*)"
+      "mcp__serena__replace_regex"
     ],
     "deny": [],
     "ask": []

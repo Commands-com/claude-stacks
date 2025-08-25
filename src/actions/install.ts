@@ -17,12 +17,18 @@ export async function installAction(stackId: string, options: InstallOptions = {
   }
   
   try {
-    // Parse org/name format
-    const [org, name] = stackId.includes('/') ? stackId.split('/') : [null, stackId];
-    const url = org && name ? `${apiConfig.baseUrl}/v1/stacks/${org}/${name}` : `${apiConfig.baseUrl}/v1/stacks/${stackId}`;
+    // Validate org/name format
+    if (!stackId.includes('/')) {
+      throw new Error(`Invalid stack ID format. Expected org/name format (e.g., "commands-com/my-stack"), got: ${stackId}`);
+    }
+    
+    const [org, name] = stackId.split('/');
+    if (!org || !name) {
+      throw new Error(`Invalid stack ID format. Expected org/name format (e.g., "commands-com/my-stack"), got: ${stackId}`);
+    }
     
     // Fetch stack from Commands.com
-    const response = await fetch(url, {
+    const response = await fetch(`${apiConfig.baseUrl}/v1/stacks/${org}/${name}`, {
       method: 'GET',
       headers: {
         'User-Agent': 'claude-stacks-cli/1.0.0'
@@ -76,8 +82,7 @@ export async function installAction(stackId: string, options: InstallOptions = {
       
       // Track successful installation
       try {
-        const trackUrl = org && name ? `${apiConfig.baseUrl}/v1/stacks/${org}/${name}/install` : `${apiConfig.baseUrl}/v1/stacks/${stackId}/install`;
-        const trackResponse = await fetch(trackUrl, {
+        const trackResponse = await fetch(`${apiConfig.baseUrl}/v1/stacks/${org}/${name}/install`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

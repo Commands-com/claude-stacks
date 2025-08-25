@@ -143,18 +143,16 @@ export async function publishAction(stackFilePath?: string, options: PublishOpti
     let stackId: string;
     if (result.org && result.name) {
       stackId = `${result.org}/${result.name}`;
-    } else if (result.stackId) {
-      stackId = result.stackId;
     } else if (result.url) {
       // Extract org/name from URL: https://commands.com/stacks/org/name/
       const urlMatch = result.url.match(/\/stacks\/([^/]+)\/([^/]+)\/?$/);
       if (urlMatch) {
         stackId = `${urlMatch[1]}/${urlMatch[2]}`;
       } else {
-        stackId = stack.metadata?.published_stack_id || 'unknown';
+        throw new Error('Unable to determine stack ID from API response');
       }
     } else {
-      stackId = stack.metadata?.published_stack_id || 'unknown';
+      throw new Error('API response missing required org/name information');
     }
     const currentDir = stack.metadata?.exported_from || process.cwd();
     

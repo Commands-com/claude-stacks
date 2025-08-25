@@ -140,7 +140,7 @@ export async function showStackDetailsAndActions(stack: any, accessToken: string
   
   console.log(`${colors.info('Stats:')} ${colors.meta(`${stack.viewCount || 0} views, ${stack.installCount || 0} installs`)}`);
   console.log(`${colors.info('Created:')} ${colors.meta(stack.createdAt ? new Date(stack.createdAt).toLocaleDateString() : 'Unknown')}`);
-  const stackPath = stack.org && stack.name ? `${stack.org}/${stack.name}` : stack.stackId;
+  const stackPath = `${stack.org}/${stack.name}`;
   console.log(`${colors.info('Stack ID:')} ${colors.id(stackPath)}`);
   console.log(`${colors.info('URL:')} ${colors.url(`https://commands.com/stacks/${stackPath}`)}`);
   
@@ -158,7 +158,7 @@ export async function showStackDetailsAndActions(stack: any, accessToken: string
     case 'i':
       console.log(colors.info('\n📦 Installing stack...'));
       try {
-        const stackPath = stack.org && stack.name ? `${stack.org}/${stack.name}` : stack.stackId;
+        const stackPath = `${stack.org}/${stack.name}`;
         await installAction(stackPath, {});
         console.log(colors.success('✅ Stack installed successfully!'));
       } catch (error) {
@@ -167,7 +167,7 @@ export async function showStackDetailsAndActions(stack: any, accessToken: string
       break;
       
     case 'v':
-      const viewStackPath = stack.org && stack.name ? `${stack.org}/${stack.name}` : stack.stackId;
+      const viewStackPath = `${stack.org}/${stack.name}`;
       const url = `https://commands.com/stacks/${viewStackPath}`;
       console.log(colors.info(`\n🌐 Opening ${url}...`));
       try {
@@ -184,7 +184,7 @@ export async function showStackDetailsAndActions(stack: any, accessToken: string
         const confirmAction = await readSingleChar(colors.warning(`\nDelete "${stack.name}"? This cannot be undone. (y/N): `));
         if (confirmAction.toLowerCase() === 'y') {
           try {
-            const deleteStackPath = stack.org && stack.name ? `${stack.org}/${stack.name}` : stack.stackId;
+            const deleteStackPath = `${stack.org}/${stack.name}`;
             await deleteAction(deleteStackPath);
             return; // Exit back to list
           } catch (error) {

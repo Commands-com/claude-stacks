@@ -15,11 +15,17 @@ export async function deleteAction(stackId: string): Promise<void> {
     // Authenticate
     const accessToken = await authenticate();
     
-    // Parse org/name format
-    const [org, name] = stackId.includes('/') ? stackId.split('/') : [null, stackId];
-    const url = org && name ? `${apiConfig.baseUrl}/v1/stacks/${org}/${name}` : `${apiConfig.baseUrl}/v1/stacks/${stackId}`;
+    // Validate org/name format
+    if (!stackId.includes('/')) {
+      throw new Error(`Invalid stack ID format. Expected org/name format (e.g., "commands-com/my-stack"), got: ${stackId}`);
+    }
     
-    const response = await fetch(url, {
+    const [org, name] = stackId.split('/');
+    if (!org || !name) {
+      throw new Error(`Invalid stack ID format. Expected org/name format (e.g., "commands-com/my-stack"), got: ${stackId}`);
+    }
+    
+    const response = await fetch(`${apiConfig.baseUrl}/v1/stacks/${org}/${name}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -39,7 +45,7 @@ export async function deleteAction(stackId: string): Promise<void> {
     const result = await response.json() as any;
     
     // Clean up local metadata for this stack
-    const finalStackId = `${result.org}/${result.name || stackId}`;
+    const finalStackId = `${org}/${name}`;
     const stackMetadata = await findStackByStackId(finalStackId);
     if (stackMetadata) {
       await removePublishedStackMetadata(stackMetadata.path);
