@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import * as path from 'path';
-import * as os from 'os';
+import { CLAUDE_CONFIG_PATH } from '../constants/paths.js';
 
 export interface PublishedStackMetadata {
   stack_id: string;
@@ -18,7 +18,7 @@ export interface StacksMetadata {
  * Get the path to the global stacks metadata file
  */
 function getMetadataPath(): string {
-  return path.join(os.homedir(), '.claude', '.claude-stacks-meta.json');
+  return path.join(CLAUDE_CONFIG_PATH, '.claude-stacks-meta.json');
 }
 
 /**
@@ -26,19 +26,20 @@ function getMetadataPath(): string {
  */
 export async function loadMetadata(): Promise<StacksMetadata> {
   const metadataPath = getMetadataPath();
-  
+
   try {
     if (await fs.pathExists(metadataPath)) {
-      return await fs.readJson(metadataPath);
+      const data = (await fs.readJson(metadataPath)) as StacksMetadata;
+      return data;
     }
-  } catch (error) {
+  } catch {
     // If file is corrupted, start fresh
     console.warn('Warning: Could not read metadata file, starting fresh');
   }
-  
+
   // Return default structure
   return {
-    published_stacks: {}
+    published_stacks: {},
   };
 }
 
@@ -47,26 +48,28 @@ export async function loadMetadata(): Promise<StacksMetadata> {
  */
 export async function saveMetadata(metadata: StacksMetadata): Promise<void> {
   const metadataPath = getMetadataPath();
-  
+
   // Ensure directory exists
   await fs.ensureDir(path.dirname(metadataPath));
-  
+
   await fs.writeJson(metadataPath, metadata, { spaces: 2 });
 }
 
 /**
  * Get published stack metadata for a specific directory
  */
-export async function getPublishedStackMetadata(directoryPath: string): Promise<PublishedStackMetadata | null> {
+export async function getPublishedStackMetadata(
+  directoryPath: string
+): Promise<PublishedStackMetadata | null> {
   const metadata = await loadMetadata();
-  return metadata.published_stacks[directoryPath] || null;
+  return metadata.published_stacks[directoryPath] ?? null;
 }
 
 /**
  * Save or update published stack metadata for a directory
  */
 export async function savePublishedStackMetadata(
-  directoryPath: string, 
+  directoryPath: string,
   stackMetadata: PublishedStackMetadata
 ): Promise<void> {
   const metadata = await loadMetadata();
@@ -94,15 +97,17 @@ export async function getAllPublishedStacks(): Promise<Record<string, PublishedS
 /**
  * Find stack metadata by stack ID
  */
-export async function findStackByStackId(stackId: string): Promise<{ path: string; metadata: PublishedStackMetadata } | null> {
+export async function findStackByStackId(
+  stackId: string
+): Promise<{ path: string; metadata: PublishedStackMetadata } | null> {
   const metadata = await loadMetadata();
-  
+
   for (const [directoryPath, stackMetadata] of Object.entries(metadata.published_stacks)) {
     if (stackMetadata.stack_id === stackId) {
       return { path: directoryPath, metadata: stackMetadata };
     }
   }
-  
+
   return null;
 }
 
@@ -112,17 +117,25 @@ export async function findStackByStackId(stackId: string): Promise<{ path: strin
 export async function cleanupMetadata(): Promise<string[]> {
   const metadata = await loadMetadata();
   const removedPaths: string[] = [];
-  
-  for (const directoryPath of Object.keys(metadata.published_stacks)) {
-    if (!await fs.pathExists(directoryPath)) {
-      delete metadata.published_stacks[directoryPath];
-      removedPaths.push(directoryPath);
+
+  const directoryPaths = Object.keys(metadata.published_stacks);
+  const existenceChecks = await Promise.all(
+    directoryPaths.map(async dirPath => ({
+      dirPath,
+      exists: await fs.pathExists(dirPath),
+    }))
+  );
+
+  for (const { dirPath, exists } of existenceChecks) {
+    if (!exists) {
+      delete metadata.published_stacks[dirPath];
+      removedPaths.push(dirPath);
     }
   }
-  
+
   if (removedPaths.length > 0) {
     await saveMetadata(metadata);
   }
-  
+
   return removedPaths;
 }

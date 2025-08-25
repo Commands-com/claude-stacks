@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
 import { colors } from './colors.js';
+import type { StackMcpServer } from '../types/index.js';
 
 export interface MissingDependency {
   command: string;
@@ -8,9 +9,9 @@ export interface MissingDependency {
 }
 
 export async function checkCommandExists(command: string): Promise<boolean> {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const child = spawn('which', [command], { stdio: 'ignore' });
-    child.on('close', (code) => {
+    child.on('close', code => {
       resolve(code === 0);
     });
     child.on('error', () => {
@@ -19,33 +20,46 @@ export async function checkCommandExists(command: string): Promise<boolean> {
   });
 }
 
-export async function checkMcpDependencies(mcpServers: any[]): Promise<MissingDependency[]> {
+export async function checkMcpDependencies(
+  mcpServers: StackMcpServer[]
+): Promise<MissingDependency[]> {
   const missingDeps: MissingDependency[] = [];
-  const checkedCommands = new Set<string>();
+
+  // Group servers by command to avoid duplicate checks
+  const commandToServers = new Map<string, string[]>();
 
   for (const mcpServer of mcpServers) {
     if (mcpServer.type !== 'stdio' || !mcpServer.command) {
       continue;
     }
 
-    const command = mcpServer.command;
-    if (checkedCommands.has(command)) {
-      continue;
-    }
-    checkedCommands.add(command);
+    const { command } = mcpServer;
+    const serverName = mcpServer.name || 'Unknown MCP Server';
 
-    const exists = await checkCommandExists(command);
+    if (!commandToServers.has(command)) {
+      commandToServers.set(command, []);
+    }
+    commandToServers.get(command)!.push(serverName);
+  }
+
+  // Check all commands in parallel
+  const commandChecks = Array.from(commandToServers.entries()).map(
+    async ([command, serverNames]) => ({
+      command,
+      serverNames,
+      exists: await checkCommandExists(command),
+    })
+  );
+
+  const results = await Promise.all(commandChecks);
+
+  for (const { command, serverNames, exists } of results) {
     if (!exists) {
-      const existingDep = missingDeps.find(dep => dep.command === command);
-      if (existingDep) {
-        existingDep.mcpServers.push(mcpServer.name);
-      } else {
-        missingDeps.push({
-          command,
-          mcpServers: [mcpServer.name],
-          installInstructions: getInstallInstructions(command)
-        });
-      }
+      missingDeps.push({
+        command,
+        mcpServers: serverNames,
+        installInstructions: getInstallInstructions(command),
+      });
     }
   }
 
@@ -85,6 +99,14 @@ export function displayMissingDependencies(missingDeps: MissingDependency[]): vo
     console.log();
   }
 
-  console.log(colors.meta('These MCP servers will be installed but may fail to start until dependencies are available.'));
-  console.log(colors.meta('You can still use other parts of the stack that don\'t require these dependencies.\n'));
+  console.log(
+    colors.meta(
+      'These MCP servers will be installed but may fail to start until dependencies are available.'
+    )
+  );
+  console.log(
+    colors.meta(
+      "You can still use other parts of the stack that don't require these dependencies.\n"
+    )
+  );
 }

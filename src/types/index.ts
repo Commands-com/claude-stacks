@@ -1,5 +1,13 @@
 // Type definitions for Claude Stacks
 
+import type { ApiStackMetadata } from './api.js';
+
+// Re-export new enhanced types
+export type * from './cli.js';
+export type * from './stack.js';
+export type * from './api.js';
+export * from './errors.js';
+
 export interface DeveloperStack {
   name: string;
   description: string;
@@ -19,12 +27,14 @@ export interface DeveloperStack {
     };
   };
   metadata?: {
-    created_at: string;
+    created_at?: string;
     updated_at?: string;
     exported_from?: string;
-    published_stack_id?: string;  // Track if stack was published
-    published_version?: string;    // Last published version
-    local_version?: string;        // Current local version
+    published_stack_id?: string; // Track if stack was published
+    published_version?: string; // Last published version
+    local_version?: string; // Current local version
+    installed_from?: string; // Track where stack was installed from
+    installed_at?: string; // Track when stack was installed
   };
   filePath?: string; // Added for local stacks
 }
@@ -53,7 +63,7 @@ export interface StackMcpServer {
 }
 
 export interface StackSettings {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface OAuthConfig {
@@ -117,6 +127,7 @@ export interface CleanOptions {
 export interface RemoteStack {
   org: string; // Organization username
   name: string; // Stack name (slugified)
+  title?: string; // Display title (may differ from name)
   description: string;
   version?: string;
   author?: string; // Display name for org
@@ -125,7 +136,7 @@ export interface RemoteStack {
   agents?: StackAgent[];
   mcpServers?: StackMcpServer[];
   settings?: StackSettings;
-  metadata?: any;
+  metadata?: ApiStackMetadata;
   createdAt?: string;
   updatedAt?: string;
   viewCount?: number;

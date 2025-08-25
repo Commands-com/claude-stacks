@@ -1,81 +1,351 @@
 import fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
+import { CLAUDE_CONFIG_PATH, STACKS_PATH } from '../constants/paths.js';
 
-import { DeveloperStack, StackCommand, StackAgent, StackMcpServer, ExportOptions } from '../types/index.js';
+import type {
+  DeveloperStack,
+  ExportOptions,
+  StackAgent,
+  StackCommand,
+  StackMcpServer,
+} from '../types/index.js';
 import { colors } from '../utils/colors.js';
 import { getPublishedStackMetadata } from '../utils/metadata.js';
 import { generateSuggestedVersion, isValidVersion } from '../utils/version.js';
 
-function extractDescriptionFromContent(content: string): string {
-  // Try to extract description from YAML frontmatter first
-  if (content.startsWith('---')) {
-    const frontmatterEnd = content.indexOf('\n---\n', 4);
-    if (frontmatterEnd !== -1) {
-      const frontmatterContent = content.substring(4, frontmatterEnd);
-      const descriptionMatch = frontmatterContent.match(/^description:\s*(.+)$/m);
-      if (descriptionMatch) {
-        const description = descriptionMatch[1].trim().replace(/^['"]|['"]$/g, '');
-        return description.length > 80 ? description.substring(0, 77) + '...' : description;
-      }
-    }
+function truncateDescription(description: string): string {
+  return description.length > 80 ? `${description.substring(0, 77)}...` : description;
+}
+
+function extractFromYamlFrontmatter(content: string): string | null {
+  if (!content.startsWith('---')) {
+    return null;
   }
-  
-  // Fall back to first meaningful line as description
+
+  const frontmatterEnd = content.indexOf('\n---\n', 4);
+  if (frontmatterEnd === -1) {
+    return null;
+  }
+
+  const frontmatterContent = content.substring(4, frontmatterEnd);
+  const descriptionMatch = frontmatterContent.match(/^description:\s*(.+)$/m);
+  if (descriptionMatch) {
+    const description = descriptionMatch[1].trim().replace(/^['"]|['"]$/g, '');
+    return truncateDescription(description);
+  }
+
+  return null;
+}
+
+function extractFromFirstMeaningfulLine(content: string): string {
   const lines = content.split('\n');
   for (const line of lines) {
     const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith('#') && !trimmed.startsWith('<!--') && !trimmed.startsWith('---')) {
-      return trimmed.length > 80 ? trimmed.substring(0, 77) + '...' : trimmed;
+    if (
+      trimmed &&
+      !trimmed.startsWith('#') &&
+      !trimmed.startsWith('<!--') &&
+      !trimmed.startsWith('---')
+    ) {
+      return truncateDescription(trimmed);
     }
   }
   return 'No description available';
 }
 
-async function exportCurrentStack(options: { name?: string; description?: string; includeGlobal?: boolean; includeClaudeMd?: boolean; stackVersion?: string }): Promise<DeveloperStack> {
-  const claudeDir = path.join(os.homedir(), '.claude');
+/**
+ * Extract description from markdown content by looking for first paragraph
+ */
+function extractDescriptionFromContent(content: string): string {
+  const fromYaml = extractFromYamlFrontmatter(content);
+  if (fromYaml) {
+    return fromYaml;
+  }
+
+  return extractFromFirstMeaningfulLine(content);
+}
+
+/**
+ * Generic directory scanner for .md files
+ */
+async function scanDirectory<T>(
+  dirPath: string,
+  // eslint-disable-next-line no-unused-vars
+  itemFactory: (filename: string, fileContent: string) => T
+): Promise<Map<string, T>> {
+  const itemsMap = new Map<string, T>();
+
+  if (!(await fs.pathExists(dirPath))) {
+    return itemsMap;
+  }
+
+  const files = await fs.readdir(dirPath);
+  const mdFiles = files.filter(f => f.endsWith('.md'));
+
+  const fileContents = await Promise.all(
+    mdFiles.map(async file => {
+      const filePath = path.join(dirPath, file);
+      const content = await fs.readFile(filePath, 'utf-8');
+      const name = file.replace('.md', '');
+      return { name, content };
+    })
+  );
+
+  for (const { name, content } of fileContents) {
+    itemsMap.set(name, itemFactory(name, content));
+  }
+
+  return itemsMap;
+}
+
+/**
+ * Generate stack metadata (name, description, version)
+ */
+async function generateStackMetadata(options: {
+  name?: string;
+  description?: string;
+  stackVersion?: string;
+}): Promise<{ name: string; description: string; version: string }> {
   const currentDir = process.cwd();
-  
-  // Auto-generate stack name and description from current directory
   const dirName = path.basename(currentDir);
-  const stackName = options.name || `${dirName}${options.includeGlobal ? ' Full' : ''} Development Stack`;
-  const stackDescription = options.description || `${options.includeGlobal ? 'Full d' : 'Local d'}evelopment stack for ${dirName} project`;
-  
-  // Try to read package.json or other project files for better description
-  let autoDescription = stackDescription;
+
+  // Auto-generate stack name and description from current directory
+  const stackName = options.name ?? `${dirName} Development Stack`;
+  let stackDescription = options.description ?? `Development stack for ${dirName} project`;
+
+  // Try to read package.json for better description
   const packageJsonPath = path.join(currentDir, 'package.json');
   if (await fs.pathExists(packageJsonPath)) {
     try {
-      const packageJson = await fs.readJson(packageJsonPath);
-      if (packageJson.description) {
-        autoDescription = options.description || `${packageJson.description} - Development stack`;
+      const packageJson = (await fs.readJson(packageJsonPath)) as { description?: string };
+      if (packageJson.description && !options.description) {
+        stackDescription = `${packageJson.description} - Development stack`;
       }
-    } catch (error) {
+    } catch {
       // Ignore package.json parsing errors
     }
   }
 
-  // Check for previous publication and determine version
+  // Determine version from previous publication
   const publishedMeta = await getPublishedStackMetadata(currentDir);
   let stackVersion = '1.0.0';
-  
-  if (options.stackVersion) {
-    // Manual version override
-    if (!isValidVersion(options.stackVersion)) {
-      throw new Error(`Invalid version format: ${options.stackVersion}. Expected format: X.Y.Z`);
+
+  const { stackVersion: optionsStackVersion } = options;
+  if (optionsStackVersion) {
+    if (!isValidVersion(optionsStackVersion)) {
+      throw new Error(`Invalid version format: ${optionsStackVersion}. Expected format: X.Y.Z`);
     }
-    stackVersion = options.stackVersion;
+    stackVersion = optionsStackVersion;
   } else if (publishedMeta) {
-    // Auto-suggest next version based on previous publication
     stackVersion = generateSuggestedVersion(publishedMeta.last_published_version);
-    console.log(colors.info(`📌 Previously published as "${publishedMeta.stack_name}" (v${publishedMeta.last_published_version})`));
-    console.log(colors.meta(`   Auto-suggesting version: ${stackVersion} (use --version to override)`));
+    console.log(
+      colors.info(
+        `📌 Previously published as "${publishedMeta.stack_name}" (v${publishedMeta.last_published_version})`
+      )
+    );
+    console.log(
+      colors.meta(`   Auto-suggesting version: ${stackVersion} (use --version to override)`)
+    );
   }
 
+  return { name: stackName, description: stackDescription, version: stackVersion };
+}
+
+/**
+ * Scan and collect commands from global and local directories
+ */
+async function collectCommands(includeGlobal: boolean): Promise<Map<string, StackCommand>> {
+  const commandsMap = new Map<string, StackCommand>();
+
+  if (includeGlobal) {
+    const globalCommands = await scanDirectory(
+      path.join(CLAUDE_CONFIG_PATH, 'commands'),
+      (name, content) => ({
+        name,
+        filePath: `~/.claude/commands/${name}.md`,
+        content,
+        description: extractDescriptionFromContent(content),
+      })
+    );
+    globalCommands.forEach((command, name) => commandsMap.set(name, command));
+  }
+
+  const localCommands = await scanDirectory(
+    path.join(process.cwd(), '.claude', 'commands'),
+    (name, content) => ({
+      name,
+      filePath: `./.claude/commands/${name}.md`,
+      content,
+      description: extractDescriptionFromContent(content),
+    })
+  );
+  localCommands.forEach((command, name) => commandsMap.set(name, command));
+
+  return commandsMap;
+}
+
+/**
+ * Scan and collect agents from global and local directories
+ */
+async function collectAgents(includeGlobal: boolean): Promise<Map<string, StackAgent>> {
+  const agentsMap = new Map<string, StackAgent>();
+
+  if (includeGlobal) {
+    const globalAgents = await scanDirectory(
+      path.join(CLAUDE_CONFIG_PATH, 'agents'),
+      (name, content) => ({
+        name,
+        filePath: `~/.claude/agents/${name}.md`,
+        content,
+        description: extractDescriptionFromContent(content),
+      })
+    );
+    globalAgents.forEach((agent, name) => agentsMap.set(name, agent));
+  }
+
+  const localAgents = await scanDirectory(
+    path.join(process.cwd(), '.claude', 'agents'),
+    (name, content) => ({
+      name,
+      filePath: `./.claude/agents/${name}.md`,
+      content,
+      description: extractDescriptionFromContent(content),
+    })
+  );
+  localAgents.forEach((agent, name) => agentsMap.set(name, agent));
+
+  return agentsMap;
+}
+
+/**
+ * Read and merge settings files
+ */
+async function collectSettings(includeGlobal: boolean): Promise<Record<string, unknown>> {
+  const settings: Record<string, unknown> = {};
+
+  if (includeGlobal) {
+    const globalSettings = await readSettingsFile(
+      path.join(CLAUDE_CONFIG_PATH, 'settings.json'),
+      'global settings.json'
+    );
+    Object.assign(settings, globalSettings);
+  }
+
+  const localSettings = await readSettingsFile(
+    path.join(process.cwd(), '.claude', 'settings.local.json'),
+    'local settings.local.json'
+  );
+  Object.assign(settings, localSettings);
+
+  return settings;
+}
+
+/**
+ * Helper function to read a settings file safely
+ */
+async function readSettingsFile(
+  filePath: string,
+  description: string
+): Promise<Record<string, unknown>> {
+  if (!(await fs.pathExists(filePath))) {
+    return {};
+  }
+
+  try {
+    return (await fs.readJson(filePath)) as Record<string, unknown>;
+  } catch {
+    console.warn(`Warning: Could not read ${description}`);
+    return {};
+  }
+}
+
+/**
+ * Get MCP server configuration for current project
+ */
+interface ClaudeConfig {
+  projects?: Record<
+    string,
+    {
+      mcpServers?: Record<
+        string,
+        {
+          type?: 'stdio' | 'http' | 'sse';
+          command?: string;
+          args?: string[];
+          url?: string;
+          env?: Record<string, string>;
+        }
+      >;
+    }
+  >;
+}
+
+function convertMcpConfig(
+  mcpServers: Record<
+    string,
+    {
+      type?: 'stdio' | 'http' | 'sse';
+      command?: string;
+      args?: string[];
+      url?: string;
+      env?: Record<string, string>;
+    }
+  >
+): StackMcpServer[] {
+  const servers: StackMcpServer[] = [];
+  Object.entries(mcpServers).forEach(([name, config]) => {
+    servers.push({
+      name,
+      type: config.type ?? 'stdio',
+      command: config.command,
+      args: config.args,
+      url: config.url,
+      env: config.env,
+    });
+  });
+  return servers;
+}
+
+async function collectMcpServers(): Promise<StackMcpServer[]> {
+  const claudeJsonPath = path.join(os.homedir(), '.claude.json');
+  if (!(await fs.pathExists(claudeJsonPath))) {
+    return [];
+  }
+
+  try {
+    const claudeConfig = (await fs.readJson(claudeJsonPath)) as ClaudeConfig;
+    const mcpProjects = claudeConfig.projects ?? {};
+    const currentProjectPath = process.cwd();
+    const projectConfig = mcpProjects[currentProjectPath];
+
+    if (!projectConfig?.mcpServers) {
+      return [];
+    }
+
+    return convertMcpConfig(projectConfig.mcpServers);
+  } catch {
+    return [];
+  }
+}
+
+async function exportCurrentStack(options: {
+  name?: string;
+  description?: string;
+  includeGlobal?: boolean;
+  includeClaudeMd?: boolean;
+  stackVersion?: string;
+}): Promise<DeveloperStack> {
+  const currentDir = process.cwd();
+
+  // Generate stack metadata using helper function
+  const { name, description, version } = await generateStackMetadata(options);
+
+  // Create base stack object
   const stack: DeveloperStack = {
-    name: stackName,
-    description: autoDescription,
-    version: stackVersion,
+    name,
+    description,
+    version,
     commands: [],
     agents: [],
     mcpServers: [],
@@ -84,197 +354,76 @@ async function exportCurrentStack(options: { name?: string; description?: string
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       exported_from: currentDir,
-      published_stack_id: publishedMeta?.stack_id,
-      published_version: publishedMeta?.last_published_version,
-      local_version: stackVersion
-    }
+    },
   };
 
-  // Use Maps to ensure uniqueness
-  const commandsMap = new Map<string, StackCommand>();
-  const agentsMap = new Map<string, StackAgent>();
+  // Collect all components using helper functions
+  const [commandsMap, agentsMap, settings, mcpServers] = await Promise.all([
+    collectCommands(options.includeGlobal ?? false),
+    collectAgents(options.includeGlobal ?? false),
+    collectSettings(options.includeGlobal ?? false),
+    collectMcpServers(),
+  ]);
 
-  // Scan global ~/.claude directory (only if includeGlobal is specified)
-  if (options.includeGlobal) {
-    const globalCommandsDir = path.join(claudeDir, 'commands');
-    if (await fs.pathExists(globalCommandsDir)) {
-      const commands = await fs.readdir(globalCommandsDir);
-      for (const commandFile of commands.filter(f => f.endsWith('.md'))) {
-        const filePath = path.join(globalCommandsDir, commandFile);
-        const content = await fs.readFile(filePath, 'utf-8');
-        const name = commandFile.replace('.md', '');
-        
-        commandsMap.set(name, {
-          name,
-          filePath: `~/.claude/commands/${commandFile}`,
-          content,
-          description: extractDescriptionFromContent(content)
-        });
-      }
-    }
-
-    // Scan global ~/.claude/agents directory
-    const globalAgentsDir = path.join(claudeDir, 'agents');
-    if (await fs.pathExists(globalAgentsDir)) {
-      const agents = await fs.readdir(globalAgentsDir);
-      for (const agentFile of agents.filter(f => f.endsWith('.md'))) {
-        const filePath = path.join(globalAgentsDir, agentFile);
-        const content = await fs.readFile(filePath, 'utf-8');
-        const name = agentFile.replace('.md', '');
-        
-        agentsMap.set(name, {
-          name,
-          filePath: `~/.claude/agents/${agentFile}`,
-          content,
-          description: extractDescriptionFromContent(content)
-        });
-      }
-    }
-  }
-
-  // Scan project-local .claude directory if it exists
-  const localClaudeDir = path.join(currentDir, '.claude');
-  if (await fs.pathExists(localClaudeDir)) {
-    // Check for local commands
-    const localCommandsDir = path.join(localClaudeDir, 'commands');
-    if (await fs.pathExists(localCommandsDir)) {
-      const commands = await fs.readdir(localCommandsDir);
-      for (const commandFile of commands.filter(f => f.endsWith('.md'))) {
-        const filePath = path.join(localCommandsDir, commandFile);
-        const content = await fs.readFile(filePath, 'utf-8');
-        const name = commandFile.replace('.md', '');
-        
-        commandsMap.set(name, {
-          name,
-          filePath: `./.claude/commands/${commandFile}`,
-          content,
-          description: extractDescriptionFromContent(content)
-        });
-      }
-    }
-
-    // Check for local agents
-    const localAgentsDir = path.join(localClaudeDir, 'agents');
-    if (await fs.pathExists(localAgentsDir)) {
-      const agents = await fs.readdir(localAgentsDir);
-      for (const agentFile of agents.filter(f => f.endsWith('.md'))) {
-        const filePath = path.join(localAgentsDir, agentFile);
-        const content = await fs.readFile(filePath, 'utf-8');
-        const name = agentFile.replace('.md', '');
-        
-        agentsMap.set(name, {
-          name,
-          filePath: `./.claude/agents/${agentFile}`,
-          content,
-          description: extractDescriptionFromContent(content)
-        });
-      }
-    }
-  }
-
-  // Read settings files
-  if (options.includeGlobal) {
-    // Read global settings
-    const globalSettingsPath = path.join(claudeDir, 'settings.json');
-    if (await fs.pathExists(globalSettingsPath)) {
-      try {
-        const globalSettings = await fs.readJson(globalSettingsPath);
-        stack.settings = { ...stack.settings, ...globalSettings };
-      } catch (error) {
-        console.warn('Warning: Could not read global settings.json');
-      }
-    }
-  }
-  
-  // Always try to read local settings if .claude directory exists
-  if (await fs.pathExists(localClaudeDir)) {
-    const localSettingsPath = path.join(localClaudeDir, 'settings.local.json');
-    if (await fs.pathExists(localSettingsPath)) {
-      try {
-        const localSettings = await fs.readJson(localSettingsPath);
-        stack.settings = { ...stack.settings, ...localSettings };
-      } catch (error) {
-        console.warn('Warning: Could not read local settings.local.json');
-      }
-    }
-  }
-
-  // Get MCP server configuration for current project
-  const claudeJsonPath = path.join(os.homedir(), '.claude.json');
-  if (await fs.pathExists(claudeJsonPath)) {
-    try {
-      const claudeConfig = await fs.readJson(claudeJsonPath);
-      const mcpProjects = claudeConfig.projects || {};
-      const currentProjectPath = process.cwd();
-      const projectConfig = mcpProjects[currentProjectPath];
-      
-      if (projectConfig && projectConfig.mcpServers) {
-        const mcpServers: StackMcpServer[] = [];
-        Object.entries(projectConfig.mcpServers).forEach(([name, config]: [string, any]) => {
-          mcpServers.push({
-            name,
-            type: config.type || 'stdio',
-            command: config.command,
-            args: config.args,
-            url: config.url,
-            env: config.env
-          });
-        });
-        stack.mcpServers = mcpServers;
-      }
-    } catch (error) {
-      // Ignore .claude.json parsing errors
-    }
-  }
-
-  // Convert maps to arrays
+  // Convert maps to arrays and assign to stack
   stack.commands = Array.from(commandsMap.values());
   stack.agents = Array.from(agentsMap.values());
+  stack.settings = settings;
+  stack.mcpServers = mcpServers;
 
   return stack;
 }
 
 export async function exportAction(filename?: string, options: ExportOptions = {}): Promise<void> {
   try {
-    // Export current environment to stack
-    const stack = await exportCurrentStack({ 
+    const stack = await exportCurrentStack({
       name: options.name,
       description: options.description,
-      includeGlobal: options.includeGlobal || false,
-      includeClaudeMd: options.includeClaudeMd || false,
-      stackVersion: options.stackVersion  // Add version option support
+      includeGlobal: options.includeGlobal ?? false,
+      includeClaudeMd: options.includeClaudeMd ?? false,
+      stackVersion: options.stackVersion,
     });
 
-    // Determine output filename
-    let outputFilename = filename;
-    if (!outputFilename) {
-      const dirName = path.basename(process.cwd());
-      outputFilename = `${dirName}-stack.json`;
-    }
-
-    // Ensure .json extension
-    if (!outputFilename.endsWith('.json')) {
-      outputFilename += '.json';
-    }
-
-    // Create ~/.claude/stacks directory if it doesn't exist
-    const stacksDir = path.join(os.homedir(), '.claude', 'stacks');
-    await fs.ensureDir(stacksDir);
-
-    // Write to ~/.claude/stacks/
-    const outputPath = path.join(stacksDir, outputFilename);
-    await fs.writeJson(outputPath, stack, { spaces: 2 });
-
-    const totalComponents = (stack.commands?.length || 0) + (stack.agents?.length || 0) + (stack.mcpServers?.length || 0);
-    
-    console.log(colors.success('✅ Stack exported successfully!'));
-    console.log(colors.meta(`  File: ~/.claude/stacks/${outputFilename}`));
-    console.log(colors.meta(`  Version: ${stack.version}`));
-    console.log(colors.meta(`  Components: ${totalComponents} items`));
-    console.log(colors.meta(`  MCP Servers: ${stack.mcpServers?.length || 0} items`));
-
+    const outputFilename = resolveOutputFilename(filename);
+    await writeStackToFile(stack, outputFilename);
+    displayExportSuccess(stack, outputFilename);
   } catch (error) {
-    console.error(colors.error('Export failed:'), error instanceof Error ? error.message : String(error));
-    process.exit(1);
+    handleExportError(error);
   }
+}
+
+function resolveOutputFilename(filename?: string): string {
+  let outputFilename = filename;
+  if (!outputFilename) {
+    const dirName = path.basename(process.cwd());
+    outputFilename = `${dirName}-stack.json`;
+  }
+
+  return outputFilename.endsWith('.json') ? outputFilename : `${outputFilename}.json`;
+}
+
+async function writeStackToFile(stack: DeveloperStack, filename: string): Promise<void> {
+  const stacksDir = STACKS_PATH;
+  await fs.ensureDir(stacksDir);
+  const outputPath = path.join(stacksDir, filename);
+  await fs.writeJson(outputPath, stack, { spaces: 2 });
+}
+
+function displayExportSuccess(stack: DeveloperStack, filename: string): void {
+  const totalComponents =
+    (stack.commands?.length ?? 0) + (stack.agents?.length ?? 0) + (stack.mcpServers?.length ?? 0);
+
+  console.log(colors.success('✅ Stack exported successfully!'));
+  console.log(colors.meta(`  File: ~/.claude/stacks/${filename}`));
+  console.log(colors.meta(`  Version: ${stack.version}`));
+  console.log(colors.meta(`  Components: ${totalComponents} items`));
+  console.log(colors.meta(`  MCP Servers: ${stack.mcpServers?.length ?? 0} items`));
+}
+
+function handleExportError(error: unknown): never {
+  console.error(
+    colors.error('Export failed:'),
+    error instanceof Error ? error.message : String(error)
+  );
+  process.exit(1);
 }
