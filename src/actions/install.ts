@@ -7,14 +7,7 @@ import { DeveloperStack, InstallOptions } from '../types';
 import { colors } from '../utils/colors';
 import { getApiConfig, isLocalDev } from '../utils/api';
 
-// Note: This will import restoreAction once it's extracted
-// import { restoreAction } from './restore';
-
-// Temporary placeholder for restore functionality
-async function restoreStackFromFile(filePath: string, options: any): Promise<void> {
-  console.log(colors.warning('Stack restoration not yet fully implemented in modular structure'));
-  console.log(colors.info(`Would restore stack from: ${filePath}`));
-}
+import { restoreAction } from './restore';
 
 export async function installAction(stackId: string, options: InstallOptions = {}): Promise<void> {
   const apiConfig = getApiConfig();
@@ -73,11 +66,13 @@ export async function installAction(stackId: string, options: InstallOptions = {
     
     // Use the existing restore function to install the stack
     // First, save it as a temporary file
-    const tempStackPath = path.join(os.tmpdir(), `remote-stack-${stackId}.json`);
+    // Replace slashes with dashes to avoid directory issues
+    const safeStackId = stackId.replace(/\//g, '-');
+    const tempStackPath = path.join(os.tmpdir(), `remote-stack-${safeStackId}.json`);
     await fs.writeJson(tempStackPath, stack, { spaces: 2 });
     
     try {
-      await restoreStackFromFile(tempStackPath, options);
+      await restoreAction(tempStackPath, options);
       
       // Track successful installation
       try {
