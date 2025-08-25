@@ -172,10 +172,17 @@ export async function restoreAction(stackFilePath: string, options: RestoreOptio
       // Set up current project configuration
       const currentProjectPath = process.cwd();
       if (!claudeConfig.projects[currentProjectPath]) {
-        claudeConfig.projects[currentProjectPath] = {};
+        claudeConfig.projects[currentProjectPath] = {
+          allowedTools: []
+        };
       }
       
       const projectConfig = claudeConfig.projects[currentProjectPath];
+      
+      // Ensure allowedTools exists (for existing projects that might not have it)
+      if (!projectConfig.allowedTools) {
+        projectConfig.allowedTools = [];
+      }
       
       if (options.overwrite) {
         // Replace MCP servers entirely
