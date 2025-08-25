@@ -112,3 +112,27 @@ export interface InstallOptions {
 export interface CleanOptions {
   dryRun?: boolean;
 }
+
+// Remote stack format from API (includes org/name)
+export interface RemoteStack {
+  organizationUsername: string;
+  name: string;
+  org?: string; // Alternative field name
+  stackId?: string; // Legacy field for backward compatibility
+  description: string;
+  version?: string;
+  author?: string;
+  public?: boolean;
+  commands?: StackCommand[];
+  agents?: StackAgent[];
+  mcpServers?: StackMcpServer[];
+  settings?: StackSettings;
+  metadata?: any;
+  createdAt?: string;
+  updatedAt?: string;
+  viewCount?: number;
+  installCount?: number;
+  commandCount?: number;
+  agentCount?: number;
+  mcpServerCount?: number;
+}

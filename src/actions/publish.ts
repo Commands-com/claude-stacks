@@ -7,7 +7,7 @@ import { DeveloperStack, PublishOptions } from '../types';
 import { colors } from '../utils/colors';
 import { authenticate } from '../utils/auth';
 import { getApiConfig, isLocalDev } from '../utils/api';
-import { savePublishedStackMetadata, getPublishedStackMetadata } from '../utils/metadata';
+import { savePublishedStackMetadata, getPublishedStackMetadata, getAllPublishedStacks } from '../utils/metadata';
 import { readSingleChar } from '../utils/input';
 
 export async function publishAction(stackFilePath?: string, options: PublishOptions = {}): Promise<void> {
@@ -31,6 +31,17 @@ export async function publishAction(stackFilePath?: string, options: PublishOpti
     
     // Load and validate stack
     const stack: DeveloperStack = await fs.readJson(stackPath);
+    
+    // Check for name changes in published stacks
+    if (stack.metadata?.published_stack_id) {
+      const globalMeta = await getAllPublishedStacks();
+      const currentDir = stack.metadata?.exported_from || process.cwd();
+      const lastPublished = globalMeta[currentDir];
+      
+      if (lastPublished && lastPublished.stack_name !== stack.name) {
+        throw new Error(`Stack name changed from "${lastPublished.stack_name}" to "${stack.name}".\nUse 'claude-stacks rename "${stack.name}"' to rename the published stack first.`);
+      }
+    }
     
     // Check if this stack has been published before
     const isUpdate = stack.metadata?.published_stack_id;
@@ -102,8 +113,9 @@ export async function publishAction(stackFilePath?: string, options: PublishOpti
     }
     
     // Use PUT for updates, POST for new stacks
+    // For updates, published_stack_id should be in org/name format
     const url = isUpdate 
-      ? `${apiConfig.baseUrl}/v1/stacks/${stack.metadata?.published_stack_id}`
+      ? `${apiConfig.baseUrl}/v1/stacks/${stack.metadata?.published_stack_id}`  // published_stack_id now contains org/name
       : `${apiConfig.baseUrl}/v1/stacks`;
     
     const response = await fetch(url, {
@@ -128,7 +140,22 @@ export async function publishAction(stackFilePath?: string, options: PublishOpti
     const result = await response.json() as any;
     
     // Save metadata for future updates
-    const stackId = result.stackId || stack.metadata?.published_stack_id;
+    let stackId: string;
+    if (result.org && result.name) {
+      stackId = `${result.org}/${result.name}`;
+    } else if (result.stackId) {
+      stackId = result.stackId;
+    } else if (result.url) {
+      // Extract org/name from URL: https://commands.com/stacks/org/name/
+      const urlMatch = result.url.match(/\/stacks\/([^/]+)\/([^/]+)\/?$/);
+      if (urlMatch) {
+        stackId = `${urlMatch[1]}/${urlMatch[2]}`;
+      } else {
+        stackId = stack.metadata?.published_stack_id || 'unknown';
+      }
+    } else {
+      stackId = stack.metadata?.published_stack_id || 'unknown';
+    }
     const currentDir = stack.metadata?.exported_from || process.cwd();
     
     await savePublishedStackMetadata(currentDir, {
@@ -137,6 +164,22 @@ export async function publishAction(stackFilePath?: string, options: PublishOpti
       last_published_version: stack.version || '1.0.0',
       last_published_at: new Date().toISOString()
     });
+    
+    // Also update the stack file with published metadata
+    if (!stack.metadata) {
+      stack.metadata = {
+        created_at: new Date().toISOString(),
+        exported_from: currentDir
+      };
+    }
+    stack.metadata.published_stack_id = stackId;
+    stack.metadata.published_version = stack.version || '1.0.0';
+    
+    // Save updated stack file
+    const stacksDir = path.join(os.homedir(), '.claude', 'stacks');
+    const stackFileName = `${path.basename(currentDir)}-stack.json`;
+    const updatedStackFilePath = path.join(stacksDir, stackFileName);
+    await fs.writeJson(updatedStackFilePath, stack, { spaces: 2 });
     
     console.log(colors.success(`✅ Stack ${isUpdate ? 'content updated' : 'published'} successfully!`));
     console.log(colors.meta(`  Stack ID: ${stackId}`));

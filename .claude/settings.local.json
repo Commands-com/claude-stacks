@@ -10,7 +10,10 @@
       "mcp__google-meet__get-email-addresses",
       "mcp__google-calendar__update-event",
       "mcp__google-calendar__list-events",
-      "Read(//Users/dtannen/.claude/stacks/**)"
+      "Read(//Users/dtannen/.claude/stacks/**)",
+      "mcp__serena__read_file",
+      "Bash(npm run build:*)",
+      "mcp__serena__replace_regex"
     ],
     "deny": [],
     "ask": []

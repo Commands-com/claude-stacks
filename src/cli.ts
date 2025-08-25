@@ -28,6 +28,7 @@ import { installAction } from './actions/install';
 import { listAction } from './actions/list';
 import { deleteAction } from './actions/delete';
 import { cleanAction } from './actions/clean';
+import { renameAction } from './actions/rename';
 
 // Import UI components  
 import { showStackDetailsAndActions, showLocalStackDetailsAndActions } from './ui/menus';
@@ -101,6 +102,13 @@ program
   .argument('<stack-id>', 'Stack ID to delete from Commands.com marketplace')
   .description('Delete a published stack from the marketplace')
   .action((stackId) => deleteAction(stackId));
+
+// Rename command
+program
+  .command('rename')
+  .argument('<new-title>', 'New title for the published stack')
+  .description('Rename a published stack')
+  .action((newTitle) => renameAction(newTitle));
 
 // Clean command
 program

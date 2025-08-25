@@ -14,6 +14,16 @@ interface BrowseState {
   accessToken?: string | null;
 }
 
+// Helper function to determine stack path from API response
+function getStackPath(stack: any): string {
+  // API returns author (org) and name (already slugified)
+  if (stack.author && stack.name) {
+    return `${stack.author}/${stack.name}`;
+  }
+  
+  return 'unknown-stack';
+}
+
 async function fetchStacks(options: { search?: string; myStacks?: boolean } = {}, accessToken: string | null): Promise<any[]> {
   const params = new URLSearchParams();
   if (options.search) params.set('search', options.search);
@@ -123,16 +133,20 @@ async function showStackActions(stack: any, state: BrowseState, isMyStack: boole
     console.log(`${colors.info('Visibility:')} ${colors.meta(visibility)}`);
   }
   
-  console.log(`${colors.info('Stack ID:')} ${colors.id(stack.stackId)}`);
-  console.log(`${colors.info('URL:')} ${colors.url(`https://commands.com/stacks/${stack.stackId}`)}`);
+  // Determine stack identifier from available data
+  const stackPath = getStackPath(stack);
+  
+  
+  console.log(`${colors.info('Stack ID:')} ${colors.id(stackPath)}`);
+  console.log(`${colors.info('URL:')} ${colors.url(`https://commands.com/stacks/${stackPath}`)}`);
   
   // Show action menu with single letter shortcuts
-  let actionPrompt = `\nActions: ${colors.highlight('(i)')}nstall, ${colors.highlight('(v)')}iew in browser, ${colors.highlight('(c)')}opy ID`;
+  let actionPrompt = `\nActions: ${colors.highlight('(i)')}nstall, ${colors.highlight('(v)')}iew in browser`;
   
   // Show additional options for owned stacks
   if (isMyStack && state.accessToken) {
     const visibilityAction = stack.public ? `${colors.highlight('(m)')}ake private` : `${colors.highlight('(m)')}ake public`;
-    actionPrompt += `, ${visibilityAction}, ${colors.highlight('(d)')}elete`;
+    actionPrompt += `, ${colors.highlight('(r)')}ename, ${visibilityAction}, ${colors.highlight('(d)')}elete`;
   }
   actionPrompt += `, ${colors.highlight('(b)')}ack`;
   console.log(actionPrompt);
@@ -143,7 +157,7 @@ async function showStackActions(stack: any, state: BrowseState, isMyStack: boole
     case 'i':
       console.log(colors.info('\n📦 Installing stack...'));
       try {
-        await installAction(stack.stackId, {});
+        await installAction(getStackPath(stack), {});
         console.log('\nPress any key to continue...');
         await readSingleChar('');
       } catch (error) {
@@ -153,8 +167,9 @@ async function showStackActions(stack: any, state: BrowseState, isMyStack: boole
       }
       return 'retry'; // Stay on same stack
       
-    case 'v':
-      const url = `https://commands.com/stacks/${stack.stackId}`;
+    case 'v': {
+      const stackPath = getStackPath(stack);
+      const url = `https://commands.com/stacks/${stackPath}`;
       console.log(colors.info(`\n🌐 Opening ${url}...`));
       try {
         await open(url);
@@ -166,13 +181,7 @@ async function showStackActions(stack: any, state: BrowseState, isMyStack: boole
       console.log('\nPress any key to continue...');
       await readSingleChar('');
       return 'retry'; // Stay on same stack
-      
-    case 'c':
-      console.log(colors.success(`\n📋 Stack ID: ${stack.stackId}`));
-      console.log(colors.meta('Copy the ID above to install with: claude-stacks install ' + stack.stackId));
-      console.log('\nPress any key to continue...');
-      await readSingleChar('');
-      return 'retry'; // Stay on same stack
+    }
       
     case 'm':
       // Make public/private toggle
@@ -185,7 +194,8 @@ async function showStackActions(stack: any, state: BrowseState, isMyStack: boole
               console.log(colors.info('\n🔒 Making stack private...'));
               
               const apiConfig = getApiConfig();
-              const response = await fetch(`${apiConfig.baseUrl}/v1/stacks/${stack.stackId}`, {
+              const stackPath = getStackPath(stack);
+              const response = await fetch(`${apiConfig.baseUrl}/v1/stacks/${stackPath}`, {
                 method: 'PATCH',
                 headers: {
                   'Authorization': `Bearer ${state.accessToken}`,
@@ -227,7 +237,8 @@ async function showStackActions(stack: any, state: BrowseState, isMyStack: boole
               console.log(colors.info('\n🌐 Making stack public...'));
               
               const apiConfig = getApiConfig();
-              const response = await fetch(`${apiConfig.baseUrl}/v1/stacks/${stack.stackId}`, {
+              const stackPath = getStackPath(stack);
+              const response = await fetch(`${apiConfig.baseUrl}/v1/stacks/${stackPath}`, {
                 method: 'PATCH',
                 headers: {
                   'Authorization': `Bearer ${state.accessToken}`,
@@ -265,12 +276,87 @@ async function showStackActions(stack: any, state: BrowseState, isMyStack: boole
       }
       return 'retry'; // Stay on same stack
       
+    case 'r':
+      // Rename stack
+      if (isMyStack && state.accessToken) {
+        console.log(colors.info(`\n🏷️  Current name: "${stack.name}"`));
+        const newTitle = await new Promise<string>((resolve) => {
+          process.stdin.resume();
+          process.stdin.setEncoding('utf8');
+          console.log(colors.meta('Enter new title (or press Enter to cancel): '));
+          process.stdin.once('data', (data) => {
+            resolve(data.toString().trim());
+          });
+        });
+        
+        if (newTitle && newTitle !== stack.name) {
+          try {
+            console.log(colors.info('\n📝 Renaming stack...'));
+            
+            // Get current stack path
+            const currentStackPath = getStackPath(stack);
+            const [org, name] = currentStackPath.split('/');
+            
+            if (!org || !name) {
+              throw new Error('Invalid stack path for rename operation.');
+            }
+            
+            // Call rename API
+            const apiConfig = getApiConfig();
+            const response = await fetch(`${apiConfig.baseUrl}/v1/stacks/${org}/${name}/rename`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${state.accessToken}`,
+                'User-Agent': 'claude-stacks-cli/1.0.0'
+              },
+              body: JSON.stringify({
+                title: newTitle
+              })
+            });
+            
+            if (!response.ok) {
+              let errorDetails = '';
+              try {
+                const errorBody = await response.text();
+                errorDetails = errorBody ? `\n${errorBody}` : '';
+              } catch {}
+              throw new Error(`Rename failed: ${response.status} ${response.statusText}${errorDetails}`);
+            }
+            
+            const result = await response.json() as any;
+            
+            // Update the local stack object for display
+            stack.title = newTitle;
+            if (result.organizationUsername && result.name) {
+              stack.author = result.organizationUsername;
+              stack.name = result.name;
+            }
+            
+            console.log(colors.success('✅ Stack renamed successfully!'));
+            console.log(colors.meta(`  New title: ${newTitle}`));
+            if (result.newUrl) {
+              console.log(colors.meta(`  New URL: ${result.newUrl}`));
+            }
+            console.log('\nPress any key to continue...');
+            await readSingleChar('');
+          } catch (error) {
+            console.error(colors.error('Rename failed:'), error instanceof Error ? error.message : String(error));
+            console.log('\nPress any key to continue...');
+            await readSingleChar('');
+          }
+        } else {
+          console.log(colors.meta('Rename cancelled.'));
+        }
+      }
+      return 'retry'; // Stay on same stack
+      
     case 'd':
       if (isMyStack && state.accessToken) {
         const confirmAction = await readSingleChar(colors.warning(`\nDelete "${stack.name}"? This cannot be undone. (y/N): `));
         if (confirmAction.toLowerCase() === 'y') {
           try {
-            await deleteAction(stack.stackId);
+            await deleteAction(getStackPath(stack));
             console.log('\nStack deleted. Press any key to continue...');
             await readSingleChar('');
             return null; // Go back to main menu (stack is gone)

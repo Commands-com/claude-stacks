@@ -24,8 +24,12 @@ export async function installAction(stackId: string, options: InstallOptions = {
   }
   
   try {
+    // Parse org/name format
+    const [org, name] = stackId.includes('/') ? stackId.split('/') : [null, stackId];
+    const url = org && name ? `${apiConfig.baseUrl}/v1/stacks/${org}/${name}` : `${apiConfig.baseUrl}/v1/stacks/${stackId}`;
+    
     // Fetch stack from Commands.com
-    const response = await fetch(`${apiConfig.baseUrl}/v1/stacks/${stackId}`, {
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'User-Agent': 'claude-stacks-cli/1.0.0'
@@ -77,7 +81,8 @@ export async function installAction(stackId: string, options: InstallOptions = {
       
       // Track successful installation
       try {
-        const trackResponse = await fetch(`${apiConfig.baseUrl}/v1/stacks/${stackId}/install`, {
+        const trackUrl = org && name ? `${apiConfig.baseUrl}/v1/stacks/${org}/${name}/install` : `${apiConfig.baseUrl}/v1/stacks/${stackId}/install`;
+        const trackResponse = await fetch(trackUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

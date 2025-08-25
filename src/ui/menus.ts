@@ -140,11 +140,12 @@ export async function showStackDetailsAndActions(stack: any, accessToken: string
   
   console.log(`${colors.info('Stats:')} ${colors.meta(`${stack.viewCount || 0} views, ${stack.installCount || 0} installs`)}`);
   console.log(`${colors.info('Created:')} ${colors.meta(stack.createdAt ? new Date(stack.createdAt).toLocaleDateString() : 'Unknown')}`);
-  console.log(`${colors.info('Stack ID:')} ${colors.id(stack.stackId)}`);
-  console.log(`${colors.info('URL:')} ${colors.url(`https://commands.com/stacks/${stack.stackId}`)}`);
+  const stackPath = stack.org && stack.name ? `${stack.org}/${stack.name}` : stack.stackId;
+  console.log(`${colors.info('Stack ID:')} ${colors.id(stackPath)}`);
+  console.log(`${colors.info('URL:')} ${colors.url(`https://commands.com/stacks/${stackPath}`)}`);
   
   // Show action menu with single letter shortcuts
-  let actionPrompt = `\nActions: ${colors.highlight('(i)')}nstall, ${colors.highlight('(v)')}iew in browser, ${colors.highlight('(c)')}opy ID`;
+  let actionPrompt = `\nActions: ${colors.highlight('(i)')}nstall, ${colors.highlight('(v)')}iew in browser`;
   if (accessToken) {
     actionPrompt += `, ${colors.highlight('(d)')}elete`;
   }
@@ -157,7 +158,8 @@ export async function showStackDetailsAndActions(stack: any, accessToken: string
     case 'i':
       console.log(colors.info('\n📦 Installing stack...'));
       try {
-        await installAction(stack.stackId, {});
+        const stackPath = stack.org && stack.name ? `${stack.org}/${stack.name}` : stack.stackId;
+        await installAction(stackPath, {});
         console.log(colors.success('✅ Stack installed successfully!'));
       } catch (error) {
         console.error(colors.error('Install failed:'), error instanceof Error ? error.message : String(error));
@@ -165,7 +167,8 @@ export async function showStackDetailsAndActions(stack: any, accessToken: string
       break;
       
     case 'v':
-      const url = `https://commands.com/stacks/${stack.stackId}`;
+      const viewStackPath = stack.org && stack.name ? `${stack.org}/${stack.name}` : stack.stackId;
+      const url = `https://commands.com/stacks/${viewStackPath}`;
       console.log(colors.info(`\n🌐 Opening ${url}...`));
       try {
         await open(url);
@@ -176,17 +179,13 @@ export async function showStackDetailsAndActions(stack: any, accessToken: string
       }
       break;
       
-    case 'c':
-      console.log(colors.success(`\n📋 Stack ID: ${stack.stackId}`));
-      console.log(colors.meta('Copy the ID above to install with: claude-stacks install ' + stack.stackId));
-      break;
-      
     case 'd':
       if (accessToken) {
         const confirmAction = await readSingleChar(colors.warning(`\nDelete "${stack.name}"? This cannot be undone. (y/N): `));
         if (confirmAction.toLowerCase() === 'y') {
           try {
-            await deleteAction(stack.stackId);
+            const deleteStackPath = stack.org && stack.name ? `${stack.org}/${stack.name}` : stack.stackId;
+            await deleteAction(deleteStackPath);
             return; // Exit back to list
           } catch (error) {
             console.error(colors.error('Delete failed:'), error instanceof Error ? error.message : String(error));
