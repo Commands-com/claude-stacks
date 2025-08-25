@@ -1,4 +1,4 @@
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
 import fetch from 'node-fetch';
@@ -6,6 +6,7 @@ import fetch from 'node-fetch';
 import { DeveloperStack, InstallOptions } from '../types/index.js';
 import { colors } from '../utils/colors.js';
 import { getApiConfig, isLocalDev } from '../utils/api.js';
+import { checkMcpDependencies, displayMissingDependencies } from '../utils/dependencies.js';
 
 import { restoreAction } from './restore.js';
 
@@ -69,6 +70,13 @@ export async function installAction(stackId: string, options: InstallOptions = {
     console.log(colors.stackName(`Installing: ${stack.name}`));
     console.log(colors.meta(`By: ${remoteStack.author || 'Unknown'}`));
     console.log(`Description: ${colors.description(stack.description)}\n`);
+    
+    // Check for missing MCP server dependencies
+    if (stack.mcpServers && stack.mcpServers.length > 0) {
+      console.log(colors.info('🔍 Checking MCP server dependencies...'));
+      const missingDeps = await checkMcpDependencies(stack.mcpServers);
+      displayMissingDependencies(missingDeps);
+    }
     
     // Use the existing restore function to install the stack
     // First, save it as a temporary file

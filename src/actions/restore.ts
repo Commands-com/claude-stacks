@@ -1,9 +1,10 @@
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
 
 import { DeveloperStack, RestoreOptions } from '../types/index.js';
 import { colors } from '../utils/colors.js';
+import { checkMcpDependencies, displayMissingDependencies } from '../utils/dependencies.js';
 
 export async function restoreAction(stackFilePath: string, options: RestoreOptions = {}): Promise<void> {
   try {
@@ -25,6 +26,13 @@ export async function restoreAction(stackFilePath: string, options: RestoreOptio
     console.log(`Description: ${colors.description(stack.description)}`);
     console.log(colors.meta(`Mode: ${options.overwrite ? 'Overwrite' : 'Add/Merge'}`));
     console.log();
+    
+    // Check for missing MCP server dependencies
+    if (stack.mcpServers && stack.mcpServers.length > 0) {
+      console.log(colors.info('🔍 Checking MCP server dependencies...'));
+      const missingDeps = await checkMcpDependencies(stack.mcpServers);
+      displayMissingDependencies(missingDeps);
+    }
     
     const claudeDir = path.join(os.homedir(), '.claude');
     const currentDir = process.cwd();

@@ -1,4 +1,4 @@
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import * as path from 'path';
 import * as os from 'os';
 import fetch from 'node-fetch';
@@ -48,7 +48,7 @@ export async function publishAction(stackFilePath?: string, options: PublishOpti
     if (isUpdate) {
       console.log(colors.info(`📦 Updating existing stack "${stack.name}" (${stack.metadata?.published_version} → ${stack.version})`));
       
-      const action = await readSingleChar(colors.stackName('Actions: (u)pdate existing, (n)ew stack, (c)ancel: '));
+      const action = await readSingleChar(`Actions: ${colors.highlight('(u)')}pdate existing, ${colors.highlight('(n)')}ew stack, ${colors.highlight('(c)')}ancel: `);
       
       switch (action.toLowerCase()) {
         case 'c':
@@ -143,6 +143,8 @@ export async function publishAction(stackFilePath?: string, options: PublishOpti
     let stackId: string;
     if (result.org && result.name) {
       stackId = `${result.org}/${result.name}`;
+    } else if (result.organizationUsername && result.name) {
+      stackId = `${result.organizationUsername}/${result.name}`;
     } else if (result.url) {
       // Extract org/name from URL: https://commands.com/stacks/org/name/
       const urlMatch = result.url.match(/\/stacks\/([^/]+)\/([^/]+)\/?$/);
