@@ -21,7 +21,18 @@ import type { ApiConfig } from '../types/index.js';
  * @public
  */
 export function getApiConfig(): ApiConfig {
-  const isDev = process.env.CLAUDE_STACKS_DEV === 'true';
+  // Check for custom API URL first
+  if (process.env.CLAUDE_STACKS_API_URL) {
+    return {
+      baseUrl: process.env.CLAUDE_STACKS_API_URL,
+      authUrl: 'https://api.commands.com/oauth/authorize',
+      tokenUrl: 'https://api.commands.com/oauth/token',
+      clientId: 'claude-stacks-cli',
+    };
+  }
+
+  const isDev =
+    process.env.CLAUDE_STACKS_LOCAL_DEV === 'true' || process.env.CLAUDE_STACKS_DEV === 'true';
 
   return {
     baseUrl: isDev ? 'http://localhost:3000' : 'https://backend.commands.com',
@@ -36,9 +47,18 @@ export const oauthConfig = {
   clientId: 'claude-stacks-cli',
   authUrl: 'https://api.commands.com/oauth/authorize',
   tokenUrl: 'https://api.commands.com/oauth/token',
+  redirectUri: isLocalDev()
+    ? 'http://localhost:8080/callback'
+    : 'https://stacks.commands.com/callback',
+  scope: 'read write stacks',
+  responseType: 'code',
 };
 
 // Utility to check if using local development backend
 export function isLocalDev(): boolean {
+  const localDevVar = process.env.CLAUDE_STACKS_LOCAL_DEV;
+  if (localDevVar === 'true' || localDevVar === '1' || localDevVar === 'yes') {
+    return true;
+  }
   return process.env.CLAUDE_STACKS_DEV === 'true';
 }

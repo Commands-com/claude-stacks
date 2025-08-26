@@ -295,8 +295,12 @@ export async function showStackDetailsAndActions(
       await handleViewAction(stackPath);
       break;
     case 'd':
-      if (accessToken && (await handleRemoteDeleteAction(stack))) {
-        return;
+      if (accessToken) {
+        if (await handleRemoteDeleteAction(stack)) {
+          return;
+        }
+      } else {
+        console.log(colors.error('Invalid action. Please try again.'));
       }
       break;
     case 'b':

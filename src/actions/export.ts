@@ -445,5 +445,32 @@ function handleExportError(error: unknown): never {
     colors.error('Export failed:'),
     error instanceof Error ? error.message : String(error)
   );
+
+  // In test environment, throw error instead of exiting
+  if (process.env.NODE_ENV === 'test') {
+    throw new Error(error instanceof Error ? error.message : String(error));
+  }
+
   process.exit(1);
 }
+
+// Export helper functions for testing
+export const exportHelpers = {
+  truncateDescription,
+  extractFromYamlFrontmatter,
+  extractFromFirstMeaningfulLine,
+  extractDescriptionFromContent,
+  scanDirectory,
+  generateStackMetadata,
+  collectCommands,
+  collectAgents,
+  collectSettings,
+  readSettingsFile,
+  convertMcpConfig,
+  collectMcpServers,
+  exportCurrentStack,
+  resolveOutputFilename,
+  writeStackToFile,
+  displayExportSuccess,
+  handleExportError,
+};

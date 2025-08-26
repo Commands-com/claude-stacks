@@ -58,7 +58,7 @@ async function fetchStackFromApi(stackId: string, org: string, name: string): Pr
 
 function convertToLocalStack(remoteStack: RemoteStack, stackId: string): DeveloperStack {
   return {
-    name: remoteStack.name,
+    name: remoteStack.title ?? remoteStack.name,
     description: remoteStack.description,
     version: remoteStack.version ?? '1.0.0',
     commands: remoteStack.commands ?? [],

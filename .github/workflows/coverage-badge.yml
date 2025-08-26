@@ -1,0 +1,91 @@
+name: Coverage Badge
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  coverage-badge:
+    name: Update Coverage Badge
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+      - name: Generate coverage badge
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            // Read coverage summary
+            const coverageSummaryPath = path.join(process.cwd(), 'coverage', 'coverage-summary.json');
+
+            if (!fs.existsSync(coverageSummaryPath)) {
+              console.log('Coverage summary not found');
+              return;
+            }
+
+            const coverageSummary = JSON.parse(fs.readFileSync(coverageSummaryPath, 'utf8'));
+            const coverage = Math.round(coverageSummary.total.statements.pct);
+
+            // Determine badge color
+            let color = 'red';
+            if (coverage >= 90) color = 'brightgreen';
+            else if (coverage >= 80) color = 'green';
+            else if (coverage >= 70) color = 'yellowgreen';
+            else if (coverage >= 60) color = 'yellow';
+            else if (coverage >= 50) color = 'orange';
+
+            // Create badge URL
+            const badgeUrl = `https://img.shields.io/badge/coverage-${coverage}%25-${color}`;
+
+            console.log(`Coverage: ${coverage}%`);
+            console.log(`Badge URL: ${badgeUrl}`);
+
+            // Update README.md with new badge
+            const readmePath = path.join(process.cwd(), 'README.md');
+            if (fs.existsSync(readmePath)) {
+              let readme = fs.readFileSync(readmePath, 'utf8');
+              
+              // Replace existing coverage badge or add new one
+              const badgeRegex = /!\[Coverage\]\([^)]+\)/;
+              const newBadge = `![Coverage](${badgeUrl})`;
+              
+              if (badgeRegex.test(readme)) {
+                readme = readme.replace(badgeRegex, newBadge);
+              } else {
+                // Add badge after title if no existing badge found
+                readme = readme.replace(/^(# [^\n]+)/, `$1\n\n${newBadge}`);
+              }
+              
+              fs.writeFileSync(readmePath, readme);
+              console.log('Updated README.md with coverage badge');
+            }
+
+      - name: Commit badge update
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add README.md
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update coverage badge [skip ci]"
+            git push
+          fi

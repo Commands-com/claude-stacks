@@ -21,8 +21,8 @@ export function parseVersion(version: string): { major: number; minor: number; p
 /**
  * Format version components into a semantic version string
  */
-export function formatVersion(major: number, minor: number, patch: number): string {
-  return `${major}.${minor}.${patch}`;
+export function formatVersion(version: { major: number; minor: number; patch: number }): string {
+  return `${version.major}.${version.minor}.${version.patch}`;
 }
 
 /**
@@ -56,11 +56,11 @@ export function bumpVersion(version: string, bumpType: VersionBumpType): string 
 
   switch (bumpType) {
     case 'major':
-      return formatVersion(major + 1, 0, 0);
+      return formatVersion({ major: major + 1, minor: 0, patch: 0 });
     case 'minor':
-      return formatVersion(major, minor + 1, 0);
+      return formatVersion({ major, minor: minor + 1, patch: 0 });
     case 'patch':
-      return formatVersion(major, minor, patch + 1);
+      return formatVersion({ major, minor, patch: patch + 1 });
     default:
       throw new Error(`Invalid bump type: ${bumpType}`);
   }
@@ -167,7 +167,18 @@ function hasMcpConfigurationsChanged(oldStack: DeveloperStack, newStack: Develop
  * Check if critical settings changed
  */
 function haveSettingsChanged(oldStack: DeveloperStack, newStack: DeveloperStack): boolean {
-  return JSON.stringify(oldStack.settings) !== JSON.stringify(newStack.settings);
+  // Only consider settings changes as major if settings are removed or core settings change
+  const oldSettings = oldStack.settings ?? {};
+  const newSettings = newStack.settings ?? {};
+
+  // Check if any old settings keys were removed
+  for (const key of Object.keys(oldSettings)) {
+    if (!(key in newSettings)) {
+      return true; // Setting removed - major change
+    }
+  }
+
+  return false; // Only additions or value changes - not major
 }
 
 /**
@@ -300,11 +311,16 @@ export function generateSuggestedVersion(
     return getDefaultVersion();
   }
 
-  if (oldStack && newStack) {
-    const bumpType = suggestVersionBump(oldStack, newStack);
-    return bumpVersion(previousVersion, bumpType);
-  }
+  try {
+    if (oldStack && newStack) {
+      const bumpType = suggestVersionBump(oldStack, newStack);
+      return bumpVersion(previousVersion, bumpType);
+    }
 
-  // Default to patch bump if we can't analyze changes
-  return bumpVersion(previousVersion, 'patch');
+    // Default to patch bump if we can't analyze changes
+    return bumpVersion(previousVersion, 'patch');
+  } catch {
+    // If version is invalid, return default version
+    return getDefaultVersion();
+  }
 }

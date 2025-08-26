@@ -17,7 +17,7 @@ export interface StacksMetadata {
 /**
  * Get the path to the global stacks metadata file
  */
-function getMetadataPath(): string {
+export function getMetadataPath(): string {
   return METADATA_FILE_PATH;
 }
 

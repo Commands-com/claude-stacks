@@ -1,0 +1,51 @@
+{
+  "id": "example-org/web-stack",
+  "name": "Full Stack Web Development",
+  "description": "Complete web development environment with React, Node.js, and database tools",
+  "author": "example-user",
+  "version": "1.0.0",
+  "dependencies": [
+    {
+      "name": "node",
+      "version": ">=18.0.0",
+      "type": "runtime"
+    },
+    {
+      "name": "npm",
+      "version": ">=8.0.0",
+      "type": "package_manager"
+    }
+  ],
+  "mcpConfigs": {
+    "filesystem": {
+      "name": "filesystem",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/user/projects"],
+      "env": {}
+    },
+    "git": {
+      "name": "git",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git", "--repository", "/Users/user/projects"],
+      "env": {}
+    }
+  },
+  "files": {
+    ".vscode/settings.json": {
+      "content": "{\n  \"typescript.preferences.includePackageJsonAutoImports\": \"auto\",\n  \"editor.formatOnSave\": true\n}",
+      "encoding": "utf8"
+    },
+    "package.json": {
+      "content": "{\n  \"name\": \"web-project\",\n  \"version\": \"1.0.0\",\n  \"scripts\": {\n    \"dev\": \"npm run dev\",\n    \"build\": \"npm run build\"\n  }\n}",
+      "encoding": "utf8"
+    }
+  },
+  "metadata": {
+    "createdAt": "2024-01-15T10:30:00Z",
+    "updatedAt": "2024-01-15T10:30:00Z",
+    "tags": ["web", "fullstack", "react", "nodejs"],
+    "category": "development",
+    "downloadCount": 0,
+    "isPublic": true
+  }
+}
