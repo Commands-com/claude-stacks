@@ -309,6 +309,8 @@ describe('CLI End-to-End Workflows', () => {
           ...process.env,
           NODE_ENV: 'test',
           CLAUDE_STACKS_TEST_MODE: 'true',
+          // Explicitly pass the test stacks path to ensure it's available in CI
+          CLAUDE_STACKS_TEST_STACKS_PATH: process.env.CLAUDE_STACKS_TEST_STACKS_PATH || '',
         },
       });
 
