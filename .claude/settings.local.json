@@ -45,7 +45,8 @@
       "mcp__serena__insert_after_symbol",
       "Bash(npx tsc:*)",
       "mcp__serena__insert_before_symbol",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Read(//Users/dtannen/.claude/**)"
     ],
     "deny": [],
     "ask": []
@@ -59,6 +60,17 @@
           {
             "type": "command",
             "command": "bash -c 'json_input=$(cat); cwd=$(echo \"$json_input\" | jq -r \".cwd\" | xargs basename); if command -v osascript >/dev/null 2>&1; then osascript -e \"display notification \\\"Claude completed task in $cwd\\\" with title \\\"Claude Code\\\"\"; elif command -v notify-send >/dev/null 2>&1; then notify-send \"Claude Code\" \"Claude completed task in $cwd\"; fi'"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write|mcp__serena__replace_regex|mcp__serena__replace_symbol_body|mcp__serena__insert_after_symbol|mcp__serena__insert_before_symbol|mcp__serena__create_text_file",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'json_input=$(cat); tool_name=$(echo \"$json_input\" | jq -r \".tool_name\"); file_path=\"\"; if echo \"$json_input\" | jq -e \".tool_response.filePath\" > /dev/null 2>&1; then file_path=$(echo \"$json_input\" | jq -r \".tool_response.filePath\"); elif echo \"$json_input\" | jq -e \".tool_input.file_path\" > /dev/null 2>&1; then file_path=$(echo \"$json_input\" | jq -r \".tool_input.file_path\"); elif echo \"$json_input\" | jq -e \".tool_input.relative_path\" > /dev/null 2>&1; then cwd=$(echo \"$json_input\" | jq -r \".cwd\"); rel_path=$(echo \"$json_input\" | jq -r \".tool_input.relative_path\"); file_path=\"$cwd/$rel_path\"; fi; timestamp=$(date \"+%Y-%m-%d %H:%M:%S\"); echo \"[$timestamp] Hook triggered: $tool_name on $file_path\" >> /tmp/claude-lint-hook.log; if [[ \"$file_path\" == *.ts ]]; then echo \"🔧 Running lint on $file_path (via $tool_name)...\"; echo \"[$timestamp] Running eslint --fix on $file_path\" >> /tmp/claude-lint-hook.log; lint_output=$(npx eslint \"$file_path\" --fix 2>&1); if [ $? -eq 0 ]; then echo \"✅ Lint passed for $file_path\"; echo \"[$timestamp] Lint SUCCESS: $file_path\" >> /tmp/claude-lint-hook.log; else echo \"❌ Lint failed for $file_path\"; echo \"[$timestamp] Lint FAILED: $file_path\" >> /tmp/claude-lint-hook.log; echo \"--- LINT FAILURE REPORT ---\" > \"$cwd/lint_failures.log\"; echo \"File: $file_path\" >> \"$cwd/lint_failures.log\"; echo \"Timestamp: $timestamp\" >> \"$cwd/lint_failures.log\"; echo \"Tool: $tool_name\" >> \"$cwd/lint_failures.log\"; echo \"\" >> \"$cwd/lint_failures.log\"; echo \"$lint_output\" >> \"$cwd/lint_failures.log\"; echo \"\" >> \"$cwd/lint_failures.log\"; echo \"To fix: npx eslint $file_path --fix\" >> \"$cwd/lint_failures.log\"; fi; else echo \"[$timestamp] Skipped (not .ts file): $file_path\" >> /tmp/claude-lint-hook.log; fi'"
           }
         ]
       }
