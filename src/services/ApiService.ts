@@ -1,5 +1,6 @@
 import { getApiConfig, isLocalDev } from '../utils/api.js';
-import fetch from 'node-fetch';
+import { SecureHttpClient } from '../utils/secureHttp.js';
+import { validateObjectResponse, validateRemoteStack } from '../utils/validators.js';
 import type { RemoteStack } from '../types/index.js';
 
 /**
@@ -60,12 +61,10 @@ export class ApiService {
   async fetchStack(stackId: string, accessToken: string): Promise<RemoteStack> {
     const url = `${this.config.baseUrl}/v1/stacks/${stackId}`;
 
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'User-Agent': 'claude-stacks-cli/1.0.0',
-        Accept: 'application/json',
-      },
+    const response = await SecureHttpClient.get(url, {
+      Authorization: `Bearer ${accessToken}`,
+      'User-Agent': 'claude-stacks-cli/1.0.0',
+      Accept: 'application/json',
     });
 
     if (!response.ok) {
@@ -75,7 +74,7 @@ export class ApiService {
       );
     }
 
-    return (await response.json()) as RemoteStack;
+    return validateRemoteStack(await response.json());
   }
 
   /**
@@ -96,15 +95,14 @@ export class ApiService {
       ? `${this.config.baseUrl}/v1/stacks/${stackId}`
       : `${this.config.baseUrl}/v1/stacks`;
 
-    const response = await fetch(url, {
-      method: isUpdate ? 'PUT' : 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-        'User-Agent': 'claude-stacks-cli/1.0.0',
-      },
-      body: JSON.stringify(payload),
-    });
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      'User-Agent': 'claude-stacks-cli/1.0.0',
+    };
+
+    const response = isUpdate
+      ? await SecureHttpClient.put(url, payload, headers)
+      : await SecureHttpClient.post(url, payload, headers);
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'Unknown error');
@@ -113,7 +111,7 @@ export class ApiService {
       );
     }
 
-    return (await response.json()) as Record<string, unknown>;
+    return validateObjectResponse(await response.json());
   }
 
   /**
@@ -126,12 +124,9 @@ export class ApiService {
   async deleteStack(stackId: string, accessToken: string): Promise<void> {
     const url = `${this.config.baseUrl}/v1/stacks/${stackId}`;
 
-    const response = await fetch(url, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'User-Agent': 'claude-stacks-cli/1.0.0',
-      },
+    const response = await SecureHttpClient.delete(url, {
+      Authorization: `Bearer ${accessToken}`,
+      'User-Agent': 'claude-stacks-cli/1.0.0',
     });
 
     if (!response.ok) {
@@ -165,21 +160,20 @@ export class ApiService {
   ): Promise<Record<string, unknown>> {
     const url = `${this.config.baseUrl}/v1/stacks/${stackId}/title`;
 
-    const response = await fetch(url, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
+    const response = await SecureHttpClient.put(
+      url,
+      { title: newTitle },
+      {
         Authorization: `Bearer ${accessToken}`,
         'User-Agent': 'claude-stacks-cli/1.0.0',
-      },
-      body: JSON.stringify({ title: newTitle }),
-    });
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'Unknown error');
       throw new Error(`Rename failed: ${response.status} ${response.statusText}\n${errorText}`);
     }
 
-    return (await response.json()) as Record<string, unknown>;
+    return validateObjectResponse(await response.json());
   }
 }

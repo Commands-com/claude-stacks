@@ -305,6 +305,74 @@ export const FilePathValidator: BrandedTypeValidator<string, 'FilePath'> = {
 };
 
 // ============================================================================
+// MCP SERVER SECURITY VALIDATORS
+// ============================================================================
+
+/**
+ * Interface for safe MCP server configuration
+ */
+interface SafeMcpServerConfig {
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  url?: string;
+  type?: string;
+}
+
+/**
+ * Validates MCP server configurations for basic format correctness
+ * Note: MCP servers are user-controlled and run in user's environment
+ * Security is the user's responsibility as they choose what to install
+ */
+export const McpServerConfigValidator = {
+  /**
+   * Validates an MCP server configuration for basic format
+   * @param config The MCP server configuration to validate
+   * @returns true if configuration has valid format
+   * @throws Error if configuration has invalid format
+   */
+  validate: (config: unknown): config is SafeMcpServerConfig => {
+    if (!config || typeof config !== 'object') {
+      throw new Error('MCP server configuration must be an object');
+    }
+
+    const server = config as Record<string, unknown>;
+
+    // Basic format validation only - no security restrictions
+    McpServerConfigValidator.validateCommand(server);
+    McpServerConfigValidator.validateArgs(server);
+    McpServerConfigValidator.validateEnv(server);
+    McpServerConfigValidator.validateUrl(server);
+
+    return true;
+  },
+
+  validateCommand: (server: Record<string, unknown>): void => {
+    if (server.command !== undefined && typeof server.command !== 'string') {
+      throw new Error('MCP server command must be a string');
+    }
+  },
+
+  validateArgs: (server: Record<string, unknown>): void => {
+    if (server.args !== undefined && !Array.isArray(server.args)) {
+      throw new Error('MCP server args must be an array');
+    }
+  },
+
+  validateEnv: (server: Record<string, unknown>): void => {
+    if (server.env !== undefined && (typeof server.env !== 'object' || server.env === null)) {
+      throw new Error('MCP server env must be an object');
+    }
+  },
+
+  validateUrl: (server: Record<string, unknown>): void => {
+    if (server.url !== undefined && typeof server.url !== 'string') {
+      throw new Error('MCP server URL must be a string');
+    }
+  },
+};
+
+// ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
 

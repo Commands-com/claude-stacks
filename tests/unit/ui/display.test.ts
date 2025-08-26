@@ -50,12 +50,30 @@ jest.mock('../../../src/constants/paths.js', () => ({
 
 // Mock path module
 jest.mock('path', () => ({
-  join: jest.fn((...args) => args.filter(Boolean).join('/')),
+  join: jest.fn((...args) => {
+    const validArgs = args.filter(Boolean);
+    return validArgs.join('/').replace(/\/+/g, '/');
+  }),
   basename: jest.fn(path => (path ? path.split('/').pop() : '')),
   isAbsolute: jest.fn(path => typeof path === 'string' && path.startsWith('/')),
-  resolve: jest.fn(path =>
-    typeof path === 'string' && path.startsWith('/') ? path : `/resolved/${path}`
-  ),
+  resolve: jest.fn((...args) => {
+    if (args.length === 1) {
+      const path = args[0];
+      return typeof path === 'string' && path.startsWith('/') ? path : `/resolved/${path}`;
+    } else if (args.length === 2) {
+      const [baseDir, relativePath] = args;
+      return `${baseDir}/${relativePath}`.replace(/\/+/g, '/');
+    }
+    return args[args.length - 1];
+  }),
+  normalize: jest.fn(path => path),
+  sep: '/',
+  extname: jest.fn(path => {
+    const parts = path.split('/');
+    const filename = parts[parts.length - 1];
+    const lastDot = filename.lastIndexOf('.');
+    return lastDot > 0 ? filename.slice(lastDot) : '';
+  }),
 }));
 
 // Mock process
@@ -108,12 +126,30 @@ describe('display module', () => {
 
     // Re-setup path module mocks to ensure they work correctly
     const mockPath = require('path');
-    mockPath.join = jest.fn((...args) => args.filter(Boolean).join('/'));
+    mockPath.join = jest.fn((...args) => {
+      const validArgs = args.filter(Boolean);
+      return validArgs.join('/').replace(/\/+/g, '/');
+    });
     mockPath.basename = jest.fn(path => (path ? path.split('/').pop() : ''));
     mockPath.isAbsolute = jest.fn(path => typeof path === 'string' && path.startsWith('/'));
-    mockPath.resolve = jest.fn(path =>
-      typeof path === 'string' && path.startsWith('/') ? path : `/resolved/${path}`
-    );
+    mockPath.resolve = jest.fn((...args) => {
+      if (args.length === 1) {
+        const path = args[0];
+        return typeof path === 'string' && path.startsWith('/') ? path : `/resolved/${path}`;
+      } else if (args.length === 2) {
+        const [baseDir, relativePath] = args;
+        return `${baseDir}/${relativePath}`.replace(/\/+/g, '/');
+      }
+      return args[args.length - 1];
+    });
+    mockPath.normalize = jest.fn(path => path);
+    mockPath.sep = '/';
+    mockPath.extname = jest.fn(path => {
+      const parts = path.split('/');
+      const filename = parts[parts.length - 1];
+      const lastDot = filename.lastIndexOf('.');
+      return lastDot > 0 ? filename.slice(lastDot) : '';
+    });
 
     // Setup fs mocks
     mockFs = require('fs-extra');
@@ -210,7 +246,7 @@ describe('display module', () => {
 
       it('should resolve absolute paths for complex filenames', async () => {
         const mockPath = require('path');
-        mockPath.resolve.mockReturnValue('/resolved/complex/path.json');
+        mockPath.resolve.mockReturnValue('/test/current-directory/complex/path.json');
 
         const mockStack: DeveloperStack = {
           name: 'complex-stack',
@@ -221,15 +257,18 @@ describe('display module', () => {
 
         await showStackInfo('complex/path.json');
 
-        expect(mockPath.resolve).toHaveBeenCalledWith('complex/path.json');
-        expect(mockFs.pathExists).toHaveBeenCalledWith('/resolved/complex/path.json');
+        expect(mockPath.resolve).toHaveBeenCalledWith(
+          '/test/current-directory',
+          'complex/path.json'
+        );
+        expect(mockFs.pathExists).toHaveBeenCalledWith('/test/current-directory/complex/path.json');
       });
 
       it('should throw error when stack file does not exist', async () => {
         mockFs.pathExists.mockResolvedValue(false);
 
         await expect(showStackInfo('/nonexistent/stack.json')).rejects.toThrow(
-          'Stack file not found: /nonexistent/stack.json'
+          'Access denied: stack file path outside allowed directories. Allowed: /test/.claude/stacks, /test/current-directory'
         );
       });
 

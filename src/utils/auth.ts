@@ -1,11 +1,14 @@
 import fs from 'fs-extra';
+import * as path from 'path';
 import { AUTH_TOKEN_PATH } from '../constants/paths.js';
 import * as crypto from 'crypto';
+import * as os from 'os';
 import * as http from 'http';
 import { setTimeout } from 'timers';
 import open from 'open';
 import fetch from 'node-fetch';
 import chalk from 'chalk';
+import { validateAuthToken } from './validators.js';
 
 import type { AuthToken, OAuthConfig } from '../types/index.js';
 
@@ -35,11 +38,131 @@ export function findAvailablePort(): Promise<number> {
   });
 }
 
-// Generate PKCE challenge
+// Generate PKCE challenge with enhanced security
 export function generatePKCE(): { codeVerifier: string; codeChallenge: string } {
-  const codeVerifier = crypto.randomBytes(32).toString('base64url');
+  // RFC 7636 recommends 43-128 characters, use maximum for security
+  const codeVerifier = crypto.randomBytes(96).toString('base64url'); // ~128 chars
   const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
   return { codeVerifier, codeChallenge };
+}
+
+// Token encryption utilities
+const ENCRYPTION_ALGORITHM = 'aes-256-gcm';
+const KEY_LENGTH = 32;
+const IV_LENGTH = 16;
+const SALT_LENGTH = 32;
+const PBKDF2_ITERATIONS = 100000; // OWASP recommendation for 2023
+
+function getKeyMaterial(): string {
+  // Use a combination of machine-specific data for key derivation
+  const machineId = os.hostname() + os.platform() + os.arch();
+  return process.env.CLAUDE_STACKS_KEY ?? `claude-stacks-default-key-${machineId}`;
+}
+
+function deriveKey(keyMaterial: string, salt: Buffer): Buffer {
+  return crypto.pbkdf2Sync(keyMaterial, salt, PBKDF2_ITERATIONS, KEY_LENGTH, 'sha256');
+}
+
+function encryptToken(token: AuthToken): string {
+  // Generate unique salt for this encryption
+  const salt = crypto.randomBytes(SALT_LENGTH);
+  const key = deriveKey(getKeyMaterial(), salt);
+  const iv = crypto.randomBytes(IV_LENGTH);
+
+  const cipher = crypto.createCipheriv(ENCRYPTION_ALGORITHM, key, iv);
+
+  let encrypted = cipher.update(JSON.stringify(token), 'utf8');
+  encrypted = Buffer.concat([encrypted, cipher.final()]);
+
+  const authTag = cipher.getAuthTag();
+
+  // Format: version:salt:iv:authTag:encrypted
+  return `v2:${salt.toString('hex')}:${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted.toString('hex')}`;
+}
+
+function decryptTokenV2(encryptedData: string): AuthToken {
+  const parts = encryptedData.split(':');
+  if (parts.length !== 5 || parts[0] !== 'v2') {
+    throw new Error('Invalid v2 encrypted token format');
+  }
+
+  const [, saltHex, ivHex, authTagHex, encryptedHex] = parts;
+  const salt = Buffer.from(saltHex, 'hex');
+  const iv = Buffer.from(ivHex, 'hex');
+  const authTag = Buffer.from(authTagHex, 'hex');
+  const encrypted = Buffer.from(encryptedHex, 'hex');
+
+  const key = deriveKey(getKeyMaterial(), salt);
+  const decipher = crypto.createDecipheriv(ENCRYPTION_ALGORITHM, key, iv);
+  decipher.setAuthTag(authTag);
+
+  let decrypted = decipher.update(encrypted, undefined, 'utf8');
+  decrypted += decipher.final('utf8');
+
+  return JSON.parse(decrypted) as AuthToken;
+}
+
+function decryptTokenLegacy(encryptedData: string): AuthToken {
+  // Legacy decryption for backward compatibility
+  try {
+    const parts = encryptedData.split(':');
+    if (parts.length !== 2) {
+      throw new Error('Invalid legacy encrypted token format');
+    }
+
+    const [, encrypted] = parts;
+    const keyMaterial = getKeyMaterial();
+    const key = crypto.scryptSync(keyMaterial, 'claude-stacks-salt', KEY_LENGTH);
+
+    const decipher = crypto.createDecipher('aes-256-cbc', key);
+
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+
+    return JSON.parse(decrypted) as AuthToken;
+  } catch (error) {
+    throw new Error(
+      `Failed to decrypt legacy token: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+  }
+}
+
+function decryptToken(encryptedData: string): AuthToken {
+  try {
+    // Handle v2 format (new secure format)
+    if (encryptedData.startsWith('v2:')) {
+      return decryptTokenV2(encryptedData);
+    }
+
+    // Handle legacy format for backward compatibility
+    return decryptTokenLegacy(encryptedData);
+  } catch (error) {
+    throw new Error(
+      `Failed to decrypt token: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+  }
+}
+
+/**
+ * Validates OAuth state parameter using timing-safe comparison
+ * @param receivedState The state parameter received from OAuth callback
+ * @param expectedState The expected state parameter
+ * @returns true if states match
+ */
+function validateOAuthState(receivedState: string, expectedState: string): boolean {
+  if (receivedState.length !== expectedState.length) {
+    return false;
+  }
+
+  // Use crypto.timingSafeEqual for constant-time comparison
+  const receivedBuffer = Buffer.from(receivedState, 'hex');
+  const expectedBuffer = Buffer.from(expectedState, 'hex');
+
+  if (receivedBuffer.length !== expectedBuffer.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(receivedBuffer, expectedBuffer);
 }
 
 // Store/retrieve tokens
@@ -47,8 +170,20 @@ export async function getStoredToken(): Promise<AuthToken | null> {
   const tokenPath = AUTH_TOKEN_PATH;
   if (await fs.pathExists(tokenPath)) {
     try {
-      return (await fs.readJson(tokenPath)) as AuthToken;
+      const encryptedData = await fs.readFile(tokenPath, 'utf-8');
+
+      // Check if this is an old unencrypted token (for backward compatibility)
+      if (encryptedData.trim().startsWith('{')) {
+        console.warn('Found unencrypted token, re-encrypting for security...');
+        const oldToken = JSON.parse(encryptedData) as AuthToken;
+        await storeToken(oldToken); // Re-store with encryption
+        return oldToken;
+      }
+
+      return decryptToken(encryptedData);
     } catch {
+      console.warn('Failed to decrypt stored token, removing invalid token file');
+      await clearStoredToken();
       return null;
     }
   }
@@ -57,7 +192,13 @@ export async function getStoredToken(): Promise<AuthToken | null> {
 
 export async function storeToken(token: AuthToken): Promise<void> {
   const tokenPath = AUTH_TOKEN_PATH;
-  await fs.writeJson(tokenPath, token, { spaces: 2 });
+  const encryptedToken = encryptToken(token);
+
+  // Ensure the directory exists
+  await fs.ensureDir(path.dirname(tokenPath));
+
+  // Write encrypted token with restrictive permissions
+  await fs.writeFile(tokenPath, encryptedToken, { mode: 0o600 });
 }
 
 export async function clearStoredToken(): Promise<void> {
@@ -84,7 +225,7 @@ export async function refreshToken(token: string): Promise<AuthToken> {
     throw new Error(`Token refresh failed: ${response.statusText}`);
   }
 
-  return (await response.json()) as AuthToken;
+  return validateAuthToken(await response.json());
 }
 
 // eslint-disable-next-line no-unused-vars
@@ -153,7 +294,7 @@ function handleOAuthCallback(
     return;
   }
 
-  if (returnedState !== state) {
+  if (!validateOAuthState(returnedState ?? '', state)) {
     sendErrorResponse(res, 'Invalid state parameter', server, reject);
     return;
   }
@@ -180,13 +321,21 @@ function startOAuthServer(callbackPort: number, state: string, authUrl: string):
       });
     });
 
-    // Timeout after 5 minutes
+    // Warning at 2 minutes
+    setTimeout(
+      () => {
+        console.log(chalk.yellow('⚠️  Authentication timeout in 1 minute...'));
+      },
+      2 * 60 * 1000
+    );
+
+    // Timeout after 3 minutes
     setTimeout(
       () => {
         server.close();
         reject(new Error('Authentication timeout'));
       },
-      5 * 60 * 1000
+      3 * 60 * 1000
     );
   });
 }
@@ -242,7 +391,7 @@ async function exchangeCodeForToken(
     throw new Error(`Token exchange failed: ${tokenResponse.statusText}`);
   }
 
-  const token: AuthToken = (await tokenResponse.json()) as AuthToken;
+  const token: AuthToken = validateAuthToken(await tokenResponse.json());
   await storeToken(token);
   return token.access_token;
 }

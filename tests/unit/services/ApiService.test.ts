@@ -16,9 +16,20 @@ jest.mock('../../../src/utils/api.ts', () => ({
   isLocalDev: mockIsLocalDev,
 }));
 
-// Mock node-fetch
-const mockFetch = jest.fn();
-jest.mock('node-fetch', () => mockFetch);
+// Mock SecureHttpClient
+const mockGet = jest.fn();
+const mockPost = jest.fn();
+const mockPut = jest.fn();
+const mockDelete = jest.fn();
+
+jest.mock('../../../src/utils/secureHttp.ts', () => ({
+  SecureHttpClient: {
+    get: mockGet,
+    post: mockPost,
+    put: mockPut,
+    delete: mockDelete,
+  },
+}));
 
 // Import ApiService after setting up mocks
 import { ApiService } from '../../../src/services/ApiService.js';
@@ -28,7 +39,7 @@ describe('ApiService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Reset mock implementations
     mockGetApiConfig.mockReturnValue({
       baseUrl: 'https://api.test.com',
@@ -36,10 +47,13 @@ describe('ApiService', () => {
       tokenUrl: 'https://api.commands.com/oauth/token',
       clientId: 'claude-stacks-cli',
     });
-    
+
     mockIsLocalDev.mockReturnValue(false);
-    mockFetch.mockReset();
-    
+    mockGet.mockReset();
+    mockPost.mockReset();
+    mockPut.mockReset();
+    mockDelete.mockReset();
+
     apiService = new ApiService();
   });
 
@@ -60,7 +74,7 @@ describe('ApiService', () => {
   describe('getConfig', () => {
     it('should return a copy of the current configuration', () => {
       const config = apiService.getConfig();
-      
+
       expect(config).toEqual({
         baseUrl: 'https://api.test.com',
         authUrl: 'https://api.commands.com/oauth/authorize',
@@ -97,7 +111,7 @@ describe('ApiService', () => {
     };
 
     it('should successfully fetch a stack', async () => {
-      mockFetch.mockResolvedValue({
+      mockGet.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue(mockStack),
       });
@@ -105,50 +119,45 @@ describe('ApiService', () => {
       const result = await apiService.fetchStack('test-org/test-stack', 'test-token');
 
       expect(result).toEqual(mockStack);
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.test.com/v1/stacks/test-org/test-stack',
-        {
-          headers: {
-            Authorization: 'Bearer test-token',
-            'User-Agent': 'claude-stacks-cli/1.0.0',
-            Accept: 'application/json',
-          },
-        }
-      );
+      expect(mockGet).toHaveBeenCalledWith('https://api.test.com/v1/stacks/test-org/test-stack', {
+        Authorization: 'Bearer test-token',
+        'User-Agent': 'claude-stacks-cli/1.0.0',
+        Accept: 'application/json',
+      });
     });
 
     it('should handle API errors with response text', async () => {
-      mockFetch.mockResolvedValue({
+      mockGet.mockResolvedValue({
         ok: false,
         status: 404,
         statusText: 'Not Found',
         text: jest.fn().mockResolvedValue('Stack not found'),
       });
 
-      await expect(
-        apiService.fetchStack('test-org/nonexistent', 'test-token')
-      ).rejects.toThrow('Failed to fetch stack: 404 Not Found\nStack not found');
+      await expect(apiService.fetchStack('test-org/nonexistent', 'test-token')).rejects.toThrow(
+        'Failed to fetch stack: 404 Not Found\nStack not found'
+      );
     });
 
     it('should handle API errors without response text', async () => {
-      mockFetch.mockResolvedValue({
+      mockGet.mockResolvedValue({
         ok: false,
         status: 500,
         statusText: 'Internal Server Error',
         text: jest.fn().mockRejectedValue(new Error('Parse error')),
       });
 
-      await expect(
-        apiService.fetchStack('test-org/error-stack', 'test-token')
-      ).rejects.toThrow('Failed to fetch stack: 500 Internal Server Error\nUnknown error');
+      await expect(apiService.fetchStack('test-org/error-stack', 'test-token')).rejects.toThrow(
+        'Failed to fetch stack: 500 Internal Server Error\nUnknown error'
+      );
     });
 
     it('should handle network errors', async () => {
-      mockFetch.mockRejectedValue(new Error('Network error'));
+      mockGet.mockRejectedValue(new Error('Network error'));
 
-      await expect(
-        apiService.fetchStack('test-org/test-stack', 'test-token')
-      ).rejects.toThrow('Network error');
+      await expect(apiService.fetchStack('test-org/test-stack', 'test-token')).rejects.toThrow(
+        'Network error'
+      );
     });
   });
 
@@ -165,7 +174,7 @@ describe('ApiService', () => {
     };
 
     it('should successfully publish a new stack', async () => {
-      mockFetch.mockResolvedValue({
+      mockPost.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue(mockResponse),
       });
@@ -173,60 +182,52 @@ describe('ApiService', () => {
       const result = await apiService.publishStack(mockPayload, 'test-token');
 
       expect(result).toEqual(mockResponse);
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.test.com/v1/stacks',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer test-token',
-            'User-Agent': 'claude-stacks-cli/1.0.0',
-          },
-          body: JSON.stringify(mockPayload),
-        }
-      );
+      expect(mockPost).toHaveBeenCalledWith('https://api.test.com/v1/stacks', mockPayload, {
+        Authorization: 'Bearer test-token',
+        'User-Agent': 'claude-stacks-cli/1.0.0',
+      });
     });
 
     it('should successfully update an existing stack', async () => {
-      mockFetch.mockResolvedValue({
+      mockPut.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue(mockResponse),
       });
 
-      const result = await apiService.publishStack(mockPayload, 'test-token', 'test-org/test-stack');
+      const result = await apiService.publishStack(
+        mockPayload,
+        'test-token',
+        'test-org/test-stack'
+      );
 
       expect(result).toEqual(mockResponse);
-      expect(mockFetch).toHaveBeenCalledWith(
+      expect(mockPut).toHaveBeenCalledWith(
         'https://api.test.com/v1/stacks/test-org/test-stack',
+        mockPayload,
         {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer test-token',
-            'User-Agent': 'claude-stacks-cli/1.0.0',
-          },
-          body: JSON.stringify(mockPayload),
+          Authorization: 'Bearer test-token',
+          'User-Agent': 'claude-stacks-cli/1.0.0',
         }
       );
     });
 
     it('should handle publish errors', async () => {
-      mockFetch.mockResolvedValue({
+      mockPost.mockResolvedValue({
         ok: false,
         status: 400,
         statusText: 'Bad Request',
         text: jest.fn().mockResolvedValue('Invalid payload'),
       });
 
-      await expect(
-        apiService.publishStack(mockPayload, 'test-token')
-      ).rejects.toThrow('Upload failed: 400 Bad Request\nInvalid payload');
+      await expect(apiService.publishStack(mockPayload, 'test-token')).rejects.toThrow(
+        'Upload failed: 400 Bad Request\nInvalid payload'
+      );
     });
   });
 
   describe('deleteStack', () => {
     it('should successfully delete a stack', async () => {
-      mockFetch.mockResolvedValue({
+      mockDelete.mockResolvedValue({
         ok: true,
       });
 
@@ -234,20 +235,17 @@ describe('ApiService', () => {
         apiService.deleteStack('test-org/test-stack', 'test-token')
       ).resolves.toBeUndefined();
 
-      expect(mockFetch).toHaveBeenCalledWith(
+      expect(mockDelete).toHaveBeenCalledWith(
         'https://api.test.com/v1/stacks/test-org/test-stack',
         {
-          method: 'DELETE',
-          headers: {
-            Authorization: 'Bearer test-token',
-            'User-Agent': 'claude-stacks-cli/1.0.0',
-          },
+          Authorization: 'Bearer test-token',
+          'User-Agent': 'claude-stacks-cli/1.0.0',
         }
       );
     });
 
     it('should handle delete errors', async () => {
-      mockFetch.mockResolvedValue({
+      mockDelete.mockResolvedValue({
         ok: false,
         status: 403,
         statusText: 'Forbidden',
@@ -269,30 +267,30 @@ describe('ApiService', () => {
     };
 
     it('should successfully rename a stack', async () => {
-      mockFetch.mockResolvedValue({
+      mockPut.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue(mockRenameResponse),
       });
 
-      const result = await apiService.renameStack('test-org/old-stack-name', 'New Stack Name', 'test-token');
+      const result = await apiService.renameStack(
+        'test-org/old-stack-name',
+        'New Stack Name',
+        'test-token'
+      );
 
       expect(result).toEqual(mockRenameResponse);
-      expect(mockFetch).toHaveBeenCalledWith(
+      expect(mockPut).toHaveBeenCalledWith(
         'https://api.test.com/v1/stacks/test-org/old-stack-name/title',
+        { title: 'New Stack Name' },
         {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer test-token',
-            'User-Agent': 'claude-stacks-cli/1.0.0',
-          },
-          body: JSON.stringify({ title: 'New Stack Name' }),
+          Authorization: 'Bearer test-token',
+          'User-Agent': 'claude-stacks-cli/1.0.0',
         }
       );
     });
 
     it('should handle rename errors', async () => {
-      mockFetch.mockResolvedValue({
+      mockPut.mockResolvedValue({
         ok: false,
         status: 422,
         statusText: 'Unprocessable Entity',
@@ -308,9 +306,9 @@ describe('ApiService', () => {
   describe('updateConfig', () => {
     it('should update configuration partially', () => {
       const originalConfig = apiService.getConfig();
-      
+
       apiService.updateConfig({ baseUrl: 'https://localhost:3000' });
-      
+
       const updatedConfig = apiService.getConfig();
       expect(updatedConfig).toEqual({
         ...originalConfig,

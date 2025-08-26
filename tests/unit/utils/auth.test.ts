@@ -5,7 +5,10 @@ jest.mock('fs-extra', () => ({
   pathExists: jest.fn(),
   readJson: jest.fn(),
   writeJson: jest.fn(),
+  writeFile: jest.fn(),
+  readFile: jest.fn(),
   remove: jest.fn(),
+  ensureDir: jest.fn(),
 }));
 
 // Mock node-fetch
@@ -18,6 +21,13 @@ jest.mock('node-fetch', () => ({
 jest.mock('crypto', () => ({
   randomBytes: jest.fn(),
   createHash: jest.fn(),
+  scryptSync: jest.fn(),
+  pbkdf2Sync: jest.fn(),
+  createCipher: jest.fn(),
+  createDecipher: jest.fn(),
+  createCipheriv: jest.fn(),
+  createDecipheriv: jest.fn(),
+  timingSafeEqual: jest.fn(),
 }));
 
 // Mock http
@@ -201,7 +211,7 @@ describe('Auth Utility Functions', () => {
 
       const result = generatePKCE();
 
-      expect(mockedCrypto.randomBytes).toHaveBeenCalledWith(32);
+      expect(mockedCrypto.randomBytes).toHaveBeenCalledWith(96);
       expect(mockedCrypto.createHash).toHaveBeenCalledWith('sha256');
       expect(mockHash.update).toHaveBeenCalledWith(mockRandomBytes.toString('base64url'));
       expect(mockHash.digest).toHaveBeenCalledWith('base64url');
@@ -247,6 +257,35 @@ describe('Auth Utility Functions', () => {
   });
 
   describe('getStoredToken', () => {
+    beforeEach(() => {
+      // Reset crypto mocks to working state for these tests
+      mockedCrypto.randomBytes.mockImplementation((size: number) => {
+        if (size === 16) {
+          return Buffer.from('6d6f636b2d73746174652d313662797465', 'hex');
+        }
+        return Buffer.from('mock-bytes', 'utf8');
+      });
+
+      const mockCipher = {
+        update: jest.fn().mockReturnValue('encrypted'),
+        final: jest.fn().mockReturnValue('data'),
+      };
+      const mockDecipher = {
+        update: jest
+          .fn()
+          .mockReturnValue(
+            `{"access_token":"decrypted_token","refresh_token":"decrypted_refresh","expires_at":${Math.floor(Date.now() / 1000) + 3600}`
+          ),
+        final: jest.fn().mockReturnValue(',"token_type":"Bearer"}'),
+      };
+
+      mockedCrypto.scryptSync.mockReturnValue(
+        Buffer.from('mock-key-32-chars-long-for-aes256', 'utf8')
+      );
+      mockedCrypto.createCipher.mockReturnValue(mockCipher as any);
+      mockedCrypto.createDecipher.mockReturnValue(mockDecipher as any);
+    });
+
     it('should return null when token file does not exist', async () => {
       mockedFs.pathExists.mockResolvedValue(false);
 
@@ -258,30 +297,36 @@ describe('Auth Utility Functions', () => {
       );
     });
 
-    it('should return token when file exists and contains valid data', async () => {
+    it('should return token when file exists and contains valid encrypted data', async () => {
       mockedFs.pathExists.mockResolvedValue(true);
-      mockedFs.readJson.mockResolvedValue(mockAuthToken);
+      mockedFs.readFile.mockResolvedValue('6d6f636b2d73746174652d313662797465:encrypteddata');
 
       const result = await getStoredToken();
 
-      expect(result).toEqual(mockAuthToken);
-      expect(mockedFs.readJson).toHaveBeenCalledWith(
-        expect.stringContaining('.claude-stacks-auth.json')
+      expect(result).toEqual({
+        access_token: 'decrypted_token',
+        refresh_token: 'decrypted_refresh',
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        token_type: 'Bearer',
+      });
+      expect(mockedFs.readFile).toHaveBeenCalledWith(
+        expect.stringContaining('.claude-stacks-auth.json'),
+        'utf-8'
       );
     });
 
-    it('should return null when file exists but contains invalid JSON', async () => {
+    it('should return null when file exists but contains invalid encrypted data', async () => {
       mockedFs.pathExists.mockResolvedValue(true);
-      mockedFs.readJson.mockRejectedValue(new Error('Invalid JSON'));
+      mockedFs.readFile.mockResolvedValue('invalid-encrypted-data');
 
       const result = await getStoredToken();
 
       expect(result).toBeNull();
     });
 
-    it('should return null when readJson throws any error', async () => {
+    it('should return null when readFile throws any error', async () => {
       mockedFs.pathExists.mockResolvedValue(true);
-      mockedFs.readJson.mockRejectedValue(new Error('Permission denied'));
+      mockedFs.readFile.mockRejectedValue(new Error('Permission denied'));
 
       const result = await getStoredToken();
 
@@ -296,21 +341,77 @@ describe('Auth Utility Functions', () => {
   });
 
   describe('storeToken', () => {
+    beforeEach(() => {
+      // Reset crypto mocks to working state for these tests
+      mockedCrypto.randomBytes.mockImplementation((size: number) => {
+        if (size === 16) {
+          return Buffer.from('6d6f636b2d73746174652d313662797465', 'hex');
+        }
+        if (size === 32) {
+          // SALT_LENGTH
+          return Buffer.from('mock-salt-32-chars-long-for-testing', 'utf8');
+        }
+        return Buffer.from('mock-bytes', 'utf8');
+      });
+
+      // Mock PBKDF2 for new encryption
+      mockedCrypto.pbkdf2Sync.mockReturnValue(
+        Buffer.from('mock-pbkdf2-key-32-chars-for-testing', 'utf8')
+      );
+
+      // Mock GCM cipher for new encryption
+      const mockGcmCipher = {
+        update: jest.fn().mockReturnValue(Buffer.from('encrypted-gcm', 'utf8')),
+        final: jest.fn().mockReturnValue(Buffer.from('final-gcm', 'utf8')),
+        getAuthTag: jest.fn().mockReturnValue(Buffer.from('mock-auth-tag-16b', 'utf8')),
+      };
+      const mockGcmDecipher = {
+        setAuthTag: jest.fn(),
+        update: jest.fn().mockReturnValue('{"access_token":"mock"}'),
+        final: jest.fn().mockReturnValue(''),
+      };
+
+      // Mock CBC cipher for legacy encryption
+      const mockCipher = {
+        update: jest.fn().mockReturnValue('encrypted'),
+        final: jest.fn().mockReturnValue('data'),
+      };
+      const mockDecipher = {
+        update: jest.fn().mockReturnValue('decrypted'),
+        final: jest.fn().mockReturnValue('data'),
+      };
+
+      mockedCrypto.scryptSync.mockReturnValue(
+        Buffer.from('mock-key-32-chars-long-for-aes256', 'utf8')
+      );
+
+      // Set up new cipher methods
+      mockedCrypto.createCipheriv.mockReturnValue(mockGcmCipher as any);
+      mockedCrypto.createDecipheriv.mockReturnValue(mockGcmDecipher as any);
+
+      // Keep legacy cipher methods for backward compatibility
+      mockedCrypto.createCipher.mockReturnValue(mockCipher as any);
+      mockedCrypto.createDecipher.mockReturnValue(mockDecipher as any);
+    });
+
     it('should store token successfully', async () => {
-      mockedFs.writeJson.mockResolvedValue(undefined);
+      mockedFs.ensureDir.mockResolvedValue(undefined);
+      mockedFs.writeFile.mockResolvedValue(undefined);
 
       await storeToken(mockAuthToken);
 
-      expect(mockedFs.writeJson).toHaveBeenCalledWith(
+      // New v2 format: version:salt:iv:authTag:encrypted
+      expect(mockedFs.writeFile).toHaveBeenCalledWith(
         expect.stringContaining('.claude-stacks-auth.json'),
-        mockAuthToken,
-        { spaces: 2 }
+        expect.stringMatching(/^v2:.*:.*:.*:.*$/), // v2 format pattern
+        { mode: 0o600 }
       );
     });
 
-    it('should handle writeJson errors', async () => {
+    it('should handle writeFile errors', async () => {
       const error = new Error('Write failed');
-      mockedFs.writeJson.mockRejectedValue(error);
+      mockedFs.ensureDir.mockResolvedValue(undefined);
+      mockedFs.writeFile.mockRejectedValue(error);
 
       await expect(storeToken(mockAuthToken)).rejects.toThrow('Write failed');
     });
@@ -320,14 +421,16 @@ describe('Auth Utility Functions', () => {
         access_token: 'minimal_token',
       };
 
-      mockedFs.writeJson.mockResolvedValue(undefined);
+      mockedFs.ensureDir.mockResolvedValue(undefined);
+      mockedFs.writeFile.mockResolvedValue(undefined);
 
       await storeToken(minimalToken);
 
-      expect(mockedFs.writeJson).toHaveBeenCalledWith(
+      // New v2 format: version:salt:iv:authTag:encrypted
+      expect(mockedFs.writeFile).toHaveBeenCalledWith(
         expect.stringContaining('.claude-stacks-auth.json'),
-        minimalToken,
-        { spaces: 2 }
+        expect.stringMatching(/^v2:.*:.*:.*:.*$/), // v2 format pattern
+        { mode: 0o600 }
       );
     });
   });
@@ -459,6 +562,79 @@ describe('Auth Utility Functions', () => {
     let originalSetTimeout: typeof global.setTimeout;
 
     beforeEach(() => {
+      // Reset all fs mocks to ensure clean state
+      mockedFs.pathExists.mockResolvedValue(false);
+      mockedFs.readFile.mockResolvedValue('');
+      mockedFs.writeFile.mockResolvedValue(undefined);
+      mockedFs.ensureDir.mockResolvedValue(undefined);
+      mockedFs.remove.mockResolvedValue(undefined);
+
+      // Reset crypto mocks to working state for these tests
+      mockedCrypto.randomBytes.mockImplementation((size: number) => {
+        if (size === 96) {
+          return Buffer.from('mock-random-bytes-32-characters', 'utf8'); // For PKCE code verifier
+        }
+        if (size === 16) {
+          return Buffer.from('6d6f636b2d73746174652d313662797465', 'hex'); // For state and IV
+        }
+        if (size === 32) {
+          // SALT_LENGTH
+          return Buffer.from('mock-salt-32-chars-long-for-testing', 'utf8');
+        }
+        return Buffer.from('mock-bytes', 'utf8');
+      });
+
+      // Mock PBKDF2 for new encryption
+      mockedCrypto.pbkdf2Sync.mockReturnValue(
+        Buffer.from('mock-pbkdf2-key-32-chars-for-testing', 'utf8')
+      );
+
+      const mockHash = {
+        update: jest.fn().mockReturnThis(),
+        digest: jest.fn().mockReturnValue(Buffer.from('mock-challenge', 'utf8')),
+      };
+
+      // Mock GCM cipher for new encryption
+      const mockGcmCipher = {
+        update: jest.fn().mockReturnValue(Buffer.from('encrypted-gcm', 'utf8')),
+        final: jest.fn().mockReturnValue(Buffer.from('final-gcm', 'utf8')),
+        getAuthTag: jest.fn().mockReturnValue(Buffer.from('mock-auth-tag-16b', 'utf8')),
+      };
+      const mockGcmDecipher = {
+        setAuthTag: jest.fn(),
+        update: jest.fn().mockReturnValue('{"access_token":"mock"}'),
+        final: jest.fn().mockReturnValue(''),
+      };
+
+      // Mock CBC cipher for legacy encryption
+      const mockCipher = {
+        update: jest.fn().mockReturnValue('encrypted'),
+        final: jest.fn().mockReturnValue('data'),
+      };
+
+      const mockDecipher = {
+        update: jest
+          .fn()
+          .mockReturnValue(
+            `{"access_token":"decrypted_token","refresh_token":"decrypted_refresh","expires_at":${Math.floor(Date.now() / 1000) + 3600}`
+          ),
+        final: jest.fn().mockReturnValue(',"token_type":"Bearer"}'),
+      };
+
+      mockedCrypto.createHash.mockReturnValue(mockHash as any);
+      mockedCrypto.scryptSync.mockReturnValue(
+        Buffer.from('mock-key-32-chars-long-for-aes256', 'utf8')
+      );
+
+      // Set up new cipher methods
+      mockedCrypto.createCipheriv.mockReturnValue(mockGcmCipher as any);
+      mockedCrypto.createDecipheriv.mockReturnValue(mockGcmDecipher as any);
+
+      // Keep legacy cipher methods for backward compatibility
+      mockedCrypto.createCipher.mockReturnValue(mockCipher as any);
+      mockedCrypto.createDecipher.mockReturnValue(mockDecipher as any);
+      mockedCrypto.timingSafeEqual.mockReturnValue(true);
+
       // Mock server setup
       mockServer = {
         listen: jest.fn((port: number, callback: () => void) => {
@@ -475,23 +651,6 @@ describe('Auth Utility Functions', () => {
         (mockServer as any).requestHandler = requestHandler;
         return mockServer as any;
       });
-
-      // Mock crypto
-      const mockRandomBytes = Buffer.from('mock-random-bytes-32-characters', 'utf8');
-      const mockHash = {
-        update: jest.fn().mockReturnThis(),
-        digest: jest.fn().mockReturnValue(Buffer.from('mock-challenge', 'utf8')),
-      };
-
-      mockedCrypto.randomBytes.mockImplementation((size: number) => {
-        if (size === 32) {
-          return mockRandomBytes; // For PKCE code verifier
-        }
-        // For state (16 bytes) - return hex-compatible bytes that will match the expected state
-        return Buffer.from('6d6f636b2d73746174652d313662797465', 'hex'); // 'mock-state-16bytes' in hex
-      });
-
-      mockedCrypto.createHash.mockReturnValue(mockHash as any);
 
       // Mock open
       mockedOpen.mockResolvedValue({ pid: 123 } as any);
@@ -510,17 +669,32 @@ describe('Auth Utility Functions', () => {
 
     it('should return existing valid token without authentication', async () => {
       mockedFs.pathExists.mockResolvedValue(true);
-      mockedFs.readJson.mockResolvedValue(mockAuthToken);
+      mockedFs.readFile.mockResolvedValue('6d6f636b2d73746174652d313662797465:encrypteddata');
 
       const result = await authenticate();
 
-      expect(result).toBe(mockAuthToken.access_token);
+      expect(result).toBe('decrypted_token');
       expect(mockedOpen).not.toHaveBeenCalled();
     });
 
     it('should refresh expired token successfully', async () => {
+      // Mock expired encrypted token
+      const expiredMockDecipher = {
+        update: jest
+          .fn()
+          .mockReturnValue(
+            '{"access_token":"expired_access_token","refresh_token":"mock_refresh_token_67890","expires_at":'
+          ),
+        final: jest
+          .fn()
+          .mockReturnValue(`${Math.floor(Date.now() / 1000) - 3600},"token_type":"Bearer"}`),
+      };
+      mockedCrypto.createDecipher.mockReturnValue(expiredMockDecipher as any);
+
       mockedFs.pathExists.mockResolvedValue(true);
-      mockedFs.readJson.mockResolvedValue(expiredAuthToken);
+      mockedFs.readFile.mockResolvedValue(
+        '6d6f636b2d73746174652d313662797465:expiredencrypteddata'
+      );
 
       const mockRefreshResponse = {
         ok: true,
@@ -529,7 +703,8 @@ describe('Auth Utility Functions', () => {
       };
 
       mockedFetch.mockResolvedValue(mockRefreshResponse as any);
-      mockedFs.writeJson.mockResolvedValue(undefined);
+      mockedFs.ensureDir.mockResolvedValue(undefined);
+      mockedFs.writeFile.mockResolvedValue(undefined);
 
       const result = await authenticate();
 
@@ -540,15 +715,16 @@ describe('Auth Utility Functions', () => {
           method: 'POST',
           body: new URLSearchParams({
             grant_type: 'refresh_token',
-            refresh_token: expiredAuthToken.refresh_token!,
+            refresh_token: 'mock_refresh_token_67890',
             client_id: 'claude-stacks-cli',
           }),
         })
       );
-      expect(mockedFs.writeJson).toHaveBeenCalledWith(
+      // New v2 format: version:salt:iv:authTag:encrypted
+      expect(mockedFs.writeFile).toHaveBeenCalledWith(
         expect.stringContaining('.claude-stacks-auth.json'),
-        refreshedToken,
-        { spaces: 2 }
+        expect.stringMatching(/^v2:.*:.*:.*:.*$/), // v2 format pattern
+        { mode: 0o600 }
       );
     });
 
@@ -563,7 +739,8 @@ describe('Auth Utility Functions', () => {
       };
 
       mockedFetch.mockResolvedValue(mockTokenResponse as any);
-      mockedFs.writeJson.mockResolvedValue(undefined);
+      mockedFs.ensureDir.mockResolvedValue(undefined);
+      mockedFs.writeFile.mockResolvedValue(undefined);
 
       // Start authentication and immediately trigger callback
       const authPromise = authenticate();
@@ -699,7 +876,8 @@ describe('Auth Utility Functions', () => {
       };
 
       mockedFetch.mockResolvedValue(mockTokenResponse as any);
-      mockedFs.writeJson.mockResolvedValue(undefined);
+      mockedFs.ensureDir.mockResolvedValue(undefined);
+      mockedFs.writeFile.mockResolvedValue(undefined);
 
       // Start authentication and simulate OAuth callback
       const authPromise = authenticate();
@@ -727,9 +905,74 @@ describe('Auth Utility Functions', () => {
   });
 
   describe('Edge Cases and Error Handling', () => {
+    beforeEach(() => {
+      // Reset all fs mocks to ensure clean state
+      mockedFs.pathExists.mockResolvedValue(false);
+      mockedFs.readFile.mockResolvedValue('');
+      mockedFs.writeFile.mockResolvedValue(undefined);
+      mockedFs.ensureDir.mockResolvedValue(undefined);
+      mockedFs.remove.mockResolvedValue(undefined);
+
+      // Reset crypto mocks to working state for these tests
+      mockedCrypto.randomBytes.mockImplementation((size: number) => {
+        if (size === 16) {
+          return Buffer.from('6d6f636b2d73746174652d313662797465', 'hex');
+        }
+        if (size === 32) {
+          // SALT_LENGTH
+          return Buffer.from('mock-salt-32-chars-long-for-testing', 'utf8');
+        }
+        return Buffer.from('mock-bytes', 'utf8');
+      });
+
+      // Mock PBKDF2 for new encryption
+      mockedCrypto.pbkdf2Sync.mockReturnValue(
+        Buffer.from('mock-pbkdf2-key-32-chars-for-testing', 'utf8')
+      );
+
+      // Mock GCM cipher for new encryption
+      const mockGcmCipher = {
+        update: jest.fn().mockReturnValue(Buffer.from('encrypted-gcm', 'utf8')),
+        final: jest.fn().mockReturnValue(Buffer.from('final-gcm', 'utf8')),
+        getAuthTag: jest.fn().mockReturnValue(Buffer.from('mock-auth-tag-16b', 'utf8')),
+      };
+      const mockGcmDecipher = {
+        setAuthTag: jest.fn(),
+        update: jest.fn().mockReturnValue('{"access_token":"mock"}'),
+        final: jest.fn().mockReturnValue(''),
+      };
+
+      // Mock CBC cipher for legacy encryption
+      const mockCipher = {
+        update: jest.fn().mockReturnValue('encrypted'),
+        final: jest.fn().mockReturnValue('data'),
+      };
+      const mockDecipher = {
+        update: jest
+          .fn()
+          .mockReturnValue(
+            `{"access_token":"decrypted_token","refresh_token":"decrypted_refresh","expires_at":${Math.floor(Date.now() / 1000) + 3600}`
+          ),
+        final: jest.fn().mockReturnValue(',"token_type":"Bearer"}'),
+      };
+
+      mockedCrypto.scryptSync.mockReturnValue(
+        Buffer.from('mock-key-32-chars-long-for-aes256', 'utf8')
+      );
+
+      // Set up new cipher methods
+      mockedCrypto.createCipheriv.mockReturnValue(mockGcmCipher as any);
+      mockedCrypto.createDecipheriv.mockReturnValue(mockGcmDecipher as any);
+
+      // Keep legacy cipher methods for backward compatibility
+      mockedCrypto.createCipher.mockReturnValue(mockCipher as any);
+      mockedCrypto.createDecipher.mockReturnValue(mockDecipher as any);
+    });
+
     it('should handle concurrent token storage operations', async () => {
       let writeCallCount = 0;
-      mockedFs.writeJson.mockImplementation(async () => {
+      mockedFs.ensureDir.mockResolvedValue(undefined);
+      mockedFs.writeFile.mockImplementation(async () => {
         writeCallCount++;
         await new Promise(resolve => setTimeout(resolve, 10)); // Simulate async operation
         return undefined;
@@ -745,12 +988,12 @@ describe('Auth Utility Functions', () => {
       await Promise.all([promise1, promise2]);
 
       expect(writeCallCount).toBe(2);
-      expect(mockedFs.writeJson).toHaveBeenCalledTimes(2);
+      expect(mockedFs.writeFile).toHaveBeenCalledTimes(2);
     });
 
     it('should handle concurrent token retrieval operations', async () => {
       mockedFs.pathExists.mockResolvedValue(true);
-      mockedFs.readJson.mockResolvedValue(mockAuthToken);
+      mockedFs.readFile.mockResolvedValue('6d6f636b2d73746174652d313662797465:encrypteddata');
 
       const promise1 = getStoredToken();
       const promise2 = getStoredToken();
@@ -758,18 +1001,25 @@ describe('Auth Utility Functions', () => {
 
       const results = await Promise.all([promise1, promise2, promise3]);
 
-      expect(results).toEqual([mockAuthToken, mockAuthToken, mockAuthToken]);
-      expect(mockedFs.readJson).toHaveBeenCalledTimes(3);
+      const expectedToken = {
+        access_token: 'decrypted_token',
+        refresh_token: 'decrypted_refresh',
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        token_type: 'Bearer',
+      };
+
+      expect(results).toEqual([expectedToken, expectedToken, expectedToken]);
+      expect(mockedFs.readFile).toHaveBeenCalledTimes(3);
     });
 
     it('should handle malformed token data gracefully', async () => {
       mockedFs.pathExists.mockResolvedValue(true);
-      mockedFs.readJson.mockResolvedValue({ invalid: 'token format' });
+      mockedFs.readFile.mockResolvedValue('invalid-encrypted-data');
 
       const result = await getStoredToken();
 
-      // Should still return the malformed data (type system should catch this)
-      expect(result).toEqual({ invalid: 'token format' });
+      // Should return null for malformed encrypted data
+      expect(result).toBeNull();
     });
 
     it('should handle extremely large port numbers', async () => {
@@ -793,17 +1043,25 @@ describe('Auth Utility Functions', () => {
     });
 
     it('should handle token without expiry time', async () => {
-      const tokenWithoutExpiry: AuthToken = {
-        access_token: 'no_expiry_token',
-        refresh_token: 'refresh_token',
+      // Mock decrypted token without expiry
+      const noExpiryMockDecipher = {
+        update: jest
+          .fn()
+          .mockReturnValue('{"access_token":"no_expiry_token","refresh_token":"refresh_token"'),
+        final: jest.fn().mockReturnValue(',"token_type":"Bearer"}'),
       };
+      mockedCrypto.createDecipher.mockReturnValue(noExpiryMockDecipher as any);
 
       mockedFs.pathExists.mockResolvedValue(true);
-      mockedFs.readJson.mockResolvedValue(tokenWithoutExpiry);
+      mockedFs.readFile.mockResolvedValue('6d6f636b2d73746174652d313662797465:encrypteddata');
 
-      // The token should be considered invalid due to missing/zero expires_at
+      // The token should be returned even without expires_at
       const result = await getStoredToken();
-      expect(result).toEqual(tokenWithoutExpiry);
+      expect(result).toEqual({
+        access_token: 'no_expiry_token',
+        refresh_token: 'refresh_token',
+        token_type: 'Bearer',
+      });
     });
   });
 
