@@ -45,7 +45,7 @@ export class ListAction extends BaseAction {
     }
   }
 
-  private async listLocalStacks(): Promise<DeveloperStack[]> {
+  public async listLocalStacks(): Promise<DeveloperStack[]> {
     const stacksDir = STACKS_PATH;
 
     if (!(await fs.pathExists(stacksDir))) {
@@ -121,8 +121,7 @@ export class ListAction extends BaseAction {
 // Export the standalone function that was used in list.ts for other parts of the codebase
 export async function listLocalStacks(): Promise<DeveloperStack[]> {
   const listActionInstance = new ListAction();
-  // Access private method through type assertion for compatibility
-  return (listActionInstance as any).listLocalStacks();
+  return listActionInstance.listLocalStacks();
 }
 
 // Create instance for backward compatibility

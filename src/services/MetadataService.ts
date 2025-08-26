@@ -67,7 +67,7 @@ export class MetadataService {
     if (!result) return null;
 
     return {
-      projectPath: (result as any).path, // Handle different property name
+      projectPath: result.path,
       metadata: result.metadata,
     };
   }

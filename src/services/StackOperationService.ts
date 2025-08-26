@@ -5,7 +5,6 @@ import { STACKS_PATH } from '../constants/paths.js';
 import type {
   DeveloperStack,
   InstallOptions,
-
   RestoreOptions,
   StackAgent,
   StackCommand,
@@ -13,16 +12,6 @@ import type {
 } from '../types/index.js';
 import type { UIService } from './UIService.js';
 import type { DependencyService } from './DependencyService.js';
-import type { FileService } from './FileService.js';
-
-/**
- * Configuration interface for Claude projects
- */
-interface ProjectConfig {
-  [key: string]: unknown;
-}
-
-
 
 /**
  * Service for shared stack operations
@@ -36,9 +25,8 @@ interface ProjectConfig {
  */
 export class StackOperationService {
   constructor(
-    private readonly ui: UIService,
-    private readonly dependencies: DependencyService,
-    private readonly fileService: FileService
+    private readonly ui: UIService, // eslint-disable-line no-unused-vars
+    private readonly dependencies: DependencyService // eslint-disable-line no-unused-vars
   ) {}
 
   /**
@@ -76,7 +64,7 @@ export class StackOperationService {
    */
   async performRestore(stackFilePath: string, options: RestoreOptions = {}): Promise<void> {
     const resolvedPath = await this.resolveStackPath(stackFilePath);
-    const stack: DeveloperStack = await fs.readJson(resolvedPath);
+    const stack = (await fs.readJson(resolvedPath)) as DeveloperStack;
 
     this.ui.info(`📦 Restoring stack: ${this.ui.colorStackName(stack.name)}`);
     this.ui.log(`Description: ${this.ui.colorDescription(stack.description)}\n`);
@@ -129,92 +117,93 @@ export class StackOperationService {
    * Restore stack components based on options
    */
   private async restoreComponents(stack: DeveloperStack, options: RestoreOptions): Promise<void> {
-    const { globalOnly, localOnly, overwrite } = options;
+    await this.restoreCommandComponents(stack, options);
+    await this.restoreAgentComponents(stack, options);
+    await this.restoreOtherComponents(stack);
+  }
 
-    // Restore global commands
+  private async restoreCommandComponents(
+    stack: DeveloperStack,
+    options: RestoreOptions
+  ): Promise<void> {
+    const { globalOnly, localOnly } = options;
+
     if (!localOnly && stack.commands) {
       const globalCommands = stack.commands.filter(cmd => !cmd.filePath?.startsWith('./.claude'));
       if (globalCommands.length > 0) {
-        await this.restoreGlobalCommands(globalCommands, overwrite);
+        await this.restoreGlobalCommands(globalCommands);
       }
     }
 
-    // Restore local commands
     if (!globalOnly && stack.commands) {
       const localCommands = stack.commands.filter(cmd => cmd.filePath?.startsWith('./.claude'));
       if (localCommands.length > 0) {
-        await this.restoreLocalCommands(localCommands, overwrite);
+        await this.restoreLocalCommands(localCommands);
       }
-    }
-
-    // Restore global agents
-    if (!localOnly && stack.agents) {
-      const globalAgents = stack.agents.filter(agent => !agent.filePath?.startsWith('./.claude'));
-      if (globalAgents.length > 0) {
-        await this.restoreGlobalAgents(globalAgents, overwrite);
-      }
-    }
-
-    // Restore local agents
-    if (!globalOnly && stack.agents) {
-      const localAgents = stack.agents.filter(agent => agent.filePath?.startsWith('./.claude'));
-      if (localAgents.length > 0) {
-        await this.restoreLocalAgents(localAgents, overwrite);
-      }
-    }
-
-    // Restore MCP servers
-    if (stack.mcpServers && stack.mcpServers.length > 0) {
-      await this.restoreMcpServers(stack.mcpServers, overwrite);
-    }
-
-    // Restore settings
-    if (stack.settings && Object.keys(stack.settings).length > 0) {
-      await this.restoreSettings(stack.settings, overwrite);
-    }
-
-    // Restore Claude.md files
-    if (stack.claudeMd) {
-      await this.restoreClaudeMdFiles(stack.claudeMd, options, overwrite);
     }
   }
 
-  private async restoreGlobalCommands(
-    commands: StackCommand[],
-    overwrite?: boolean
+  private async restoreAgentComponents(
+    stack: DeveloperStack,
+    options: RestoreOptions
   ): Promise<void> {
+    const { globalOnly, localOnly } = options;
+
+    if (!localOnly && stack.agents) {
+      const globalAgents = stack.agents.filter(agent => !agent.filePath?.startsWith('./.claude'));
+      if (globalAgents.length > 0) {
+        await this.restoreGlobalAgents(globalAgents);
+      }
+    }
+
+    if (!globalOnly && stack.agents) {
+      const localAgents = stack.agents.filter(agent => agent.filePath?.startsWith('./.claude'));
+      if (localAgents.length > 0) {
+        await this.restoreLocalAgents(localAgents);
+      }
+    }
+  }
+
+  private async restoreOtherComponents(stack: DeveloperStack): Promise<void> {
+    if (stack.mcpServers && stack.mcpServers.length > 0) {
+      await this.restoreMcpServers(stack.mcpServers);
+    }
+
+    if (stack.settings && Object.keys(stack.settings).length > 0) {
+      await this.restoreSettings();
+    }
+
+    if (stack.claudeMd) {
+      await this.restoreClaudeMdFiles();
+    }
+  }
+
+  private async restoreGlobalCommands(commands: StackCommand[]): Promise<void> {
     // Implementation would go here - for now, just log
     this.ui.info(`📝 Restoring ${commands.length} global command(s)...`);
   }
 
-  private async restoreLocalCommands(commands: StackCommand[], overwrite?: boolean): Promise<void> {
+  private async restoreLocalCommands(commands: StackCommand[]): Promise<void> {
     this.ui.info(`📝 Restoring ${commands.length} local command(s)...`);
   }
 
-  private async restoreGlobalAgents(agents: StackAgent[], overwrite?: boolean): Promise<void> {
+  private async restoreGlobalAgents(agents: StackAgent[]): Promise<void> {
     this.ui.info(`🤖 Restoring ${agents.length} global agent(s)...`);
   }
 
-  private async restoreLocalAgents(agents: StackAgent[], overwrite?: boolean): Promise<void> {
+  private async restoreLocalAgents(agents: StackAgent[]): Promise<void> {
     this.ui.info(`🤖 Restoring ${agents.length} local agent(s)...`);
   }
 
-  private async restoreMcpServers(servers: StackMcpServer[], overwrite?: boolean): Promise<void> {
+  private async restoreMcpServers(servers: StackMcpServer[]): Promise<void> {
     this.ui.info(`🔌 Restoring ${servers.length} MCP server(s)...`);
   }
 
-  private async restoreSettings(
-    settings: Record<string, unknown>,
-    overwrite?: boolean
-  ): Promise<void> {
+  private async restoreSettings(): Promise<void> {
     this.ui.info(`⚙️  Restoring settings...`);
   }
 
-  private async restoreClaudeMdFiles(
-    claudeMd: any,
-    options: RestoreOptions,
-    overwrite?: boolean
-  ): Promise<void> {
+  private async restoreClaudeMdFiles(): Promise<void> {
     this.ui.info(`📄 Restoring Claude.md files...`);
   }
 
@@ -246,23 +235,35 @@ export class StackOperationService {
     const { globalOnly, localOnly } = options;
 
     return {
-      globalCommands:
-        !localOnly && stack.commands
-          ? stack.commands.filter(cmd => !cmd.filePath?.startsWith('./.claude')).length
-          : 0,
-      localCommands:
-        !globalOnly && stack.commands
-          ? stack.commands.filter(cmd => cmd.filePath?.startsWith('./.claude')).length
-          : 0,
-      globalAgents:
-        !localOnly && stack.agents
-          ? stack.agents.filter(agent => !agent.filePath?.startsWith('./.claude')).length
-          : 0,
-      localAgents:
-        !globalOnly && stack.agents
-          ? stack.agents.filter(agent => agent.filePath?.startsWith('./.claude')).length
-          : 0,
+      globalCommands: this.countGlobalCommands(stack, localOnly),
+      localCommands: this.countLocalCommands(stack, globalOnly),
+      globalAgents: this.countGlobalAgents(stack, localOnly),
+      localAgents: this.countLocalAgents(stack, globalOnly),
       mcpServers: stack.mcpServers?.length ?? 0,
     };
+  }
+
+  private countGlobalCommands(stack: DeveloperStack, localOnly: boolean): number {
+    return !localOnly && stack.commands
+      ? stack.commands.filter(cmd => !cmd.filePath?.startsWith('./.claude')).length
+      : 0;
+  }
+
+  private countLocalCommands(stack: DeveloperStack, globalOnly: boolean): number {
+    return !globalOnly && stack.commands
+      ? stack.commands.filter(cmd => cmd.filePath?.startsWith('./.claude')).length
+      : 0;
+  }
+
+  private countGlobalAgents(stack: DeveloperStack, localOnly: boolean): number {
+    return !localOnly && stack.agents
+      ? stack.agents.filter(agent => !agent.filePath?.startsWith('./.claude')).length
+      : 0;
+  }
+
+  private countLocalAgents(stack: DeveloperStack, globalOnly: boolean): number {
+    return !globalOnly && stack.agents
+      ? stack.agents.filter(agent => agent.filePath?.startsWith('./.claude')).length
+      : 0;
   }
 }

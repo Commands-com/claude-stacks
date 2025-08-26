@@ -48,21 +48,35 @@ export abstract class BaseAction {
   protected readonly stackOperations: StackOperationService;
 
   constructor(services?: ActionServices) {
-    // Initialize services - use provided ones or create defaults
+    this.initializeCoreServices(services);
+    this.stackService = this.initializeStackService(services);
+    this.stackOperations = this.initializeStackOperations(services);
+  }
+
+  private initializeCoreServices(services?: ActionServices): void {
+    this.initializeBasicServices(services);
+    this.initializeDependentServices(services);
+  }
+
+  private initializeBasicServices(services?: ActionServices): void {
     this.ui = services?.ui ?? new UIService();
     this.auth = services?.auth ?? new AuthService();
     this.api = services?.api ?? new ApiService();
     this.metadata = services?.metadata ?? new MetadataService();
+  }
+
+  private initializeDependentServices(services?: ActionServices): void {
     this.dependencies = services?.dependencies ?? new DependencyService();
     this.fileService = services?.fileService ?? new FileService();
     this.configService = services?.configService ?? new ConfigService();
-    this.stackService =
-      services?.stackService ?? new StackService(this.fileService, this.configService);
+  }
 
-    // Stack operations service depends on other services
-    this.stackOperations =
-      services?.stackOperations ??
-      new StackOperationService(this.ui, this.dependencies, this.fileService);
+  private initializeStackService(services?: ActionServices): StackService {
+    return services?.stackService ?? new StackService(this.fileService, this.configService);
+  }
+
+  private initializeStackOperations(services?: ActionServices): StackOperationService {
+    return services?.stackOperations ?? new StackOperationService(this.ui, this.dependencies);
   }
 
   /**
@@ -83,7 +97,7 @@ export abstract class BaseAction {
   /**
    * Execute the action - must be implemented by subclasses
    */
-  abstract execute(...args: unknown[]): Promise<void>;
+  abstract execute(...args: unknown[]): Promise<void>; // eslint-disable-line no-unused-vars
 
   /**
    * Get the action name for logging and debugging
@@ -97,7 +111,7 @@ export abstract class BaseAction {
    */
   protected logActionStart(description?: string): void {
     const actionName = this.getActionName();
-    const message = description || `Starting ${actionName} action`;
+    const message = description ?? `Starting ${actionName} action`;
     this.ui.info(message);
   }
 
