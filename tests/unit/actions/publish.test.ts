@@ -742,8 +742,6 @@ describe('publishAction', () => {
 
       mockFs.readJson.mockResolvedValue(stack);
 
-      await publishAction();
-
       await expect(publishAction()).rejects.toThrow('Metadata load error');
 
       expect(mockConsoleError).toHaveBeenCalledWith('Publish failed:', 'Metadata load error');
