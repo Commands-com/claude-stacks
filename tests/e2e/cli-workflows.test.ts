@@ -86,6 +86,14 @@ describe('CLI End-to-End Workflows', () => {
         testProjectDir
       );
 
+      if (result.exitCode !== 0) {
+        console.error('CLI failed with stderr:', result.stderr);
+        console.error('CLI stdout:', result.stdout);
+      }
+      if (result.exitCode !== 0) {
+        console.error('CLI failed with stderr:', result.stderr);
+        console.error('CLI stdout:', result.stdout);
+      }
       expect(result.exitCode).toBe(0);
       expect(result.stderr).toBe('');
 
@@ -134,6 +142,10 @@ describe('CLI End-to-End Workflows', () => {
         testProjectDir
       );
 
+      if (result.exitCode !== 0) {
+        console.error('CLI failed with stderr:', result.stderr);
+        console.error('CLI stdout:', result.stdout);
+      }
       expect(result.exitCode).toBe(0);
 
       // Verify stack was created
@@ -174,6 +186,10 @@ describe('CLI End-to-End Workflows', () => {
         testProjectDir
       );
 
+      if (exportResult.exitCode !== 0) {
+        console.error('CLI failed with stderr:', exportResult.stderr);
+        console.error('CLI stdout:', exportResult.stdout);
+      }
       expect(exportResult.exitCode).toBe(0);
 
       // Now try to restore in a different directory
@@ -216,6 +232,10 @@ describe('CLI End-to-End Workflows', () => {
       // Test list command (it's interactive, so we send empty input to exit)
       const result = await runCliCommand(['list'], testProjectDir, 5000, '\n');
 
+      if (result.exitCode !== 0) {
+        console.error('CLI failed with stderr:', result.stderr);
+        console.error('CLI stdout:', result.stdout);
+      }
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('Test Stack One');
       expect(result.stdout).toContain('Test Stack Two');
@@ -226,6 +246,10 @@ describe('CLI End-to-End Workflows', () => {
       // Test list command works correctly regardless of directory state
       const result = await runCliCommand(['list'], testProjectDir, 5000, '\n');
 
+      if (result.exitCode !== 0) {
+        console.error('CLI failed with stderr:', result.stderr);
+        console.error('CLI stdout:', result.stdout);
+      }
       expect(result.exitCode).toBe(0);
       // Should either show stacks or handle empty directory gracefully
       expect(result.stdout).toMatch(/Found \d+ local stack|No stacks found/);
@@ -290,6 +314,10 @@ describe('CLI End-to-End Workflows', () => {
 
       const duration = Date.now() - start;
 
+      if (result.exitCode !== 0) {
+        console.error('CLI failed with stderr:', result.stderr);
+        console.error('CLI stdout:', result.stdout);
+      }
       expect(result.exitCode).toBe(0);
       expect(duration).toBeLessThan(5000); // Should complete within 5 seconds
     });
@@ -303,15 +331,24 @@ describe('CLI End-to-End Workflows', () => {
     stdinInput?: string
   ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
     return new Promise((resolve, reject) => {
+      const testEnv = {
+        ...process.env,
+        NODE_ENV: 'test',
+        CLAUDE_STACKS_TEST_MODE: 'true',
+        // Explicitly pass the test stacks path to ensure it's available in CI
+        CLAUDE_STACKS_TEST_STACKS_PATH: process.env.CLAUDE_STACKS_TEST_STACKS_PATH || '',
+      };
+      
+      // Debug logging for CI
+      if (process.env.CI) {
+        console.log('CLI command:', 'node', [cliPath, ...args]);
+        console.log('Working directory:', cwd);
+        console.log('Test stacks path:', testEnv.CLAUDE_STACKS_TEST_STACKS_PATH);
+      }
+      
       const child = spawn('node', [cliPath, ...args], {
         cwd,
-        env: {
-          ...process.env,
-          NODE_ENV: 'test',
-          CLAUDE_STACKS_TEST_MODE: 'true',
-          // Explicitly pass the test stacks path to ensure it's available in CI
-          CLAUDE_STACKS_TEST_STACKS_PATH: process.env.CLAUDE_STACKS_TEST_STACKS_PATH || '',
-        },
+        env: testEnv,
       });
 
       let stdout = '';
