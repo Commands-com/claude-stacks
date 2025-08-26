@@ -22,6 +22,12 @@ export function readSingleChar(prompt: string): Promise<string> {
 
       // Handle Ctrl+C
       if (key === '\u0003') {
+        // In test environment, resolve with empty string instead of exiting
+        if (process.env.NODE_ENV === 'test') {
+          process.stdout.write('\n');
+          resolve('');
+          return;
+        }
         process.exit(0);
       }
 

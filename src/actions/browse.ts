@@ -690,10 +690,23 @@ export async function browseAction(): Promise<void> {
       }
     }
   } catch (error) {
-    console.error(
-      ui.colorError('Browse failed:'),
-      error instanceof Error ? error.message : String(error)
-    );
-    process.exit(1);
+    handleBrowseError(error);
   }
+}
+
+/**
+ * Handle browse action errors consistently
+ */
+function handleBrowseError(error: unknown): never {
+  console.error(
+    ui.colorError('Browse failed:'),
+    error instanceof Error ? error.message : String(error)
+  );
+
+  // In test environment, throw error instead of exiting
+  if (process.env.NODE_ENV === 'test') {
+    throw new Error(error instanceof Error ? error.message : String(error));
+  }
+
+  process.exit(1);
 }

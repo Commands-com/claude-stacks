@@ -321,22 +321,25 @@ function startOAuthServer(callbackPort: number, state: string, authUrl: string):
       });
     });
 
-    // Warning at 2 minutes
-    setTimeout(
-      () => {
-        console.log(chalk.yellow('⚠️  Authentication timeout in 1 minute...'));
-      },
-      2 * 60 * 1000
-    );
+    // Skip timeouts in test environment
+    if (process.env.NODE_ENV !== 'test') {
+      // Warning at 2 minutes
+      setTimeout(
+        () => {
+          console.log(chalk.yellow('⚠️  Authentication timeout in 1 minute...'));
+        },
+        2 * 60 * 1000
+      );
 
-    // Timeout after 3 minutes
-    setTimeout(
-      () => {
-        server.close();
-        reject(new Error('Authentication timeout'));
-      },
-      3 * 60 * 1000
-    );
+      // Timeout after 3 minutes
+      setTimeout(
+        () => {
+          server.close();
+          reject(new Error('Authentication timeout'));
+        },
+        3 * 60 * 1000
+      );
+    }
   });
 }
 

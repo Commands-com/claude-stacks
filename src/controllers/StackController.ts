@@ -149,6 +149,11 @@ export class StackController {
           break;
       }
 
+      // In test environment, throw error instead of exiting
+      if (process.env.NODE_ENV === 'test') {
+        throw error;
+      }
+
       // Exit with error code for CLI
       process.exit(1);
     } else {
@@ -171,6 +176,11 @@ export class StackController {
       }
     } else {
       console.error(colors.meta(`   ${String(error)}`));
+    }
+
+    // In test environment, throw error instead of exiting
+    if (process.env.NODE_ENV === 'test') {
+      throw new Error(error instanceof Error ? error.message : String(error));
     }
 
     process.exit(1);

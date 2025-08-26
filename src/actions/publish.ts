@@ -79,6 +79,12 @@ export async function publishAction(
       ui.colorError('Publish failed:'),
       error instanceof Error ? error.message : String(error)
     );
+
+    // In test environment, throw error instead of exiting
+    if (process.env.NODE_ENV === 'test') {
+      throw new Error(error instanceof Error ? error.message : String(error));
+    }
+
     process.exit(1);
   }
 }
