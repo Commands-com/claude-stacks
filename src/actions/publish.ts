@@ -331,21 +331,29 @@ interface DisplayResultParams {
   stackPayload: StackPayload;
 }
 
-function displayPublishResult(params: DisplayResultParams): void {
-  const { result, stackId, stack, isUpdate, options, stackPayload } = params;
-  console.log(
-    ui.colorSuccess(`✅ Stack ${isUpdate ? 'content updated' : 'published'} successfully!`)
-  );
-  console.log(ui.colorMeta(`  Stack ID: ${stackId}`));
-  console.log(ui.colorMeta(`  URL: ${result.url ?? `https://commands.com/stacks/${stackId}`}`));
-  console.log(ui.colorMeta(`  Version: ${stack.version}`));
+function calculateComponentCount(stackPayload: StackPayload): number {
   const commandCount = stackPayload.commands?.length ?? 0;
   const agentCount = stackPayload.agents?.length ?? 0;
-  console.log(ui.colorMeta(`  Components: ${commandCount + agentCount} items`));
+  const mcpServerCount = stackPayload.mcpServers?.length ?? 0;
+  return commandCount + agentCount + mcpServerCount;
+}
+
+function displayPublishResult(params: DisplayResultParams): void {
+  const { result, stackId, stack, isUpdate, options, stackPayload } = params;
+  const successMessage = isUpdate ? 'content updated' : 'published';
+  const url = result.url ?? `https://commands.com/stacks/${stackId}`;
+  const componentCount = calculateComponentCount(stackPayload);
+
+  console.log(ui.colorSuccess(`✅ Stack ${successMessage} successfully!`));
+  console.log(ui.colorMeta(`  Stack ID: ${stackId}`));
+  console.log(ui.colorMeta(`  URL: ${url}`));
+  console.log(ui.colorMeta(`  Version: ${stack.version}`));
+  console.log(ui.colorMeta(`  Components: ${componentCount} items`));
 
   if (isUpdate) {
     console.log(ui.colorMeta(`  📝 Name/description preserved from website`));
   } else {
-    console.log(ui.colorMeta(`  Visibility: ${options.public ? 'Public' : 'Private'}`));
+    const visibility = options.public ? 'Public' : 'Private';
+    console.log(ui.colorMeta(`  Visibility: ${visibility}`));
   }
 }

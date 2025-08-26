@@ -37,15 +37,15 @@ export interface ActionServices {
  * @public
  */
 export abstract class BaseAction {
-  protected readonly ui: UIService;
-  protected readonly auth: AuthService;
-  protected readonly api: ApiService;
-  protected readonly metadata: MetadataService;
-  protected readonly dependencies: DependencyService;
-  protected readonly fileService: FileService;
-  protected readonly configService: ConfigService;
-  protected readonly stackService: StackService;
-  protected readonly stackOperations: StackOperationService;
+  protected ui!: UIService;
+  protected auth!: AuthService;
+  protected api!: ApiService;
+  protected metadata!: MetadataService;
+  protected dependencies!: DependencyService;
+  protected fileService!: FileService;
+  protected configService!: ConfigService;
+  protected stackService!: StackService;
+  protected stackOperations!: StackOperationService;
 
   constructor(services?: ActionServices) {
     this.initializeCoreServices(services);

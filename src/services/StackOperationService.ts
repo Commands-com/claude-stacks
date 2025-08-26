@@ -235,10 +235,10 @@ export class StackOperationService {
     const { globalOnly, localOnly } = options;
 
     return {
-      globalCommands: this.countGlobalCommands(stack, localOnly),
-      localCommands: this.countLocalCommands(stack, globalOnly),
-      globalAgents: this.countGlobalAgents(stack, localOnly),
-      localAgents: this.countLocalAgents(stack, globalOnly),
+      globalCommands: this.countGlobalCommands(stack, localOnly ?? false),
+      localCommands: this.countLocalCommands(stack, globalOnly ?? false),
+      globalAgents: this.countGlobalAgents(stack, localOnly ?? false),
+      localAgents: this.countLocalAgents(stack, globalOnly ?? false),
       mcpServers: stack.mcpServers?.length ?? 0,
     };
   }

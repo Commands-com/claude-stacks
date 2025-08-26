@@ -322,6 +322,51 @@ async function collectMcpServers(): Promise<StackMcpServer[]> {
   }
 }
 
+async function createBaseStack(options: {
+  name: string;
+  description: string;
+  version: string;
+  currentDir: string;
+  publishedMeta: { stack_id: string; last_published_version: string } | null;
+}): Promise<DeveloperStack> {
+  return {
+    name: options.name,
+    description: options.description,
+    version: options.version,
+    commands: [],
+    agents: [],
+    mcpServers: [],
+    settings: {},
+    metadata: {
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      exported_from: options.currentDir,
+      // Include published metadata if it exists to maintain publish continuity
+      ...(options.publishedMeta && {
+        published_stack_id: options.publishedMeta.stack_id,
+        published_version: options.publishedMeta.last_published_version,
+      }),
+    },
+  };
+}
+
+async function populateStackComponents(
+  stack: DeveloperStack,
+  includeGlobal: boolean
+): Promise<void> {
+  const [commandsMap, agentsMap, settings, mcpServers] = await Promise.all([
+    collectCommands(includeGlobal),
+    collectAgents(includeGlobal),
+    collectSettings(includeGlobal),
+    collectMcpServers(),
+  ]);
+
+  stack.commands = Array.from(commandsMap.values());
+  stack.agents = Array.from(agentsMap.values());
+  stack.settings = settings;
+  stack.mcpServers = mcpServers;
+}
+
 async function exportCurrentStack(options: {
   name?: string;
   description?: string;
@@ -330,39 +375,11 @@ async function exportCurrentStack(options: {
   stackVersion?: string;
 }): Promise<DeveloperStack> {
   const currentDir = process.cwd();
-
-  // Generate stack metadata using helper function
   const { name, description, version } = await generateStackMetadata(options);
+  const publishedMeta = await metadata.getPublishedStackMetadata(currentDir);
 
-  // Create base stack object
-  const stack: DeveloperStack = {
-    name,
-    description,
-    version,
-    commands: [],
-    agents: [],
-    mcpServers: [],
-    settings: {},
-    metadata: {
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      exported_from: currentDir,
-    },
-  };
-
-  // Collect all components using helper functions
-  const [commandsMap, agentsMap, settings, mcpServers] = await Promise.all([
-    collectCommands(options.includeGlobal ?? false),
-    collectAgents(options.includeGlobal ?? false),
-    collectSettings(options.includeGlobal ?? false),
-    collectMcpServers(),
-  ]);
-
-  // Convert maps to arrays and assign to stack
-  stack.commands = Array.from(commandsMap.values());
-  stack.agents = Array.from(agentsMap.values());
-  stack.settings = settings;
-  stack.mcpServers = mcpServers;
+  const stack = await createBaseStack({ name, description, version, currentDir, publishedMeta });
+  await populateStackComponents(stack, options.includeGlobal ?? false);
 
   return stack;
 }

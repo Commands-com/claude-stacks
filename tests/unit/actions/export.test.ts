@@ -541,6 +541,31 @@ describe('Export Action', () => {
       // );
     });
 
+    it('should preserve published metadata in exported stack for update continuity', async () => {
+      const { getPublishedStackMetadata } = require('../../../src/utils/metadata.js');
+
+      getPublishedStackMetadata.mockResolvedValue({
+        stack_id: 'test-org/test-stack',
+        stack_name: 'published-stack',
+        last_published_version: '1.2.0',
+        last_published_at: '2023-01-01T00:00:00Z',
+      });
+
+      await exportAction('test.json', {});
+
+      expect(fs.writeJson).toHaveBeenCalledWith(
+        '/home/.claude/stacks/test.json',
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            published_stack_id: 'test-org/test-stack',
+            published_version: '1.2.0',
+            exported_from: '/test/project',
+          }),
+        }),
+        { spaces: 2 }
+      );
+    });
+
     // Validation error tests moved to export-errors.test.ts
 
     it('should use valid custom version', async () => {
