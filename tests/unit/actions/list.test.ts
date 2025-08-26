@@ -26,6 +26,7 @@ jest.mock('path', () => ({
 // Mock constants
 jest.mock('../../../src/constants/paths.js', () => ({
   STACKS_PATH: '/test/.claude/stacks',
+  getStacksPath: jest.fn(() => '/test/.claude/stacks'),
 }));
 
 // Mock UI menus
@@ -147,7 +148,7 @@ describe('list', () => {
     // Default mock implementations
     mockBasename.mockImplementation((pathStr: string) => pathStr.split('/').pop() || '');
     mockJoin.mockImplementation((...args: string[]) => args.join('/'));
-    
+
     mockPathExists.mockResolvedValue(true);
     mockReaddir.mockResolvedValue([]);
     mockReadJson.mockResolvedValue({});
@@ -462,7 +463,7 @@ describe('list', () => {
       await listAction();
 
       expect(mockConsoleError).toHaveBeenCalledWith(
-        'Error:', 
+        'Error:',
         'Invalid selection. Please enter a number between 1 and 1'
       );
       expect(mockShowLocalStackDetailsAndActions).not.toHaveBeenCalled();
@@ -484,7 +485,7 @@ describe('list', () => {
       await listAction();
 
       expect(mockConsoleError).toHaveBeenCalledWith(
-        'Error:', 
+        'Error:',
         'Invalid selection. Please enter a number between 1 and 1'
       );
       expect(mockShowLocalStackDetailsAndActions).not.toHaveBeenCalled();
@@ -549,7 +550,9 @@ describe('list', () => {
       await listAction();
 
       expect(mockConsoleLog).toHaveBeenCalledWith('Found 1 local stack(s):\n');
-      expect(mockConsoleLog).toHaveBeenCalledWith('1. complex-stack (complex.json) - v3.2.1, 8 items');
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        '1. complex-stack (complex.json) - v3.2.1, 8 items'
+      );
     });
   });
 });

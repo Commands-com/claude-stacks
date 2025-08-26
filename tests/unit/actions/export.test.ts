@@ -23,6 +23,7 @@ jest.mock('../../../src/utils/colors.js', () => ({
 jest.mock('../../../src/constants/paths.js', () => ({
   CLAUDE_JSON_PATH: '/home/.claude.json',
   STACKS_PATH: '/home/.claude/stacks',
+  getStacksPath: jest.fn(() => '/home/.claude/stacks'),
   getGlobalCommandsDir: jest.fn(() => '/home/.claude/commands'),
   getGlobalAgentsDir: jest.fn(() => '/home/.claude/agents'),
   getGlobalSettingsPath: jest.fn(() => '/home/.claude/settings.json'),
@@ -78,6 +79,7 @@ describe('Export Action', () => {
 
     // Re-setup path mocks to ensure they work correctly
     const pathConstants = require('../../../src/constants/paths.js');
+    pathConstants.getStacksPath = jest.fn(() => '/home/.claude/stacks');
     pathConstants.STACKS_PATH = '/home/.claude/stacks';
     pathConstants.getLocalCommandsDir = jest.fn(() => '/project/.claude/commands');
     pathConstants.getLocalAgentsDir = jest.fn(() => '/project/.claude/agents');

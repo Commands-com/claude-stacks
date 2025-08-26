@@ -14,5 +14,9 @@ export default async function globalSetup(): Promise<void> {
   process.env.CLAUDE_STACKS_CONFIG_DIR = join(testTmpDir, '.claude-stacks');
   process.env.CLAUDE_STACKS_CACHE_DIR = join(testTmpDir, '.cache');
 
+  // Create a global test stacks directory for e2e tests
+  const testStacksDir = await mkdtemp(join(testTmpDir, '.claude-test-stacks-'));
+  process.env.CLAUDE_STACKS_TEST_STACKS_PATH = testStacksDir;
+
   console.log('Test setup complete. Temporary directory:', testTmpDir);
 }

@@ -5,7 +5,22 @@ import * as os from 'os';
  * Central configuration for all file paths used by Claude Stacks CLI
  */
 export const CLAUDE_CONFIG_PATH = path.join(os.homedir(), '.claude');
-export const STACKS_PATH = path.join(CLAUDE_CONFIG_PATH, 'stacks');
+
+/**
+ * Get the stacks directory path, with support for test environment override
+ * @returns Path to the stacks directory
+ */
+function getStacksPath(): string {
+  // Allow test environment to override the stacks path
+  if (process.env.CLAUDE_STACKS_TEST_STACKS_PATH) {
+    return process.env.CLAUDE_STACKS_TEST_STACKS_PATH;
+  }
+  return path.join(CLAUDE_CONFIG_PATH, 'stacks');
+}
+
+// Export function for dynamic resolution and static constant
+export { getStacksPath };
+export const STACKS_PATH = getStacksPath();
 export const CONFIG_FILE = path.join(CLAUDE_CONFIG_PATH, 'config.json');
 
 // Additional frequently used paths
@@ -29,7 +44,7 @@ export const METADATA_FILE_PATH = path.join(CLAUDE_CONFIG_PATH, '.claude-stacks-
  * @public
  */
 export function getStackPath(stackName: string): string {
-  return path.join(STACKS_PATH, stackName);
+  return path.join(getStacksPath(), stackName);
 }
 
 /**

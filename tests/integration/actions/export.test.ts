@@ -41,6 +41,7 @@ jest.mock('node-fetch');
 jest.mock('../../../src/constants/paths.js', () => ({
   CLAUDE_JSON_PATH: '/test/.claude_desktop_config.json',
   STACKS_PATH: '/test/.claude/stacks',
+  getStacksPath: jest.fn(() => '/test/.claude/stacks'),
   getGlobalAgentsDir: jest.fn(() => '/test/.claude/agents'),
   getGlobalCommandsDir: jest.fn(() => '/test/.claude/commands'),
   getGlobalSettingsPath: jest.fn(() => '/test/.claude/settings.json'),

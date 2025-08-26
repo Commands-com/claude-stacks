@@ -1,5 +1,5 @@
 import * as path from 'path';
-import { STACKS_PATH, getStackMetadataPath, getStackPath } from '../constants/paths.js';
+import { getStackMetadataPath, getStackPath, getStacksPath } from '../constants/paths.js';
 import type {
   CreateStackArgs,
   DeleteStackArgs,
@@ -159,11 +159,11 @@ export class StackService {
    */
   async listStacks(): Promise<StackResult<DeveloperStack[]>> {
     try {
-      if (!(await this.fileService.exists(STACKS_PATH))) {
+      if (!(await this.fileService.exists(getStacksPath()))) {
         return { success: true, data: [] };
       }
 
-      const stackDirs = await this.fileService.listFiles(STACKS_PATH);
+      const stackDirs = await this.fileService.listFiles(getStacksPath());
 
       const stackPromises = stackDirs.map(async dirName => {
         try {

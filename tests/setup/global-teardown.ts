@@ -11,4 +11,10 @@ export default async function globalTeardown(): Promise<void> {
       console.warn('Failed to cleanup test directory:', testTmpDir, error);
     }
   }
+
+  // Clean up test environment variables
+  delete process.env.CLAUDE_STACKS_TEST_STACKS_PATH;
+  delete process.env.CLAUDE_STACKS_TEST_TMP_DIR;
+  delete process.env.CLAUDE_STACKS_CONFIG_DIR;
+  delete process.env.CLAUDE_STACKS_CACHE_DIR;
 }

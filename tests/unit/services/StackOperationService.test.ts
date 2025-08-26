@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, jest, afterEach } from '@jest/globals';
-import type { 
-  DeveloperStack, 
-  InstallOptions, 
+import type {
+  DeveloperStack,
+  InstallOptions,
   RestoreOptions,
   StackCommand,
   StackAgent,
-  StackMcpServer 
+  StackMcpServer,
 } from '../../../src/types/index.js';
 
 // Mock external dependencies
@@ -30,8 +30,9 @@ jest.mock('path', () => ({
   isAbsolute: jest.fn((p: string) => p.startsWith('/')),
 }));
 
-jest.mock('../../../src/constants/paths.ts', () => ({
+jest.mock('../../../src/constants/paths.js', () => ({
   STACKS_PATH: '/test/stacks',
+  getStacksPath: jest.fn(() => '/test/stacks'),
 }));
 
 // Mock services
@@ -71,7 +72,7 @@ describe('StackOperationService', () => {
         filePath: '/global/commands/global-cmd.md',
       },
       {
-        name: 'local-cmd', 
+        name: 'local-cmd',
         description: 'Local command',
         filePath: './.claude/commands/local-cmd.md',
       },
@@ -84,7 +85,7 @@ describe('StackOperationService', () => {
       },
       {
         name: 'local-agent',
-        description: 'Local agent', 
+        description: 'Local agent',
         filePath: './.claude/agents/local-agent.md',
       },
     ],
@@ -134,6 +135,10 @@ describe('StackOperationService', () => {
     // Re-setup os mocks to ensure they work correctly
     const os = require('os');
     os.tmpdir = jest.fn(() => '/tmp');
+
+    // Re-setup paths mocks to ensure they work correctly
+    const pathConstants = require('../../../src/constants/paths.js');
+    pathConstants.getStacksPath = jest.fn(() => '/test/stacks');
 
     // Re-setup UI mocks to ensure they work correctly
     mockUI.info.mockReset();
@@ -190,17 +195,17 @@ describe('StackOperationService', () => {
     it('should throw error when file does not exist', async () => {
       mockPathExists.mockResolvedValue(false);
 
-      await expect(
-        stackOperationService.resolveStackPath('nonexistent.json')
-      ).rejects.toThrow('Stack file not found: /test/stacks/nonexistent.json');
+      await expect(stackOperationService.resolveStackPath('nonexistent.json')).rejects.toThrow(
+        'Stack file not found: /test/stacks/nonexistent.json'
+      );
     });
 
     it('should handle pathExists errors', async () => {
       mockPathExists.mockRejectedValue(new Error('Access denied'));
 
-      await expect(
-        stackOperationService.resolveStackPath('stack.json')
-      ).rejects.toThrow('Access denied');
+      await expect(stackOperationService.resolveStackPath('stack.json')).rejects.toThrow(
+        'Access denied'
+      );
     });
   });
 
@@ -243,9 +248,9 @@ describe('StackOperationService', () => {
     it('should handle dependency check errors', async () => {
       mockDependencies.checkMcpDependencies.mockRejectedValue(new Error('Check failed'));
 
-      await expect(
-        stackOperationService.checkDependencies(mockStack)
-      ).rejects.toThrow('Check failed');
+      await expect(stackOperationService.checkDependencies(mockStack)).rejects.toThrow(
+        'Check failed'
+      );
     });
   });
 
@@ -301,9 +306,9 @@ describe('StackOperationService', () => {
     it('should handle file read errors', async () => {
       mockReadJson.mockRejectedValue(new Error('File read error'));
 
-      await expect(
-        stackOperationService.performRestore('test-stack.json')
-      ).rejects.toThrow('File read error');
+      await expect(stackOperationService.performRestore('test-stack.json')).rejects.toThrow(
+        'File read error'
+      );
     });
 
     it('should handle stack without various components', async () => {
@@ -316,7 +321,9 @@ describe('StackOperationService', () => {
 
       await stackOperationService.performRestore('minimal-stack.json');
 
-      expect(mockUI.success).toHaveBeenCalledWith('\n✅ Stack "minimal-stack" restored successfully!');
+      expect(mockUI.success).toHaveBeenCalledWith(
+        '\n✅ Stack "minimal-stack" restored successfully!'
+      );
     });
 
     it('should restore MCP servers when present', async () => {
@@ -352,12 +359,7 @@ describe('StackOperationService', () => {
       const stackId = 'test-org/test-stack';
       const options: InstallOptions = {};
 
-      await stackOperationService.performInstallation(
-        mockStack,
-        mockRemoteStack,
-        stackId,
-        options
-      );
+      await stackOperationService.performInstallation(mockStack, mockRemoteStack, stackId, options);
 
       expect(mockWriteJson).toHaveBeenCalledWith(
         '/tmp/remote-stack-test-org-test-stack.json',
@@ -393,12 +395,7 @@ describe('StackOperationService', () => {
       mockReadJson.mockRejectedValue(new Error('Installation failed'));
 
       await expect(
-        stackOperationService.performInstallation(
-          mockStack,
-          mockRemoteStack,
-          stackId,
-          options
-        )
+        stackOperationService.performInstallation(mockStack, mockRemoteStack, stackId, options)
       ).rejects.toThrow('Installation failed');
 
       expect(mockRemove).toHaveBeenCalledWith('/tmp/remote-stack-test-org-test-stack.json');
@@ -409,12 +406,7 @@ describe('StackOperationService', () => {
       const options: InstallOptions = {};
       mockRemove.mockRejectedValue(new Error('Cleanup failed'));
 
-      await stackOperationService.performInstallation(
-        mockStack,
-        mockRemoteStack,
-        stackId,
-        options
-      );
+      await stackOperationService.performInstallation(mockStack, mockRemoteStack, stackId, options);
 
       // Should complete successfully despite cleanup error
       expect(mockUI.success).toHaveBeenCalledWith(
@@ -428,12 +420,7 @@ describe('StackOperationService', () => {
       mockWriteJson.mockRejectedValue(new Error('Write failed'));
 
       await expect(
-        stackOperationService.performInstallation(
-          mockStack,
-          mockRemoteStack,
-          stackId,
-          options
-        )
+        stackOperationService.performInstallation(mockStack, mockRemoteStack, stackId, options)
       ).rejects.toThrow('Write failed');
     });
 
@@ -441,12 +428,7 @@ describe('StackOperationService', () => {
       const stackId = 'test-org/test-stack/v1.0.0';
       const options: InstallOptions = {};
 
-      await stackOperationService.performInstallation(
-        mockStack,
-        mockRemoteStack,
-        stackId,
-        options
-      );
+      await stackOperationService.performInstallation(mockStack, mockRemoteStack, stackId, options);
 
       expect(mockWriteJson).toHaveBeenCalledWith(
         '/tmp/remote-stack-test-org-test-stack-v1.0.0.json',
@@ -538,19 +520,14 @@ describe('StackOperationService', () => {
     it('should handle complete installation workflow', async () => {
       const stackId = 'integration/test-stack';
       const options: InstallOptions = { force: true };
-      
+
       mockWriteJson.mockResolvedValue(undefined);
       mockPathExists.mockResolvedValue(true);
       mockReadJson.mockResolvedValue(mockStack);
       mockDependencies.checkMcpDependencies.mockResolvedValue([]);
       mockRemove.mockResolvedValue(undefined);
 
-      await stackOperationService.performInstallation(
-        mockStack,
-        mockRemoteStack,
-        stackId,
-        options
-      );
+      await stackOperationService.performInstallation(mockStack, mockRemoteStack, stackId, options);
 
       expect(mockWriteJson).toHaveBeenCalled();
       expect(mockReadJson).toHaveBeenCalled();

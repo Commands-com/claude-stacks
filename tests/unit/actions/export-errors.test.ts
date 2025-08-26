@@ -19,6 +19,7 @@ jest.mock('../../../src/utils/colors.js', () => ({
 jest.mock('../../../src/constants/paths.js', () => ({
   CLAUDE_JSON_PATH: '/home/.claude.json',
   STACKS_PATH: '/home/.claude/stacks',
+  getStacksPath: jest.fn(() => '/home/.claude/stacks'),
   getGlobalCommandsDir: jest.fn(() => '/home/.claude/commands'),
   getGlobalAgentsDir: jest.fn(() => '/home/.claude/agents'),
   getGlobalSettingsPath: jest.fn(() => '/home/.claude/settings.json'),

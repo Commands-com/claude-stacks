@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import * as path from 'path';
-import { STACKS_PATH } from '../constants/paths.js';
+import { getStacksPath } from '../constants/paths.js';
 
 import type { DeveloperStack } from '../types/index.js';
 import { BaseAction } from './BaseAction.js';
@@ -46,7 +46,7 @@ export class ListAction extends BaseAction {
   }
 
   public async listLocalStacks(): Promise<DeveloperStack[]> {
-    const stacksDir = STACKS_PATH;
+    const stacksDir = getStacksPath();
 
     if (!(await fs.pathExists(stacksDir))) {
       return [];

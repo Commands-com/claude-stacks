@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import * as path from 'path';
-import { STACKS_PATH } from '../constants/paths.js';
+import { getStacksPath } from '../constants/paths.js';
 import chalk from 'chalk';
 import { PathSecurity } from '../utils/pathSecurity.js';
 import { isTestEnvironment, isTestPath } from '../utils/testHelpers.js';
@@ -74,25 +74,25 @@ function resolveDefaultStackPath(): string {
 
   // In test environment, allow test paths with minimal validation
   if (isTestEnvironment()) {
-    return path.join(STACKS_PATH, defaultPath);
+    return path.join(getStacksPath(), defaultPath);
   }
 
   // Use PathSecurity to ensure the default path is safe
-  return PathSecurity.sanitizePath(defaultPath, STACKS_PATH);
+  return PathSecurity.sanitizePath(defaultPath, getStacksPath());
 }
 
 function resolveTestPath(stackFile: string): string {
-  // For non-absolute paths without directory separators, join with STACKS_PATH
+  // For non-absolute paths without directory separators, join with getStacksPath()
   if (!path.isAbsolute(stackFile) && !stackFile.includes('/') && !stackFile.includes('\\')) {
-    return path.join(STACKS_PATH, stackFile);
+    return path.join(getStacksPath(), stackFile);
   }
   return path.resolve(stackFile);
 }
 
 function resolveUserPath(stackFile: string): string {
-  // For non-absolute paths without directory separators, join with STACKS_PATH
+  // For non-absolute paths without directory separators, join with getStacksPath()
   if (!path.isAbsolute(stackFile) && !stackFile.includes('/') && !stackFile.includes('\\')) {
-    return PathSecurity.sanitizePath(stackFile, STACKS_PATH);
+    return PathSecurity.sanitizePath(stackFile, getStacksPath());
   }
 
   if (path.isAbsolute(stackFile)) {
@@ -103,7 +103,7 @@ function resolveUserPath(stackFile: string): string {
 }
 
 function resolveAbsolutePath(stackFile: string): string {
-  const allowedDirs = [STACKS_PATH, process.cwd()];
+  const allowedDirs = [getStacksPath(), process.cwd()];
 
   if (!PathSecurity.isPathAllowed(stackFile, allowedDirs)) {
     throw new Error(
@@ -117,7 +117,7 @@ function resolveAbsolutePath(stackFile: string): string {
 
 function resolveRelativePath(stackFile: string): string {
   const resolved = path.resolve(process.cwd(), stackFile);
-  const allowedDirs = [STACKS_PATH, process.cwd()];
+  const allowedDirs = [getStacksPath(), process.cwd()];
 
   if (!PathSecurity.isPathAllowed(resolved, allowedDirs)) {
     throw new Error(

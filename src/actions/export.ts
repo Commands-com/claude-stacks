@@ -2,13 +2,13 @@ import fs from 'fs-extra';
 import * as path from 'path';
 import {
   CLAUDE_JSON_PATH,
-  STACKS_PATH,
   getGlobalAgentsDir,
   getGlobalCommandsDir,
   getGlobalSettingsPath,
   getLocalAgentsDir,
   getLocalCommandsDir,
   getLocalSettingsPath,
+  getStacksPath,
 } from '../constants/paths.js';
 
 import type {
@@ -443,7 +443,7 @@ function resolveOutputFilename(filename?: string): string {
 }
 
 async function writeStackToFile(stack: DeveloperStack, filename: string): Promise<void> {
-  const stacksDir = STACKS_PATH;
+  const stacksDir = getStacksPath();
   await fs.ensureDir(stacksDir);
   const outputPath = path.join(stacksDir, filename);
   await fs.writeJson(outputPath, stack, { spaces: 2 });

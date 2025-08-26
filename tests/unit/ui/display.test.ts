@@ -45,6 +45,7 @@ jest.mock('chalk', () => {
 // Mock constants/paths
 jest.mock('../../../src/constants/paths.js', () => ({
   STACKS_PATH: '/test/.claude/stacks',
+  getStacksPath: jest.fn(() => '/test/.claude/stacks'),
   getLocalClaudeDir: jest.fn(() => '/test/project/.claude'),
 }));
 
@@ -121,6 +122,7 @@ describe('display module', () => {
 
     // Re-setup path mocks to ensure they work correctly
     const pathConstants = require('../../../src/constants/paths.js');
+    pathConstants.getStacksPath = jest.fn(() => '/test/.claude/stacks');
     pathConstants.STACKS_PATH = '/test/.claude/stacks';
     pathConstants.getLocalClaudeDir = jest.fn(() => '/test/project/.claude');
 

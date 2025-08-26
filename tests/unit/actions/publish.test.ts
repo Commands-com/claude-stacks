@@ -55,6 +55,7 @@ jest.mock('../../../src/utils/metadata.js', () => ({
 // Mock path constants
 jest.mock('../../../src/constants/paths.js', () => ({
   STACKS_PATH: '/test/.claude/stacks',
+  getStacksPath: jest.fn(() => '/test/.claude/stacks'),
 }));
 
 // Mock node-fetch
@@ -126,6 +127,7 @@ describe('publishAction', () => {
     // Re-setup path constants mocks to ensure they work correctly
     const pathConstants = require('../../../src/constants/paths.js');
     pathConstants.getLocalClaudeDir = jest.fn(() => '/test/.claude');
+    pathConstants.getStacksPath = jest.fn(() => '/test/.claude/stacks');
     pathConstants.STACKS_PATH = '/test/.claude/stacks';
 
     // Setup fs mocks

@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import * as path from 'path';
-import { STACKS_PATH } from '../constants/paths.js';
+import { getStacksPath } from '../constants/paths.js';
 import fetch from 'node-fetch';
 
 import type { DeveloperStack } from '../types/index.js';
@@ -72,7 +72,7 @@ export class RenameAction extends BaseAction {
     currentDir: string;
   }> {
     const currentDir = process.cwd();
-    const stacksDir = STACKS_PATH;
+    const stacksDir = getStacksPath();
     const defaultStackFile = `${path.basename(currentDir)}-stack.json`;
     const stackPath = path.join(stacksDir, defaultStackFile);
 

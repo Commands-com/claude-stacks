@@ -26,6 +26,7 @@ jest.mock('path', () => ({
 // Mock constants
 jest.mock('../../../src/constants/paths.js', () => ({
   STACKS_PATH: '/test/.claude/stacks',
+  getStacksPath: jest.fn(() => '/test/.claude/stacks'),
 }));
 
 // Mock node-fetch
@@ -59,7 +60,9 @@ jest.mock('../../../src/services/index.js', () => ({
   ConfigService: jest.fn().mockImplementation(() => ({
     readStackConfig: jest.fn(),
     writeStackConfig: jest.fn(),
-    getStackFilePath: jest.fn((dir?: string) => `/test/.claude/stacks/${dir || 'current-project'}-stack.json`),
+    getStackFilePath: jest.fn(
+      (dir?: string) => `/test/.claude/stacks/${dir || 'current-project'}-stack.json`
+    ),
     stackExists: jest.fn().mockResolvedValue(true),
   })),
   ApiService: jest.fn().mockImplementation(() => ({
@@ -144,7 +147,7 @@ describe('renameAction', () => {
     mockCwd.mockReturnValue('/test/current-project');
     mockBasename.mockImplementation((pathStr: string) => pathStr.split('/').pop() || '');
     mockJoin.mockImplementation((...args: string[]) => args.join('/'));
-    
+
     mockPathExists.mockResolvedValue(true);
     mockAuthenticate.mockResolvedValue('test-access-token');
     mockSavePublishedStackMetadata.mockResolvedValue();
@@ -244,7 +247,7 @@ describe('renameAction', () => {
       mockPathExists.mockResolvedValue(false);
 
       await expect(renameAction('New Name')).rejects.toThrow(
-        'Stack file not found: /test/.claude/stacks/current-project-stack.json. Make sure you\'re in the correct directory and have exported a stack.'
+        "Stack file not found: /test/.claude/stacks/current-project-stack.json. Make sure you're in the correct directory and have exported a stack."
       );
     });
 

@@ -34,6 +34,9 @@ describe('Path Constants', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
+    // Clear test environment variables to ensure clean test state
+    delete process.env.CLAUDE_STACKS_TEST_STACKS_PATH;
+
     // Reset mocks to default behavior
     (os.homedir as jest.Mock).mockReturnValue('/Users/testuser');
     (path.join as jest.Mock).mockImplementation((...args) => args.join('/'));

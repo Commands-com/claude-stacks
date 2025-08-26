@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import * as os from 'os';
 import * as path from 'path';
-import { STACKS_PATH } from '../constants/paths.js';
+import { getStacksPath } from '../constants/paths.js';
 import type {
   DeveloperStack,
   InstallOptions,
@@ -37,7 +37,7 @@ export class StackOperationService {
 
     // If it's just a filename, look in ~/.claude/stacks/
     if (!path.isAbsolute(stackFilePath) && !stackFilePath.includes('/')) {
-      const stacksDir = STACKS_PATH;
+      const stacksDir = getStacksPath();
       resolvedPath = path.join(stacksDir, stackFilePath);
     }
 

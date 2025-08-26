@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import * as path from 'path';
-import { STACKS_PATH } from '../constants/paths.js';
+import { getStacksPath } from '../constants/paths.js';
 import fetch from 'node-fetch';
 
 import type {
@@ -96,7 +96,7 @@ async function resolveStackPath(stackFilePath?: string): Promise<string> {
 
   const currentDir = process.cwd();
   const dirName = path.basename(currentDir);
-  const stacksDir = STACKS_PATH;
+  const stacksDir = getStacksPath();
   const defaultStackFile = `${dirName}-stack.json`;
   return path.join(stacksDir, defaultStackFile);
 }
@@ -303,7 +303,7 @@ async function saveMetadataAndDisplayResult(params: SaveMetadataParams): Promise
   stack.metadata.published_stack_id = stackId;
   stack.metadata.published_version = stack.version ?? '1.0.0';
 
-  const stacksDir = STACKS_PATH;
+  const stacksDir = getStacksPath();
   const stackFileName = `${path.basename(currentDir)}-stack.json`;
   const updatedStackFilePath = path.join(stacksDir, stackFileName);
   await fs.writeJson(updatedStackFilePath, stack, { spaces: 2 });
