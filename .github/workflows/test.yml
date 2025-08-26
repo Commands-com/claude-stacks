@@ -147,7 +147,7 @@ jobs:
           echo "✅ CLI file found: dist/cli.js"
 
       - name: Run E2E tests
-        run: npm run test:e2e
+        run: npx jest tests/e2e --runInBand
         env:
           NODE_ENV: test
           CLAUDE_STACKS_TEST_MODE: true
