@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, jest, afterEach } from '@jest/globals';
 import { renameAction } from '../../../src/actions/rename.js';
 import type { DeveloperStack } from '../../../src/types/index.js';
-import { _TestDataBuilder } from '../../utils/test-helpers.js';
+import { TestDataBuilder } from '../../utils/test-helpers.js';
 import type { FsMocks } from '../../mocks/fs-mocks.js';
 
 // Mock fs-extra

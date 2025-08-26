@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { PerformanceTestUtils, TestEnvironment, _TestDataBuilder } from '../utils/test-helpers.js';
+import { PerformanceTestUtils, TestEnvironment, TestDataBuilder } from '../utils/test-helpers.js';
 
 describe('Performance Benchmarks', () => {
   let testEnv: TestEnvironment;

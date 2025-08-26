@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals
 import { StackController } from '../../../src/controllers/StackController.js';
 import { StackService } from '../../../src/services/StackService.js';
 import { ConfigService } from '../../../src/services/ConfigService.js';
-import { TestEnvironment, _TestDataBuilder } from '../../utils/test-helpers.js';
+import { TestEnvironment, TestDataBuilder } from '../../utils/test-helpers.js';
 import { setupApiMocks, _mockFetch } from '../../mocks/api-mocks.js';
 
 // Mock services

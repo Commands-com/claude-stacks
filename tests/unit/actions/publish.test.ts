@@ -5,7 +5,7 @@ import type {
   PublishOptions,
   PublishedStackMetadata,
 } from '../../../src/types/index.js';
-import { _TestDataBuilder } from '../../utils/test-helpers.js';
+import { TestDataBuilder } from '../../utils/test-helpers.js';
 
 // Mock fs-extra
 jest.mock('fs-extra', () => ({

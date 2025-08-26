@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, jest, afterEach } from '@jest/globals
 import path from 'path';
 import { restoreAction } from '../../../src/actions/restore.js';
 import type { DeveloperStack, RestoreOptions } from '../../../src/types/index.js';
-import { _TestDataBuilder, TestEnvironment } from '../../utils/test-helpers.js';
+import { TestDataBuilder, TestEnvironment } from '../../utils/test-helpers.js';
 import type { FsMocks } from '../../mocks/fs-mocks.js';
 
 // Mock fs-extra

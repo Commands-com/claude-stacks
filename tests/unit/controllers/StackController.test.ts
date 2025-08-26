@@ -10,7 +10,7 @@ import {
   FileSystemError,
 } from '../../../src/types/errors.js';
 import type { CreateStackArgs, DeleteStackArgs, DeveloperStack } from '../../../src/types/stack.js';
-import { _TestDataBuilder } from '../../utils/test-helpers.js';
+import { TestDataBuilder } from '../../utils/test-helpers.js';
 
 // Mock dependencies
 jest.mock('../../../src/services/StackService.js');
