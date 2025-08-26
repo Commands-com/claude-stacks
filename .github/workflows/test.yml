@@ -127,11 +127,21 @@ jobs:
           name: build-artifacts
           path: dist/
 
+      - name: Debug downloaded artifacts
+        run: |
+          echo "Contents of project root after download:"
+          ls -la
+          echo "Contents of dist directory after download:"
+          ls -la dist/ || echo "dist directory not found"
+          echo "All files in project:"
+          find . -name "*.js" -type f | head -10
+
       - name: Verify CLI exists
         run: |
-          ls -la dist/
           if [ ! -f "dist/cli.js" ]; then
             echo "ERROR: dist/cli.js not found after downloading build artifacts"
+            echo "Available files in dist/:"
+            ls -la dist/ || echo "No dist directory"
             exit 1
           fi
           echo "✅ CLI file found: dist/cli.js"
@@ -282,6 +292,15 @@ jobs:
 
       - name: Build project
         run: npm run build
+
+      - name: Debug build output
+        run: |
+          echo "Contents of project root:"
+          ls -la
+          echo "Contents of dist directory:"
+          ls -la dist/ || echo "dist directory not found"
+          echo "Checking if cli.js exists:"
+          test -f dist/cli.js && echo "✅ cli.js exists" || echo "❌ cli.js missing"
 
       - name: Test built CLI
         run: |
