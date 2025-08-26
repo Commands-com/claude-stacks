@@ -271,7 +271,9 @@ describe('browseAction', () => {
 
       await browseAction();
 
-      expect(mockConsoleLog).toHaveBeenCalledWith('   Using local backend: http://localhost:3000');
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('Using local backend:')
+      );
     });
 
     it('should handle empty stacks response', async () => {

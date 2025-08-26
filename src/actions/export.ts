@@ -18,9 +18,12 @@ import type {
   StackCommand,
   StackMcpServer,
 } from '../types/index.js';
-import { colors } from '../utils/colors.js';
-import { getPublishedStackMetadata } from '../utils/metadata.js';
-import { generateSuggestedVersion, isValidVersion } from '../utils/version.js';
+import { UIService } from '../services/UIService.js';
+import { MetadataService } from '../services/MetadataService.js';
+
+// Create service instances
+const ui = new UIService();
+const metadata = new MetadataService();
 
 function truncateDescription(description: string): string {
   return description.length > 80 ? `${description.substring(0, 77)}...` : description;
@@ -136,24 +139,24 @@ async function generateStackMetadata(options: {
   }
 
   // Determine version from previous publication
-  const publishedMeta = await getPublishedStackMetadata(currentDir);
+  const publishedMeta = await metadata.getPublishedStackMetadata(currentDir);
   let stackVersion = '1.0.0';
 
   const { stackVersion: optionsStackVersion } = options;
   if (optionsStackVersion) {
-    if (!isValidVersion(optionsStackVersion)) {
+    if (!metadata.isValidVersion(optionsStackVersion)) {
       throw new Error(`Invalid version format: ${optionsStackVersion}. Expected format: X.Y.Z`);
     }
     stackVersion = optionsStackVersion;
   } else if (publishedMeta) {
-    stackVersion = generateSuggestedVersion(publishedMeta.last_published_version);
+    stackVersion = metadata.generateSuggestedVersion(publishedMeta.last_published_version);
     console.log(
-      colors.info(
+      ui.colorInfo(
         `📌 Previously published as "${publishedMeta.stack_name}" (v${publishedMeta.last_published_version})`
       )
     );
     console.log(
-      colors.meta(`   Auto-suggesting version: ${stackVersion} (use --version to override)`)
+      ui.colorMeta(`   Auto-suggesting version: ${stackVersion} (use --version to override)`)
     );
   }
 
@@ -433,16 +436,16 @@ function displayExportSuccess(stack: DeveloperStack, filename: string): void {
   const totalComponents =
     (stack.commands?.length ?? 0) + (stack.agents?.length ?? 0) + (stack.mcpServers?.length ?? 0);
 
-  console.log(colors.success('✅ Stack exported successfully!'));
-  console.log(colors.meta(`  File: ~/.claude/stacks/${filename}`));
-  console.log(colors.meta(`  Version: ${stack.version}`));
-  console.log(colors.meta(`  Components: ${totalComponents} items`));
-  console.log(colors.meta(`  MCP Servers: ${stack.mcpServers?.length ?? 0} items`));
+  console.log(ui.colorSuccess('✅ Stack exported successfully!'));
+  console.log(ui.colorMeta(`  File: ~/.claude/stacks/${filename}`));
+  console.log(ui.colorMeta(`  Version: ${stack.version}`));
+  console.log(ui.colorMeta(`  Components: ${totalComponents} items`));
+  console.log(ui.colorMeta(`  MCP Servers: ${stack.mcpServers?.length ?? 0} items`));
 }
 
 function handleExportError(error: unknown): never {
   console.error(
-    colors.error('Export failed:'),
+    ui.colorError('Export failed:'),
     error instanceof Error ? error.message : String(error)
   );
 

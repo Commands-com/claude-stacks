@@ -3,10 +3,14 @@ import fetch from 'node-fetch';
 import type { RemoteStack } from '../types/index.js';
 import type { ApiStackResponse } from '../types/api.js';
 import { isApiSearchResponse } from '../types/api.js';
-import { colors } from '../utils/colors.js';
-import { readSingleChar } from '../utils/input.js';
-import { authenticate } from '../utils/auth.js';
-import { getApiConfig, isLocalDev } from '../utils/api.js';
+import { UIService } from '../services/UIService.js';
+import { AuthService } from '../services/AuthService.js';
+import { ApiService } from '../services/ApiService.js';
+
+// Create service instances
+const ui = new UIService();
+const auth = new AuthService();
+const api = new ApiService();
 import { installAction } from './install.js';
 import { deleteAction } from './delete.js';
 import open from 'open';
@@ -75,11 +79,11 @@ async function fetchStacks(
   if (options.myStacks) params.set('myStacks', 'true');
 
   const headers = buildFetchHeaders(accessToken);
-  const apiConfig = getApiConfig();
+  const apiConfig = api.getConfig();
 
-  console.log(colors.info('🔍 Fetching stacks from Commands.com...'));
-  if (isLocalDev()) {
-    console.log(colors.meta(`   Using local backend: ${apiConfig.baseUrl}`));
+  console.log(ui.colorInfo('🔍 Fetching stacks from Commands.com...'));
+  if (api.isLocalDev()) {
+    console.log(ui.colorMeta(`   Using local backend: ${apiConfig.baseUrl}`));
   }
 
   const response = await fetch(`${apiConfig.baseUrl}/v1/stacks?${params.toString()}`, {
@@ -109,24 +113,24 @@ async function fetchStacks(
 }
 
 async function showMainBrowseMenu(): Promise<string> {
-  console.log(`\n${colors.info('🌐 Browse Development Stacks')}`);
-  console.log(colors.meta('Discover and manage Claude Code configurations from the community\n'));
+  console.log(`\n${ui.colorInfo('🌐 Browse Development Stacks')}`);
+  console.log(ui.colorMeta('Discover and manage Claude Code configurations from the community\n'));
 
-  console.log(colors.stackName('📚 Browse Options:'));
+  console.log(ui.colorStackName('📚 Browse Options:'));
   console.log(
-    `  ${colors.highlight('(a)')} ${colors.info('All Stacks')} - ${colors.description('Discover public stacks from the community')}`
+    `  ${ui.colorHighlight('(a)')} ${ui.colorInfo('All Stacks')} - ${ui.colorDescription('Discover public stacks from the community')}`
   );
   console.log(
-    `  ${colors.highlight('(m)')} ${colors.info('My Stacks')} - ${colors.description('Manage your published stacks')}`
+    `  ${ui.colorHighlight('(m)')} ${ui.colorInfo('My Stacks')} - ${ui.colorDescription('Manage your published stacks')}`
   );
   console.log(
-    `  ${colors.highlight('(s)')} ${colors.info('Search')} - ${colors.description('Find stacks by keyword or functionality')}`
+    `  ${ui.colorHighlight('(s)')} ${ui.colorInfo('Search')} - ${ui.colorDescription('Find stacks by keyword or functionality')}`
   );
   console.log(
-    `  ${colors.highlight('(q)')} ${colors.meta('Quit')} - ${colors.description('Return to main menu')}`
+    `  ${ui.colorHighlight('(q)')} ${ui.colorMeta('Quit')} - ${ui.colorDescription('Return to main menu')}`
   );
 
-  return await readSingleChar(colors.stackName('\nWhat would you like to do? '));
+  return await ui.readSingleChar(ui.colorStackName('\nWhat would you like to do? '));
 }
 
 async function showStackList(
@@ -136,14 +140,14 @@ async function showStackList(
   isMyStacks: boolean = false
 ): Promise<string | null> {
   if (stacks.length === 0) {
-    console.log(colors.warning('\nNo stacks found matching your criteria.'));
+    console.log(ui.colorWarning('\nNo stacks found matching your criteria.'));
     console.log('Press any key to continue...');
-    await readSingleChar('');
+    await ui.readSingleChar('');
     return null;
   }
 
   console.log(`\n📋 ${title}`);
-  console.log(colors.meta(`Found ${stacks.length} stack(s):\n`));
+  console.log(ui.colorMeta(`Found ${stacks.length} stack(s):\n`));
 
   stacks.forEach((stack: RemoteStack, index: number) => {
     const components =
@@ -152,12 +156,12 @@ async function showStackList(
     const stats = `${version}${components} items, ${stack.installCount ?? 0} installs`;
     const ownershipIndicator = isMyStacks ? '★ ' : '';
     console.log(
-      `${colors.number(`${index + 1}.`)} ${ownershipIndicator}${colors.stackName(stack.name)} ${colors.meta(`by ${stack.author ?? 'Unknown'}`)} ${colors.info(`(${stats})`)}`
+      `${ui.colorNumber(`${index + 1}.`)} ${ownershipIndicator}${ui.colorStackName(stack.name)} ${ui.colorMeta(`by ${stack.author ?? 'Unknown'}`)} ${ui.colorInfo(`(${stats})`)}`
     );
   });
 
-  const selection = await readSingleChar(
-    colors.meta(`\nEnter a number (1-${stacks.length}) or (b)ack: `)
+  const selection = await ui.readSingleChar(
+    ui.colorMeta(`\nEnter a number (1-${stacks.length}) or (b)ack: `)
   );
 
   if (selection === 'b' || selection === '') {
@@ -167,7 +171,7 @@ async function showStackList(
   const selectedIndex = parseInt(selection) - 1;
   if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= stacks.length) {
     console.log(
-      colors.error(`Invalid selection. Please enter a number between 1 and ${stacks.length}`)
+      ui.colorError(`Invalid selection. Please enter a number between 1 and ${stacks.length}`)
     );
     return 'retry'; // Retry current list
   }
@@ -177,45 +181,43 @@ async function showStackList(
 }
 
 function displayStackBasicInfo(stack: RemoteStack): void {
-  console.log(`\n📦 ${colors.stackName(stack.name)}`);
-  console.log(`${colors.info('Description:')} ${colors.description(stack.description)}`);
-  console.log(`${colors.info('Author:')} ${colors.author(stack.author ?? 'Unknown')}`);
+  console.log(`\n📦 ${ui.colorStackName(stack.name)}`);
+  console.log(`${ui.colorInfo('Description:')} ${ui.colorDescription(stack.description)}`);
+  console.log(`${ui.colorInfo('Author:')} ${ui.colorMeta(stack.author ?? 'Unknown')}`);
   if (stack.version) {
-    console.log(`${colors.info('Version:')} ${colors.meta(stack.version)}`);
+    console.log(`${ui.colorInfo('Version:')} ${ui.colorMeta(stack.version)}`);
   }
 }
 
 function displayStackComponents(stack: RemoteStack): void {
   const totalComponents =
     (stack.commandCount ?? 0) + (stack.agentCount ?? 0) + (stack.mcpServerCount ?? 0);
-  console.log(`${colors.info('Components:')} ${colors.componentCount(totalComponents)} items`);
-  console.log(
-    `   ${colors.bullet('•')} Commands: ${colors.componentCount(stack.commandCount ?? 0)}`
-  );
-  console.log(`   ${colors.bullet('•')} Agents: ${colors.componentCount(stack.agentCount ?? 0)}`);
-  console.log(
-    `   ${colors.bullet('•')} MCP Servers: ${colors.componentCount(stack.mcpServerCount ?? 0)}`
-  );
+  console.log(`${ui.colorInfo('Components:')} ${ui.colorNumber(totalComponents)} items`);
+  console.log(`   ${ui.colorMeta('•')} Commands: ${ui.colorNumber(stack.commandCount ?? 0)}`);
+  console.log(`   ${ui.colorMeta('•')} Agents: ${ui.colorNumber(stack.agentCount ?? 0)}`);
+  console.log(`   ${ui.colorMeta('•')} MCP Servers: ${ui.colorNumber(stack.mcpServerCount ?? 0)}`);
 }
 
 function displayStackMetadata(stack: RemoteStack, isMyStack: boolean): void {
   console.log(
-    `${colors.info('Stats:')} ${colors.meta(`${stack.viewCount ?? 0} views, ${stack.installCount ?? 0} installs`)}`
+    `${ui.colorInfo('Stats:')} ${ui.colorMeta(`${stack.viewCount ?? 0} views, ${stack.installCount ?? 0} installs`)}`
   );
   console.log(
-    `${colors.info('Created:')} ${colors.meta(stack.createdAt ? new Date(stack.createdAt).toLocaleDateString() : 'Unknown')}`
+    `${ui.colorInfo('Created:')} ${ui.colorMeta(stack.createdAt ? new Date(stack.createdAt).toLocaleDateString() : 'Unknown')}`
   );
 
   if (isMyStack) {
     const visibility = stack.public
       ? 'Public (discoverable by others)'
       : 'Private (only visible to you)';
-    console.log(`${colors.info('Visibility:')} ${colors.meta(visibility)}`);
+    console.log(`${ui.colorInfo('Visibility:')} ${ui.colorMeta(visibility)}`);
   }
 
   const stackPath = getStackPath(stack);
-  console.log(`${colors.info('Stack ID:')} ${colors.id(stackPath)}`);
-  console.log(`${colors.info('URL:')} ${colors.url(`https://commands.com/stacks/${stackPath}`)}`);
+  console.log(`${ui.colorInfo('Stack ID:')} ${ui.colorInfo(stackPath)}`);
+  console.log(
+    `${ui.colorInfo('URL:')} ${ui.colorInfo(`https://commands.com/stacks/${stackPath}`)}`
+  );
 }
 
 function displayStackInfo(stack: RemoteStack, isMyStack: boolean): void {
@@ -225,31 +227,31 @@ function displayStackInfo(stack: RemoteStack, isMyStack: boolean): void {
 }
 
 function showActionPrompt(isMyStack: boolean, state: BrowseState, stack: RemoteStack): void {
-  let actionPrompt = `\nActions: ${colors.highlight('(i)')}nstall, ${colors.highlight('(v)')}iew in browser`;
+  let actionPrompt = `\nActions: ${ui.colorHighlight('(i)')}nstall, ${ui.colorHighlight('(v)')}iew in browser`;
 
   if (isMyStack && state.accessToken) {
     const visibilityAction = stack.public
-      ? `${colors.highlight('(m)')}ake private`
-      : `${colors.highlight('(m)')}ake public`;
-    actionPrompt += `, ${colors.highlight('(r)')}ename, ${visibilityAction}, ${colors.highlight('(d)')}elete`;
+      ? `${ui.colorHighlight('(m)')}ake private`
+      : `${ui.colorHighlight('(m)')}ake public`;
+    actionPrompt += `, ${ui.colorHighlight('(r)')}ename, ${visibilityAction}, ${ui.colorHighlight('(d)')}elete`;
   }
-  actionPrompt += `, ${colors.highlight('(b)')}ack`;
+  actionPrompt += `, ${ui.colorHighlight('(b)')}ack`;
   console.log(actionPrompt);
 }
 
 async function handleInstallAction(stack: RemoteStack): Promise<string> {
-  console.log(colors.info('\n📦 Installing stack...'));
+  console.log(ui.colorInfo('\n📦 Installing stack...'));
   try {
     await installAction(getStackPath(stack), {});
     console.log('\nPress any key to continue...');
-    await readSingleChar('');
+    await ui.readSingleChar('');
   } catch (error) {
     console.error(
-      colors.error('Install failed:'),
+      ui.colorError('Install failed:'),
       error instanceof Error ? error.message : String(error)
     );
     console.log('\nPress any key to continue...');
-    await readSingleChar('');
+    await ui.readSingleChar('');
   }
   return 'retry';
 }
@@ -257,19 +259,19 @@ async function handleInstallAction(stack: RemoteStack): Promise<string> {
 async function handleViewAction(stack: RemoteStack): Promise<string> {
   const stackUrl = getStackPath(stack);
   const url = `https://commands.com/stacks/${stackUrl}`;
-  console.log(colors.info(`\n🌐 Opening ${url}...`));
+  console.log(ui.colorInfo(`\n🌐 Opening ${url}...`));
   try {
     await open(url);
-    console.log(colors.success('✅ Opened in browser!'));
+    console.log(ui.colorSuccess('✅ Opened in browser!'));
   } catch (error) {
     console.error(
-      colors.error('Failed to open browser:'),
+      ui.colorError('Failed to open browser:'),
       error instanceof Error ? error.message : String(error)
     );
-    console.log(colors.meta(`Please open manually: ${url}`));
+    console.log(ui.colorMeta(`Please open manually: ${url}`));
   }
   console.log('\nPress any key to continue...');
-  await readSingleChar('');
+  await ui.readSingleChar('');
   return 'retry';
 }
 
@@ -278,7 +280,7 @@ async function updateStackVisibility(
   makePublic: boolean,
   accessToken: string
 ): Promise<void> {
-  const apiConfig = getApiConfig();
+  const apiConfig = api.getConfig();
   const stackEndpoint = getStackPath(stack);
   const response = await fetch(`${apiConfig.baseUrl}/v1/stacks/${stackEndpoint}`, {
     method: 'PATCH',
@@ -319,35 +321,35 @@ async function confirmAndUpdateVisibility(
   const icon = makePublic ? '🌐' : '🔒';
   const successIcon = '✅';
   const confirmMessage = makePublic
-    ? colors.stackName(
+    ? ui.colorStackName(
         `\nMake "${stack.name}" public? Others will be able to discover and install it. (y/N): `
       )
-    : colors.warning(
+    : ui.colorWarning(
         `\nMake "${stack.name}" private? It will no longer be discoverable by others. (y/N): `
       );
   const successMessage = makePublic
     ? 'Others can now discover and install your stack.'
     : 'Only you can see and access this stack.';
 
-  const confirmAction = await readSingleChar(confirmMessage);
+  const confirmAction = await ui.readSingleChar(confirmMessage);
   if (confirmAction.toLowerCase() === 'y') {
     try {
-      console.log(colors.info(`${icon} Making stack ${action}...`));
+      console.log(ui.colorInfo(`${icon} Making stack ${action}...`));
       await updateStackVisibility(stack, makePublic, accessToken);
-      console.log(colors.success(`${successIcon} Stack is now ${action}!`));
-      console.log(colors.meta(successMessage));
+      console.log(ui.colorSuccess(`${successIcon} Stack is now ${action}!`));
+      console.log(ui.colorMeta(successMessage));
       console.log('\nPress any key to continue...');
-      await readSingleChar('');
+      await ui.readSingleChar('');
     } catch (error) {
       console.error(
-        colors.error('Failed to change visibility:'),
+        ui.colorError('Failed to change visibility:'),
         error instanceof Error ? error.message : String(error)
       );
       console.log('\nPress any key to continue...');
-      await readSingleChar('');
+      await ui.readSingleChar('');
     }
   } else {
-    console.log(colors.meta('Visibility change cancelled.'));
+    console.log(ui.colorMeta('Visibility change cancelled.'));
   }
 }
 
@@ -362,7 +364,7 @@ async function promptForNewTitle(): Promise<string> {
   return new Promise<string>(resolve => {
     process.stdin.resume();
     process.stdin.setEncoding('utf8');
-    console.log(colors.meta('Enter new title (or press Enter to cancel): '));
+    console.log(ui.colorMeta('Enter new title (or press Enter to cancel): '));
     process.stdin.once('data', data => {
       resolve(data.toString().trim());
     });
@@ -375,7 +377,7 @@ async function callRenameStackAPI(
   newTitle: string,
   accessToken: string
 ): Promise<{ organizationUsername?: string; name?: string; newUrl?: string }> {
-  const apiConfig = getApiConfig();
+  const apiConfig = api.getConfig();
   const response = await fetch(`${apiConfig.baseUrl}/v1/stacks/${org}/${name}/rename`, {
     method: 'POST',
     headers: {
@@ -436,59 +438,59 @@ async function performStackRename(
     stack.name = result.name;
   }
 
-  console.log(colors.success('✅ Stack renamed successfully!'));
-  console.log(colors.meta(`  New title: ${newTitle}`));
+  console.log(ui.colorSuccess('✅ Stack renamed successfully!'));
+  console.log(ui.colorMeta(`  New title: ${newTitle}`));
   if (result.newUrl) {
-    console.log(colors.meta(`  New URL: ${result.newUrl}`));
+    console.log(ui.colorMeta(`  New URL: ${result.newUrl}`));
   }
 }
 
 async function handleRenameAction(stack: RemoteStack, state: BrowseState): Promise<string> {
   if (!state.accessToken) return 'retry';
 
-  console.log(colors.info(`\n🏷️  Current name: "${stack.name}"`));
+  console.log(ui.colorInfo(`\n🏷️  Current name: "${stack.name}"`));
   const newTitle = await promptForNewTitle();
 
   if (newTitle && newTitle !== stack.name) {
     try {
-      console.log(colors.info('\n📝 Renaming stack...'));
+      console.log(ui.colorInfo('\n📝 Renaming stack...'));
       await performStackRename(stack, newTitle, state.accessToken);
       console.log('\nPress any key to continue...');
-      await readSingleChar('');
+      await ui.readSingleChar('');
     } catch (error) {
       console.error(
-        colors.error('Rename failed:'),
+        ui.colorError('Rename failed:'),
         error instanceof Error ? error.message : String(error)
       );
       console.log('\nPress any key to continue...');
-      await readSingleChar('');
+      await ui.readSingleChar('');
     }
   } else {
-    console.log(colors.meta('Rename cancelled.'));
+    console.log(ui.colorMeta('Rename cancelled.'));
   }
   return 'retry';
 }
 
 async function handleDeleteAction(stack: RemoteStack): Promise<string | null> {
-  const confirmAction = await readSingleChar(
-    colors.warning(`\nDelete "${stack.name}"? This cannot be undone. (y/N): `)
+  const confirmAction = await ui.readSingleChar(
+    ui.colorWarning(`\nDelete "${stack.name}"? This cannot be undone. (y/N): `)
   );
   if (confirmAction.toLowerCase() === 'y') {
     try {
       await deleteAction(getStackPath(stack));
       console.log('\nStack deleted. Press any key to continue...');
-      await readSingleChar('');
+      await ui.readSingleChar('');
       return null;
     } catch (error) {
       console.error(
-        colors.error('Delete failed:'),
+        ui.colorError('Delete failed:'),
         error instanceof Error ? error.message : String(error)
       );
       console.log('\nPress any key to continue...');
-      await readSingleChar('');
+      await ui.readSingleChar('');
     }
   } else {
-    console.log(colors.meta('Delete cancelled.'));
+    console.log(ui.colorMeta('Delete cancelled.'));
   }
   return 'retry';
 }
@@ -536,7 +538,7 @@ async function executeStackAction(
     return null;
   }
 
-  console.log(colors.error('Invalid action. Please try again.'));
+  console.log(ui.colorError('Invalid action. Please try again.'));
   return 'retry';
 }
 
@@ -548,7 +550,7 @@ async function showStackActions(
   displayStackInfo(stack, isMyStack);
   showActionPrompt(isMyStack, state, stack);
 
-  const action = await readSingleChar(colors.meta('Choose an action: '));
+  const action = await ui.readSingleChar(ui.colorMeta('Choose an action: '));
   return await executeStackAction(action.toLowerCase(), stack, state, isMyStack);
 }
 
@@ -562,17 +564,17 @@ async function handleAllStacksAction(state: BrowseState): Promise<void> {
     }
   } catch (error) {
     console.error(
-      colors.error('Failed to fetch stacks:'),
+      ui.colorError('Failed to fetch stacks:'),
       error instanceof Error ? error.message : String(error)
     );
     console.log('\nPress any key to continue...');
-    await readSingleChar('');
+    await ui.readSingleChar('');
   }
 }
 
 async function handleMyStacksAction(state: BrowseState): Promise<void> {
   try {
-    state.accessToken ??= await authenticate();
+    state.accessToken ??= await auth.authenticate();
 
     const myStacks = await fetchStacks({ myStacks: true }, state.accessToken);
     let stackAction: string | null = 'retry';
@@ -582,20 +584,20 @@ async function handleMyStacksAction(state: BrowseState): Promise<void> {
     }
   } catch (error) {
     console.error(
-      colors.error('Failed to fetch your stacks:'),
+      ui.colorError('Failed to fetch your stacks:'),
       error instanceof Error ? error.message : String(error)
     );
     console.log('\nPress any key to continue...');
-    await readSingleChar('');
+    await ui.readSingleChar('');
   }
 }
 
 async function handleSearchAction(state: BrowseState): Promise<void> {
-  console.log(colors.info('\n🔍 Search Stacks'));
+  console.log(ui.colorInfo('\n🔍 Search Stacks'));
   const searchTerm = await new Promise<string>(resolve => {
     process.stdin.resume();
     process.stdin.setEncoding('utf8');
-    console.log(colors.meta('Enter search term (or press Enter to cancel): '));
+    console.log(ui.colorMeta('Enter search term (or press Enter to cancel): '));
     process.stdin.once('data', data => {
       resolve(data.toString().trim());
     });
@@ -616,11 +618,11 @@ async function handleSearchAction(state: BrowseState): Promise<void> {
       }
     } catch (error) {
       console.error(
-        colors.error('Search failed:'),
+        ui.colorError('Search failed:'),
         error instanceof Error ? error.message : String(error)
       );
       console.log('\nPress any key to continue...');
-      await readSingleChar('');
+      await ui.readSingleChar('');
     }
   }
 }
@@ -683,13 +685,13 @@ export async function browseAction(): Promise<void> {
           break;
 
         default:
-          console.log(colors.error('Invalid option. Please try again.'));
+          console.log(ui.colorError('Invalid option. Please try again.'));
           break;
       }
     }
   } catch (error) {
     console.error(
-      colors.error('Browse failed:'),
+      ui.colorError('Browse failed:'),
       error instanceof Error ? error.message : String(error)
     );
     process.exit(1);

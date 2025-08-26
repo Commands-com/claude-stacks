@@ -11,11 +11,16 @@ import type {
   StackMcpServer,
   StackSettings,
 } from '../types/index.js';
-import { colors } from '../utils/colors.js';
-import { authenticate } from '../utils/auth.js';
-import { getApiConfig, isLocalDev } from '../utils/api.js';
-import { getAllPublishedStacks, savePublishedStackMetadata } from '../utils/metadata.js';
-import { readSingleChar } from '../utils/input.js';
+import { UIService } from '../services/UIService.js';
+import { AuthService } from '../services/AuthService.js';
+import { ApiService } from '../services/ApiService.js';
+import { MetadataService } from '../services/MetadataService.js';
+
+// Create service instances
+const ui = new UIService();
+const auth = new AuthService();
+const api = new ApiService();
+const metadata = new MetadataService();
 
 /**
  * Publishes a development stack to Commands.com for sharing with the community
@@ -57,7 +62,7 @@ export async function publishAction(
     const { shouldContinue, isUpdate } = await handleUpdateFlow(stack);
     if (!shouldContinue) return; // User cancelled
 
-    const accessToken = await authenticate();
+    const accessToken = await auth.authenticate();
     const stackPayload = prepareStackPayload(stack, isUpdate, options);
 
     const result = await performUpload(stackPayload, stack, isUpdate, accessToken);
@@ -71,7 +76,7 @@ export async function publishAction(
     });
   } catch (error) {
     console.error(
-      colors.error('Publish failed:'),
+      ui.colorError('Publish failed:'),
       error instanceof Error ? error.message : String(error)
     );
     process.exit(1);
@@ -102,7 +107,7 @@ async function loadAndValidateStack(stackPath: string): Promise<DeveloperStack> 
 
 async function validateStackForPublishing(stack: DeveloperStack): Promise<void> {
   if (stack.metadata?.published_stack_id) {
-    const globalMeta = await getAllPublishedStacks();
+    const globalMeta = await metadata.getAllPublishedStacks();
     const currentDir = stack.metadata?.exported_from ?? process.cwd();
     const lastPublished = globalMeta[currentDir];
 
@@ -124,35 +129,35 @@ async function handleUpdateFlow(
   }
 
   console.log(
-    colors.info(
+    ui.colorInfo(
       `📦 Updating existing stack "${stack.name}" (${stack.metadata?.published_version} → ${stack.version})`
     )
   );
 
-  const action = await readSingleChar(
-    `Actions: ${colors.highlight('(u)')}pdate existing, ${colors.highlight('(n)')}ew stack, ${colors.highlight('(c)')}ancel: `
+  const action = await ui.readSingleChar(
+    `Actions: ${ui.colorHighlight('(u)')}pdate existing, ${ui.colorHighlight('(n)')}ew stack, ${ui.colorHighlight('(c)')}ancel: `
   );
 
   switch (action.toLowerCase()) {
     case 'c':
     case '':
-      console.log(colors.meta('Publish cancelled.'));
+      console.log(ui.colorMeta('Publish cancelled.'));
       return { shouldContinue: false, isUpdate: false };
     case 'n':
-      console.log(colors.info('Creating new stack instead of updating...'));
+      console.log(ui.colorInfo('Creating new stack instead of updating...'));
       delete stack.metadata?.published_stack_id;
       delete stack.metadata?.published_version;
       return { shouldContinue: true, isUpdate: false };
     case 'u':
-      console.log(colors.info('Updating existing stack...'));
+      console.log(ui.colorInfo('Updating existing stack...'));
       console.log(
-        colors.meta(
+        ui.colorMeta(
           '💡 Name/description from website will be preserved, only content will be updated'
         )
       );
       return { shouldContinue: true, isUpdate: true };
     default:
-      console.log(colors.error('Invalid action. Cancelling publish.'));
+      console.log(ui.colorError('Invalid action. Cancelling publish.'));
       return { shouldContinue: false, isUpdate: false };
   }
 }
@@ -227,11 +232,11 @@ async function performUpload(
   isUpdate: boolean,
   accessToken: string
 ): Promise<PublishResponse> {
-  const apiConfig = getApiConfig();
-  console.log(colors.info(`📤 ${isUpdate ? 'Updating' : 'Uploading'} stack to Commands.com...`));
+  const apiConfig = api.getConfig();
+  console.log(ui.colorInfo(`📤 ${isUpdate ? 'Updating' : 'Uploading'} stack to Commands.com...`));
 
-  if (isLocalDev()) {
-    console.log(colors.meta(`   Using local backend: ${apiConfig.baseUrl}`));
+  if (api.isLocalDev()) {
+    console.log(ui.colorMeta(`   Using local backend: ${apiConfig.baseUrl}`));
   }
 
   const url = isUpdate
@@ -276,7 +281,7 @@ async function saveMetadataAndDisplayResult(params: SaveMetadataParams): Promise
   const stackId = extractStackId(result);
   const currentDir = stack.metadata?.exported_from ?? process.cwd();
 
-  await savePublishedStackMetadata(currentDir, {
+  await metadata.savePublishedStackMetadata(currentDir, {
     stack_id: stackId,
     stack_name: stack.name,
     last_published_version: stack.version ?? '1.0.0',
@@ -329,18 +334,18 @@ interface DisplayResultParams {
 function displayPublishResult(params: DisplayResultParams): void {
   const { result, stackId, stack, isUpdate, options, stackPayload } = params;
   console.log(
-    colors.success(`✅ Stack ${isUpdate ? 'content updated' : 'published'} successfully!`)
+    ui.colorSuccess(`✅ Stack ${isUpdate ? 'content updated' : 'published'} successfully!`)
   );
-  console.log(colors.meta(`  Stack ID: ${stackId}`));
-  console.log(colors.meta(`  URL: ${result.url ?? `https://commands.com/stacks/${stackId}`}`));
-  console.log(colors.meta(`  Version: ${stack.version}`));
+  console.log(ui.colorMeta(`  Stack ID: ${stackId}`));
+  console.log(ui.colorMeta(`  URL: ${result.url ?? `https://commands.com/stacks/${stackId}`}`));
+  console.log(ui.colorMeta(`  Version: ${stack.version}`));
   const commandCount = stackPayload.commands?.length ?? 0;
   const agentCount = stackPayload.agents?.length ?? 0;
-  console.log(colors.meta(`  Components: ${commandCount + agentCount} items`));
+  console.log(ui.colorMeta(`  Components: ${commandCount + agentCount} items`));
 
   if (isUpdate) {
-    console.log(colors.meta(`  📝 Name/description preserved from website`));
+    console.log(ui.colorMeta(`  📝 Name/description preserved from website`));
   } else {
-    console.log(colors.meta(`  Visibility: ${options.public ? 'Public' : 'Private'}`));
+    console.log(ui.colorMeta(`  Visibility: ${options.public ? 'Public' : 'Private'}`));
   }
 }
