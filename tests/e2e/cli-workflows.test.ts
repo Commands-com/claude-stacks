@@ -33,6 +33,12 @@ describe('CLI End-to-End Workflows', () => {
 
     // Build the CLI if needed (assumes dist exists)
     cliPath = join(process.cwd(), 'dist', 'cli.js');
+    
+    // Verify CLI exists before running tests
+    const fs = await import('fs');
+    if (!fs.existsSync(cliPath)) {
+      throw new Error(`CLI file not found at ${cliPath}. Make sure to run 'npm run build' before e2e tests.`);
+    }
 
     // Test stacks directory is set globally in global-setup.ts
     // No need to modify the real ~/.claude/stacks anymore
@@ -87,12 +93,20 @@ describe('CLI End-to-End Workflows', () => {
       );
 
       if (result.exitCode !== 0) {
-        console.error('CLI failed with stderr:', result.stderr);
+        console.error('=== CLI FAILURE DEBUG INFO ===');
+        console.error('Exit code:', result.exitCode);
+        console.error('CLI stderr:', result.stderr);
         console.error('CLI stdout:', result.stdout);
+        console.error('Environment CLAUDE_STACKS_TEST_STACKS_PATH:', process.env.CLAUDE_STACKS_TEST_STACKS_PATH);
+        console.error('==============================');
       }
       if (result.exitCode !== 0) {
-        console.error('CLI failed with stderr:', result.stderr);
+        console.error('=== CLI FAILURE DEBUG INFO ===');
+        console.error('Exit code:', result.exitCode);
+        console.error('CLI stderr:', result.stderr);
         console.error('CLI stdout:', result.stdout);
+        console.error('Environment CLAUDE_STACKS_TEST_STACKS_PATH:', process.env.CLAUDE_STACKS_TEST_STACKS_PATH);
+        console.error('==============================');
       }
       expect(result.exitCode).toBe(0);
       expect(result.stderr).toBe('');
@@ -143,8 +157,12 @@ describe('CLI End-to-End Workflows', () => {
       );
 
       if (result.exitCode !== 0) {
-        console.error('CLI failed with stderr:', result.stderr);
+        console.error('=== CLI FAILURE DEBUG INFO ===');
+        console.error('Exit code:', result.exitCode);
+        console.error('CLI stderr:', result.stderr);
         console.error('CLI stdout:', result.stdout);
+        console.error('Environment CLAUDE_STACKS_TEST_STACKS_PATH:', process.env.CLAUDE_STACKS_TEST_STACKS_PATH);
+        console.error('==============================');
       }
       expect(result.exitCode).toBe(0);
 
@@ -233,8 +251,12 @@ describe('CLI End-to-End Workflows', () => {
       const result = await runCliCommand(['list'], testProjectDir, 5000, '\n');
 
       if (result.exitCode !== 0) {
-        console.error('CLI failed with stderr:', result.stderr);
+        console.error('=== CLI FAILURE DEBUG INFO ===');
+        console.error('Exit code:', result.exitCode);
+        console.error('CLI stderr:', result.stderr);
         console.error('CLI stdout:', result.stdout);
+        console.error('Environment CLAUDE_STACKS_TEST_STACKS_PATH:', process.env.CLAUDE_STACKS_TEST_STACKS_PATH);
+        console.error('==============================');
       }
       expect(result.exitCode).toBe(0);
       expect(result.stdout).toContain('Test Stack One');
@@ -247,8 +269,12 @@ describe('CLI End-to-End Workflows', () => {
       const result = await runCliCommand(['list'], testProjectDir, 5000, '\n');
 
       if (result.exitCode !== 0) {
-        console.error('CLI failed with stderr:', result.stderr);
+        console.error('=== CLI FAILURE DEBUG INFO ===');
+        console.error('Exit code:', result.exitCode);
+        console.error('CLI stderr:', result.stderr);
         console.error('CLI stdout:', result.stdout);
+        console.error('Environment CLAUDE_STACKS_TEST_STACKS_PATH:', process.env.CLAUDE_STACKS_TEST_STACKS_PATH);
+        console.error('==============================');
       }
       expect(result.exitCode).toBe(0);
       // Should either show stacks or handle empty directory gracefully
@@ -315,8 +341,12 @@ describe('CLI End-to-End Workflows', () => {
       const duration = Date.now() - start;
 
       if (result.exitCode !== 0) {
-        console.error('CLI failed with stderr:', result.stderr);
+        console.error('=== CLI FAILURE DEBUG INFO ===');
+        console.error('Exit code:', result.exitCode);
+        console.error('CLI stderr:', result.stderr);
         console.error('CLI stdout:', result.stdout);
+        console.error('Environment CLAUDE_STACKS_TEST_STACKS_PATH:', process.env.CLAUDE_STACKS_TEST_STACKS_PATH);
+        console.error('==============================');
       }
       expect(result.exitCode).toBe(0);
       expect(duration).toBeLessThan(5000); // Should complete within 5 seconds
