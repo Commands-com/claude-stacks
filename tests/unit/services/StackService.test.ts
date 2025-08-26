@@ -3,7 +3,7 @@ import { StackService } from '../../../src/services/StackService.js';
 import { ConfigService } from '../../../src/services/ConfigService.js';
 import { FileService } from '../../../src/services/FileService.js';
 import { TestEnvironment, MockFactory, TestDataBuilder } from '../../utils/test-helpers.js';
-import { _FsMocks } from '../../mocks/fs-mocks.js';
+import { FsMocks } from '../../mocks/fs-mocks.js';
 
 // Mock dependencies
 jest.mock('../../../src/services/ConfigService.js');

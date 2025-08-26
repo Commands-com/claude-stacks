@@ -12,7 +12,7 @@ import {
   getMetadataPath,
 } from '../../../src/utils/metadata.js';
 import type { StacksMetadata, PublishedStackMetadata } from '../../../src/utils/metadata.js';
-import { _FsMocks } from '../../mocks/fs-mocks.js';
+import { FsMocks } from '../../mocks/fs-mocks.js';
 
 // Mock fs-extra
 jest.mock('fs-extra', () => ({

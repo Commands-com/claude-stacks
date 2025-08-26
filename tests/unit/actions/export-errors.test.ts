@@ -1,6 +1,6 @@
 import { exportAction, exportHelpers } from '../../../src/actions/export.js';
 import type { ExportOptions } from '../../../src/types/index.js';
-import { _FsMocks } from '../../mocks/fs-mocks.js';
+import { FsMocks } from '../../mocks/fs-mocks.js';
 
 // Mock fs-extra
 jest.mock('fs-extra', () => {

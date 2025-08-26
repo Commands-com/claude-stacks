@@ -3,7 +3,7 @@ import { StackController } from '../../../src/controllers/StackController.js';
 import { StackService } from '../../../src/services/StackService.js';
 import { ConfigService } from '../../../src/services/ConfigService.js';
 import { TestEnvironment, TestDataBuilder } from '../../utils/test-helpers.js';
-import { setupApiMocks, _mockFetch } from '../../mocks/api-mocks.js';
+import { setupApiMocks, mockFetch } from '../../mocks/api-mocks.js';
 
 // Mock services
 jest.mock('../../../src/services/StackService.js');

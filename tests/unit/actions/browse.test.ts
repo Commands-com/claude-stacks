@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, jest, afterEach } from '@jest/globals';
 import { browseAction } from '../../../src/actions/browse.js';
 import type { RemoteStack, ApiStackResponse, ApiSearchResponse } from '../../../src/types/index.js';
-import { _FsMocks } from '../../mocks/fs-mocks.js';
+import { FsMocks } from '../../mocks/fs-mocks.js';
 
 // Mock fs-extra
 jest.mock('fs-extra', () => {

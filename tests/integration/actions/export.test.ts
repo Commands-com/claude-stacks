@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { exportAction } from '../../../src/actions/export.js';
 import { TestEnvironment, TestDataBuilder } from '../../utils/test-helpers.js';
-import { _FsMocks, fsTestScenarios } from '../../mocks/fs-mocks.js';
+import { FsMocks, fsTestScenarios } from '../../mocks/fs-mocks.js';
 import { setupApiMocks } from '../../mocks/api-mocks.js';
 
 // Mock external dependencies - using factory functions
