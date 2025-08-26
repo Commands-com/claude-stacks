@@ -1,4 +1,3 @@
-
 import fetch from 'node-fetch';
 import type { DeveloperStack, InstallOptions, RemoteStack } from '../types/index.js';
 import { BaseAction } from './BaseAction.js';
@@ -23,7 +22,7 @@ export class InstallAction extends BaseAction {
       const { org, name } = this.validateStackId(stackId);
       const accessToken = await this.auth.authenticate();
       const remoteStack = await this.api.fetchStack(stackId, accessToken);
-      const stack = this.convertToLocalStack(remoteStack, stackId);
+      const stack = this.convertToLocalStack(remoteStack);
 
       this.ui.log(this.ui.colorStackName(`Installing: ${stack.name}`));
       this.ui.meta(`By: ${remoteStack.author ?? 'Unknown'}`);
@@ -60,7 +59,7 @@ export class InstallAction extends BaseAction {
     return { org, name };
   }
 
-  private convertToLocalStack(remoteStack: RemoteStack, _stackId: string): DeveloperStack {
+  private convertToLocalStack(remoteStack: RemoteStack): DeveloperStack {
     return {
       name: remoteStack.title ?? remoteStack.name,
       description: remoteStack.description,

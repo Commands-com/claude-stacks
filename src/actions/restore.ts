@@ -1,4 +1,4 @@
-import type { DeveloperStack, RestoreOptions } from '../types/index.js';
+import type { RestoreOptions } from '../types/index.js';
 import { BaseAction } from './BaseAction.js';
 
 /**
