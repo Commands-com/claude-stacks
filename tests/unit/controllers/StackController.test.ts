@@ -112,25 +112,25 @@ describe('StackController', () => {
         error,
       });
 
-      await expect(stackController.handleCreate(createArgs)).rejects.toThrow('process.exit called');
+      await expect(stackController.handleCreate(createArgs)).rejects.toThrow(error);
 
       expect(mockStackService.createStack).toHaveBeenCalledWith(createArgs);
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining(error.message));
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('existing stacks'));
-      expect(processExitSpy).toHaveBeenCalledWith(1);
+      expect(processExitSpy).not.toHaveBeenCalled();
     });
 
     it('should handle unexpected errors during creation', async () => {
       const error = new Error('Unexpected error');
       mockStackService.createStack.mockRejectedValue(error);
 
-      await expect(stackController.handleCreate(createArgs)).rejects.toThrow('process.exit called');
+      await expect(stackController.handleCreate(createArgs)).rejects.toThrow('Unexpected error');
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('unexpected error occurred')
       );
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Unexpected error'));
-      expect(processExitSpy).toHaveBeenCalledWith(1);
+      expect(processExitSpy).not.toHaveBeenCalled();
     });
 
     it('should show stack trace in development mode', async () => {
@@ -156,7 +156,7 @@ describe('StackController', () => {
       error.stack = 'Debug stack trace';
       mockStackService.createStack.mockRejectedValue(error);
 
-      await expect(stackController.handleCreate(createArgs)).rejects.toThrow('process.exit called');
+      await expect(stackController.handleCreate(createArgs)).rejects.toThrow('Debug error');
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Debug stack trace'));
 
@@ -261,23 +261,23 @@ describe('StackController', () => {
         error,
       });
 
-      await expect(stackController.handleList()).rejects.toThrow('process.exit called');
+      await expect(stackController.handleList()).rejects.toThrow(error);
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining(error.message));
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('file permissions'));
-      expect(processExitSpy).toHaveBeenCalledWith(1);
+      expect(processExitSpy).not.toHaveBeenCalled();
     });
 
     it('should handle unexpected errors during listing', async () => {
       const error = new Error('Service unavailable');
       mockStackService.listStacks.mockRejectedValue(error);
 
-      await expect(stackController.handleList()).rejects.toThrow('process.exit called');
+      await expect(stackController.handleList()).rejects.toThrow('Service unavailable');
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('unexpected error occurred')
       );
-      expect(processExitSpy).toHaveBeenCalledWith(1);
+      expect(processExitSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -308,24 +308,24 @@ describe('StackController', () => {
         error,
       });
 
-      await expect(stackController.handleDelete(deleteArgs)).rejects.toThrow('process.exit called');
+      await expect(stackController.handleDelete(deleteArgs)).rejects.toThrow(error);
 
       expect(mockStackService.deleteStack).toHaveBeenCalledWith(deleteArgs);
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining(error.message));
       expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('available stacks'));
-      expect(processExitSpy).toHaveBeenCalledWith(1);
+      expect(processExitSpy).not.toHaveBeenCalled();
     });
 
     it('should handle unexpected errors during deletion', async () => {
       const error = new Error('Deletion failed');
       mockStackService.deleteStack.mockRejectedValue(error);
 
-      await expect(stackController.handleDelete(deleteArgs)).rejects.toThrow('process.exit called');
+      await expect(stackController.handleDelete(deleteArgs)).rejects.toThrow('Deletion failed');
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('unexpected error occurred')
       );
-      expect(processExitSpy).toHaveBeenCalledWith(1);
+      expect(processExitSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -387,7 +387,7 @@ describe('StackController', () => {
 
         await expect(
           stackController.handleCreate({ name: 'test', description: 'test' })
-        ).rejects.toThrow('process.exit called');
+        ).rejects.toThrow(error);
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining(error.message));
         expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('available stacks'));
@@ -402,7 +402,7 @@ describe('StackController', () => {
 
         await expect(
           stackController.handleCreate({ name: 'test', description: 'test' })
-        ).rejects.toThrow('process.exit called');
+        ).rejects.toThrow(error);
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining(error.message));
         expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('existing stacks'));
@@ -417,7 +417,7 @@ describe('StackController', () => {
 
         await expect(
           stackController.handleCreate({ name: 'test', description: 'test' })
-        ).rejects.toThrow('process.exit called');
+        ).rejects.toThrow(error);
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining(error.message));
         expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('check your input'));
@@ -432,7 +432,7 @@ describe('StackController', () => {
 
         await expect(
           stackController.handleCreate({ name: 'test', description: 'test' })
-        ).rejects.toThrow('process.exit called');
+        ).rejects.toThrow(error);
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining(error.message));
         expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('file permissions'));
@@ -447,7 +447,7 @@ describe('StackController', () => {
 
         await expect(
           stackController.handleCreate({ name: 'test', description: 'test' })
-        ).rejects.toThrow('process.exit called');
+        ).rejects.toThrow(error);
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(
           expect.stringContaining('unexpected error occurred')
@@ -462,7 +462,7 @@ describe('StackController', () => {
 
         await expect(
           stackController.handleCreate({ name: 'test', description: 'test' })
-        ).rejects.toThrow('process.exit called');
+        ).rejects.toThrow('Unexpected error');
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(
           expect.stringContaining('unexpected error occurred')
@@ -475,7 +475,7 @@ describe('StackController', () => {
 
         await expect(
           stackController.handleCreate({ name: 'test', description: 'test' })
-        ).rejects.toThrow('process.exit called');
+        ).rejects.toThrow('String error');
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(
           expect.stringContaining('unexpected error occurred')

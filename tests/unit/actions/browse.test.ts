@@ -271,9 +271,7 @@ describe('browseAction', () => {
 
       await browseAction();
 
-      expect(mockConsoleLog).toHaveBeenCalledWith(
-        expect.stringContaining('Using local backend:')
-      );
+      expect(mockConsoleLog).toHaveBeenCalledWith(expect.stringContaining('Using local backend:'));
     });
 
     it('should handle empty stacks response', async () => {
@@ -779,10 +777,10 @@ describe('browseAction', () => {
       // Mock a failure that causes the outer try-catch to trigger
       mockReadSingleChar.mockRejectedValue(new Error('Input failure'));
 
-      await browseAction();
+      await expect(browseAction()).rejects.toThrow('Input failure');
 
       expect(mockConsoleError).toHaveBeenCalledWith('Browse failed:', 'Input failure');
-      expect(mockProcessExit).toHaveBeenCalledWith(1);
+      expect(mockProcessExit).not.toHaveBeenCalled();
     });
 
     it('should handle unexpected API response format', async () => {

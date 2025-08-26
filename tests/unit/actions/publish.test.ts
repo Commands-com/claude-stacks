@@ -303,10 +303,10 @@ describe('publishAction', () => {
     it('should handle authentication failure', async () => {
       mockAuthenticate.mockRejectedValue(new Error('Authentication failed'));
 
-      await publishAction();
+      await expect(publishAction()).rejects.toThrow('Authentication failed');
 
       expect(mockConsoleError).toHaveBeenCalledWith('Publish failed:', 'Authentication failed');
-      expect(mockProcessExit).toHaveBeenCalledWith(1);
+      expect(mockProcessExit).not.toHaveBeenCalled();
       expect(mockFetch).not.toHaveBeenCalled();
     });
   });
@@ -315,7 +315,7 @@ describe('publishAction', () => {
     it('should validate stack exists before publishing', async () => {
       mockFs.pathExists.mockResolvedValue(false);
 
-      await publishAction();
+      await expect(publishAction()).rejects.toThrow();
 
       expect(mockConsoleError).toHaveBeenCalledWith(
         'Publish failed:',
@@ -325,7 +325,7 @@ describe('publishAction', () => {
         'Publish failed:',
         expect.stringContaining("Run 'claude-stacks export' first")
       );
-      expect(mockProcessExit).toHaveBeenCalledWith(1);
+      expect(mockProcessExit).not.toHaveBeenCalled();
     });
 
     it('should validate stack name consistency for updates', async () => {
@@ -347,7 +347,7 @@ describe('publishAction', () => {
         },
       });
 
-      await publishAction();
+      await expect(publishAction()).rejects.toThrow();
 
       expect(mockConsoleError).toHaveBeenCalledWith(
         'Publish failed:',
@@ -357,16 +357,16 @@ describe('publishAction', () => {
         'Publish failed:',
         expect.stringContaining("Use 'claude-stacks rename")
       );
-      expect(mockProcessExit).toHaveBeenCalledWith(1);
+      expect(mockProcessExit).not.toHaveBeenCalled();
     });
 
     it('should handle JSON parsing errors', async () => {
       mockFs.readJson.mockRejectedValue(new Error('Invalid JSON'));
 
-      await publishAction();
+      await expect(publishAction()).rejects.toThrow('Invalid JSON');
 
       expect(mockConsoleError).toHaveBeenCalledWith('Publish failed:', 'Invalid JSON');
-      expect(mockProcessExit).toHaveBeenCalledWith(1);
+      expect(mockProcessExit).not.toHaveBeenCalled();
     });
   });
 
@@ -437,7 +437,7 @@ describe('publishAction', () => {
         text: jest.fn().mockResolvedValue('Invalid stack data'),
       });
 
-      await publishAction();
+      await expect(publishAction()).rejects.toThrow();
 
       expect(mockConsoleError).toHaveBeenCalledWith(
         'Publish failed:',
@@ -447,16 +447,16 @@ describe('publishAction', () => {
         'Publish failed:',
         expect.stringContaining('Invalid stack data')
       );
-      expect(mockProcessExit).toHaveBeenCalledWith(1);
+      expect(mockProcessExit).not.toHaveBeenCalled();
     });
 
     it('should handle network errors', async () => {
       mockFetch.mockRejectedValue(new Error('Network error'));
 
-      await publishAction();
+      await expect(publishAction()).rejects.toThrow('Network error');
 
       expect(mockConsoleError).toHaveBeenCalledWith('Publish failed:', 'Network error');
-      expect(mockProcessExit).toHaveBeenCalledWith(1);
+      expect(mockProcessExit).not.toHaveBeenCalled();
     });
 
     it('should handle API response without valid stack ID', async () => {
@@ -468,13 +468,13 @@ describe('publishAction', () => {
         }),
       });
 
-      await publishAction();
+      await expect(publishAction()).rejects.toThrow();
 
       expect(mockConsoleError).toHaveBeenCalledWith(
         'Publish failed:',
         expect.stringContaining('API response missing required org/name information')
       );
-      expect(mockProcessExit).toHaveBeenCalledWith(1);
+      expect(mockProcessExit).not.toHaveBeenCalled();
     });
   });
 
@@ -689,9 +689,7 @@ describe('publishAction', () => {
       await publishAction();
 
       // The mock seems to not be taking effect, so let's check what we actually get
-      expect(mockConsoleLog).toHaveBeenCalledWith(
-        expect.stringContaining('Using local backend:')
-      );
+      expect(mockConsoleLog).toHaveBeenCalledWith(expect.stringContaining('Using local backend:'));
     });
   });
 
@@ -746,8 +744,10 @@ describe('publishAction', () => {
 
       await publishAction();
 
+      await expect(publishAction()).rejects.toThrow('Metadata load error');
+
       expect(mockConsoleError).toHaveBeenCalledWith('Publish failed:', 'Metadata load error');
-      expect(mockProcessExit).toHaveBeenCalledWith(1);
+      expect(mockProcessExit).not.toHaveBeenCalled();
     });
 
     it('should handle API response text parsing errors', async () => {
@@ -758,13 +758,13 @@ describe('publishAction', () => {
         text: jest.fn().mockRejectedValue(new Error('Response body read error')),
       });
 
-      await publishAction();
+      await expect(publishAction()).rejects.toThrow();
 
       expect(mockConsoleError).toHaveBeenCalledWith(
         'Publish failed:',
         expect.stringContaining('Upload failed: 500 Internal Server Error')
       );
-      expect(mockProcessExit).toHaveBeenCalledWith(1);
+      expect(mockProcessExit).not.toHaveBeenCalled();
     });
 
     it('should handle invalid URL format in API response', async () => {
@@ -775,22 +775,22 @@ describe('publishAction', () => {
         }),
       });
 
-      await publishAction();
+      await expect(publishAction()).rejects.toThrow();
 
       expect(mockConsoleError).toHaveBeenCalledWith(
         'Publish failed:',
         expect.stringContaining('Unable to determine stack ID from API response')
       );
-      expect(mockProcessExit).toHaveBeenCalledWith(1);
+      expect(mockProcessExit).not.toHaveBeenCalled();
     });
 
     it('should handle non-Error exceptions', async () => {
       mockFetch.mockRejectedValue('String error');
 
-      await publishAction();
+      await expect(publishAction()).rejects.toThrow('String error');
 
       expect(mockConsoleError).toHaveBeenCalledWith('Publish failed:', 'String error');
-      expect(mockProcessExit).toHaveBeenCalledWith(1);
+      expect(mockProcessExit).not.toHaveBeenCalled();
     });
   });
 
