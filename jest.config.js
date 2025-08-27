@@ -43,7 +43,7 @@ export default {
   // Coverage Configuration
   collectCoverage: true,
   coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'text-summary', 'html', 'lcov', 'json', 'clover'],
+  coverageReporters: ['text', 'text-summary', 'html', 'lcov', 'json', 'json-summary', 'clover'],
 
   // Coverage Collection
   collectCoverageFrom: [
