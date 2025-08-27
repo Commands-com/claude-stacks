@@ -1,5 +1,7 @@
 # Claude Stacks
 
+![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)
+
 Share your Claude Code environment in seconds - export and restore development stacks.
 
 [![npm version](https://badge.fury.io/js/claude-stacks.svg)](https://www.npmjs.com/package/claude-stacks)
