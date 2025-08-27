@@ -15,6 +15,11 @@ import { UIService } from '../services/UIService.js';
 import { AuthService } from '../services/AuthService.js';
 import { ApiService } from '../services/ApiService.js';
 import { MetadataService } from '../services/MetadataService.js';
+import {
+  containsSensitiveData,
+  getSanitizationSummary,
+  sanitizeMcpServers,
+} from '../utils/sanitize.js';
 
 // Create service instances
 const ui = new UIService();
@@ -208,12 +213,64 @@ function createBaseMetadata(stack: DeveloperStack): Record<string, unknown> {
   };
 }
 
+/**
+ * Check for sensitive data in stack and display warnings to user
+ */
+function checkAndWarnAboutSensitiveData(stack: DeveloperStack, options: PublishOptions): void {
+  if (options.skipSanitization) {
+    console.log(ui.colorWarning('⚠️  Sanitization skipped - sensitive data may be published!'));
+    return;
+  }
+
+  const serversWithSensitiveData = (stack.mcpServers ?? [])
+    .filter(containsSensitiveData)
+    .map(getSanitizationSummary);
+
+  if (serversWithSensitiveData.length > 0) {
+    console.log(ui.colorInfo('🔐 Sanitizing sensitive data for publication...'));
+    console.log(ui.colorMeta('   The following will be replaced with generic placeholders:'));
+
+    for (const summary of serversWithSensitiveData) {
+      console.log(
+        ui.colorMeta(`   • ${summary.serverName}: ${summary.sensitiveFields.join(', ')}`)
+      );
+    }
+
+    console.log(ui.colorMeta('   💡 Your local stack file remains unchanged\n'));
+  }
+}
+
+/**
+ * Create sanitized payload for publishing, replacing sensitive data with placeholders
+ */
+function createSanitizedBasePayload(
+  stack: DeveloperStack,
+  options: PublishOptions
+): Partial<StackPayload> {
+  const basePayload = createBasePayload(stack);
+
+  // Skip sanitization if explicitly requested (with warning)
+  if (options.skipSanitization) {
+    return basePayload;
+  }
+
+  // Sanitize MCP servers to remove sensitive paths
+  if (basePayload.mcpServers) {
+    basePayload.mcpServers = sanitizeMcpServers(basePayload.mcpServers) ?? [];
+  }
+
+  return basePayload;
+}
+
 function prepareStackPayload(
   stack: DeveloperStack,
   isUpdate: boolean,
   options: PublishOptions
 ): StackPayload {
-  const basePayload = createBasePayload(stack);
+  // Check for sensitive data and warn user about sanitization
+  checkAndWarnAboutSensitiveData(stack, options);
+
+  const basePayload = createSanitizedBasePayload(stack, options);
   const baseMetadata = createBaseMetadata(stack);
 
   if (isUpdate) {

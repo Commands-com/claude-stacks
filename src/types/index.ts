@@ -125,6 +125,7 @@ export interface RestoreOptions {
 
 export interface PublishOptions {
   public?: boolean;
+  skipSanitization?: boolean;
 }
 
 export interface BrowseOptions {

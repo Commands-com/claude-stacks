@@ -396,37 +396,109 @@ export class StackOperationService {
     return projects[projectPath] as Record<string, unknown>;
   }
 
+  /**
+   * Check if a value appears to be a sanitized placeholder that needs user configuration
+   */
+  private isPlaceholderPath(value: string): boolean {
+    return typeof value === 'string' && value.startsWith('/path/to/');
+  }
+
+  /**
+   * Check MCP server for placeholder values and warn user
+   */
+  private checkForPlaceholders(mcpServer: StackMcpServer): string[] {
+    const placeholders: string[] = [];
+
+    if (mcpServer.command && this.isPlaceholderPath(mcpServer.command)) {
+      placeholders.push(`command: ${mcpServer.command}`);
+    }
+
+    if (mcpServer.args) {
+      mcpServer.args.forEach((arg, index) => {
+        if (this.isPlaceholderPath(arg)) {
+          placeholders.push(`args[${index}]: ${arg}`);
+        }
+      });
+    }
+
+    if (mcpServer.env) {
+      Object.entries(mcpServer.env).forEach(([key, value]) => {
+        if (typeof value === 'string' && this.isPlaceholderPath(value)) {
+          placeholders.push(`env.${key}: ${value}`);
+        }
+      });
+    }
+
+    return placeholders;
+  }
+
+  /**
+   * Display helpful message about configuring placeholder values
+   */
+  private displayPlaceholderWarning(serverName: string, placeholders: string[]): void {
+    this.ui.warning(`⚠️  MCP server "${serverName}" contains placeholder values:`);
+    placeholders.forEach(placeholder => {
+      this.ui.meta(`   • ${placeholder}`);
+    });
+    this.ui.meta("   💡 You'll need to update these paths in your claude_desktop_config.json");
+    this.ui.meta('   💡 to point to your actual files/credentials\n');
+  }
+
+  /**
+   * Initialize MCP servers configuration in project config
+   */
+  private initializeMcpServersConfig(
+    projectConfig: Record<string, unknown>,
+    options: RestoreOptions
+  ): Record<string, unknown> {
+    if (options.overwrite) {
+      projectConfig.mcpServers = {};
+    } else {
+      projectConfig.mcpServers ??= {};
+    }
+    return projectConfig.mcpServers as Record<string, unknown>;
+  }
+
+  /**
+   * Process a single MCP server configuration
+   */
+  private processSingleMcpServer(
+    mcpServer: StackMcpServer,
+    mcpServers: Record<string, unknown>,
+    options: RestoreOptions
+  ): void {
+    if (!options.overwrite && mcpServers[mcpServer.name]) {
+      this.ui.warning(`Skipped existing MCP server: ${mcpServer.name}`);
+      return;
+    }
+
+    // Check for placeholder values and warn user
+    const placeholders = this.checkForPlaceholders(mcpServer);
+    if (placeholders.length > 0) {
+      this.displayPlaceholderWarning(mcpServer.name, placeholders);
+    }
+
+    mcpServers[mcpServer.name] = {
+      type: mcpServer.type,
+      ...(mcpServer.command && { command: mcpServer.command }),
+      ...(mcpServer.args && { args: mcpServer.args }),
+      ...(mcpServer.url && { url: mcpServer.url }),
+      ...(mcpServer.env && { env: mcpServer.env }),
+    };
+
+    this.ui.success(`✓ Added MCP server: ${mcpServer.name}`);
+  }
+
   private configureMcpServers(
     projectConfig: Record<string, unknown>,
     servers: StackMcpServer[],
     options: RestoreOptions
   ): void {
-    // ONLY touch the mcpServers field - preserve everything else in project config
-    if (options.overwrite) {
-      projectConfig.mcpServers = {};
-    } else {
-      // Initialize mcpServers if it doesn't exist, but don't overwrite existing ones
-      projectConfig.mcpServers ??= {};
-    }
+    const mcpServers = this.initializeMcpServersConfig(projectConfig, options);
 
-    const mcpServers = projectConfig.mcpServers as Record<string, unknown>;
-
-    // Add stack's MCP servers - only append to mcpServers
+    // Process each MCP server
     for (const mcpServer of servers) {
-      if (!options.overwrite && mcpServers[mcpServer.name]) {
-        this.ui.warning(`Skipped existing MCP server: ${mcpServer.name}`);
-        continue;
-      }
-
-      mcpServers[mcpServer.name] = {
-        type: mcpServer.type,
-        ...(mcpServer.command && { command: mcpServer.command }),
-        ...(mcpServer.args && { args: mcpServer.args }),
-        ...(mcpServer.url && { url: mcpServer.url }),
-        ...(mcpServer.env && { env: mcpServer.env }),
-      };
-
-      this.ui.success(`✓ Added MCP server: ${mcpServer.name}`);
+      this.processSingleMcpServer(mcpServer, mcpServers, options);
     }
   }
 
