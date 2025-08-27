@@ -13,6 +13,9 @@ const auth = new AuthService();
 const api = new ApiService();
 import { installAction } from './install.js';
 import { deleteAction } from './delete.js';
+
+import { navigationService } from '../services/NavigationService.js';
+import { colors } from '../utils/colors.js';
 import open from 'open';
 
 interface BrowseState {
@@ -116,6 +119,12 @@ async function showMainBrowseMenu(): Promise<string> {
   console.log(`\n${ui.colorInfo('🌐 Browse Development Stacks')}`);
   console.log(ui.colorMeta('Discover and manage Claude Code configurations from the community\n'));
 
+  // Show navigation breadcrumb if available
+  const breadcrumb = navigationService.getBreadcrumb();
+  if (breadcrumb) {
+    console.log(ui.colorMeta(`Navigation: ${breadcrumb}\n`));
+  }
+
   console.log(ui.colorStackName('📚 Browse Options:'));
   console.log(
     `  ${ui.colorHighlight('(a)')} ${ui.colorInfo('All Stacks')} - ${ui.colorDescription('Discover public stacks from the community')}`
@@ -125,6 +134,9 @@ async function showMainBrowseMenu(): Promise<string> {
   );
   console.log(
     `  ${ui.colorHighlight('(s)')} ${ui.colorInfo('Search')} - ${ui.colorDescription('Find stacks by keyword or functionality')}`
+  );
+  console.log(
+    `  ${ui.colorHighlight('(l)')} ${ui.colorInfo('Local')} - ${ui.colorDescription('View your local development stacks')}`
   );
   console.log(
     `  ${ui.colorHighlight('(q)')} ${ui.colorMeta('Quit')} - ${ui.colorDescription('Return to main menu')}`
@@ -146,8 +158,8 @@ async function showStackList(
     return null;
   }
 
-  console.log(`\n📋 ${title}`);
-  console.log(ui.colorMeta(`Found ${stacks.length} stack(s):\n`));
+  console.log(`\n🌐 ${title}`);
+  console.log(ui.colorMeta(`Found ${stacks.length} remote stack(s):\n`));
 
   stacks.forEach((stack: RemoteStack, index: number) => {
     const components =
@@ -160,8 +172,20 @@ async function showStackList(
     );
   });
 
+  return await handleStackSelection(stacks, state, isMyStacks);
+}
+
+async function handleStackSelection(
+  stacks: RemoteStack[],
+  state: BrowseState,
+  isMyStacks: boolean
+): Promise<string | null> {
   const selection = await ui.readSingleChar(
-    ui.colorMeta(`\nEnter a number (1-${stacks.length}) or (b)ack: `)
+    ui.colorMeta(`\nEnter a number `) +
+      colors.highlight(`(1-${stacks.length})`) +
+      ui.colorMeta(` or `) +
+      colors.highlight(`(b)ack`) +
+      ui.colorMeta(`: `)
   );
 
   if (selection === 'b' || selection === '') {
@@ -627,6 +651,11 @@ async function handleSearchAction(state: BrowseState): Promise<void> {
   }
 }
 
+async function handleLocalStacksAction(): Promise<void> {
+  const { listAction } = await import('./list.js');
+  await listAction();
+}
+
 /**
  * Interactive browser for discovering and managing development stacks from Commands.com
  *
@@ -652,45 +681,51 @@ async function handleSearchAction(state: BrowseState): Promise<void> {
  * @since 1.0.0
  * @public
  */
+async function handleMainAction(action: string, state: BrowseState): Promise<boolean> {
+  switch (action.toLowerCase()) {
+    case 'a':
+      await handleAllStacksAction(state);
+      return true;
+
+    case 'm':
+      await handleMyStacksAction(state);
+      return true;
+
+    case 's':
+      await handleSearchAction(state);
+      return true;
+
+    case 'l':
+      await handleLocalStacksAction();
+      return true;
+
+    case 'q':
+    case '':
+      return false;
+
+    default:
+      console.log(ui.colorError('Invalid option. Please try again.'));
+      return true;
+  }
+}
+
 export async function browseAction(): Promise<void> {
   const state: BrowseState = {};
+  navigationService.pushContext({ source: 'browse' });
 
   try {
     let continueShowing = true;
     while (continueShowing) {
       console.log(`\n${'─'.repeat(50)}\n`);
-
       // eslint-disable-next-line no-await-in-loop
       const mainAction = await showMainBrowseMenu();
-
-      switch (mainAction.toLowerCase()) {
-        case 'a':
-          // eslint-disable-next-line no-await-in-loop
-          await handleAllStacksAction(state);
-          break;
-
-        case 'm':
-          // eslint-disable-next-line no-await-in-loop
-          await handleMyStacksAction(state);
-          break;
-
-        case 's':
-          // eslint-disable-next-line no-await-in-loop
-          await handleSearchAction(state);
-          break;
-
-        case 'q':
-        case '':
-          continueShowing = false;
-          break;
-
-        default:
-          console.log(ui.colorError('Invalid option. Please try again.'));
-          break;
-      }
+      // eslint-disable-next-line no-await-in-loop
+      continueShowing = await handleMainAction(mainAction, state);
     }
   } catch (error) {
     handleBrowseError(error);
+  } finally {
+    navigationService.popContext();
   }
 }
 

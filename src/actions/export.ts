@@ -189,8 +189,8 @@ async function generateStackMetadata(options: {
   const dirName = path.basename(currentDir);
 
   // Auto-generate stack name and description from current directory
-  const stackName = options.name ?? `${dirName} Stack`;
-  let stackDescription = options.description ?? `Stack for ${dirName} project`;
+  const stackName = options.name ?? dirName;
+  let stackDescription = options.description ?? `${dirName} configuration`;
 
   // Try to read package.json for better description
   const packageJsonPath = path.join(currentDir, 'package.json');

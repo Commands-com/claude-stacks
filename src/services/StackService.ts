@@ -38,7 +38,7 @@ export class StackService {
 
       const stack: DeveloperStack = {
         name: args.name,
-        description: args.description ?? `Stack for ${args.name}`,
+        description: args.description ?? `${args.name} configuration`,
         version: '1.0.0',
         commands: [],
         agents: [],

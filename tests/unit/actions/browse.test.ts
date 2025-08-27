@@ -61,6 +61,12 @@ jest.mock('open', () => jest.fn());
 // Mock node-fetch
 jest.mock('node-fetch', () => jest.fn());
 
+// Mock list action
+jest.mock('../../../src/actions/list.js', () => ({
+  listLocalStacks: jest.fn(),
+  listAction: jest.fn(),
+}));
+
 const mockConsoleLog = jest.fn();
 const mockConsoleError = jest.fn();
 const mockConsoleClear = jest.fn();
@@ -73,6 +79,8 @@ describe('browseAction', () => {
   let mockInstallAction: jest.Mock;
   let mockDeleteAction: jest.Mock;
   let mockOpen: jest.Mock;
+  let mockListLocalStacks: jest.Mock;
+  let mockListAction: jest.Mock;
 
   const originalConsoleLog = console.log;
   const originalConsoleError = console.error;
@@ -179,6 +187,32 @@ describe('browseAction', () => {
     mockOpen.mockReset();
     mockOpen.mockResolvedValue();
 
+    // Setup list action mock
+    mockListLocalStacks = require('../../../src/actions/list.js').listLocalStacks;
+    mockListLocalStacks.mockReset();
+    mockListLocalStacks.mockResolvedValue([
+      {
+        name: 'local-stack-1',
+        version: '1.0.0',
+        filePath: '/path/to/local-stack-1.json',
+        commands: [{ name: 'cmd1' }, { name: 'cmd2' }],
+        agents: [{ name: 'agent1' }],
+        mcpServers: [],
+      },
+      {
+        name: 'local-stack-2',
+        version: '2.0.0',
+        filePath: '/path/to/local-stack-2.json',
+        commands: [{ name: 'cmd3' }],
+        agents: [],
+        mcpServers: [{ name: 'mcp1' }],
+      },
+    ]);
+
+    mockListAction = require('../../../src/actions/list.js').listAction;
+    mockListAction.mockReset();
+    mockListAction.mockResolvedValue();
+
     // Setup fetch mock with successful response
     mockFetch = require('node-fetch') as jest.Mock;
     mockFetch.mockReset();
@@ -243,7 +277,9 @@ describe('browseAction', () => {
 
       expect(mockConsoleLog).toHaveBeenCalledWith('🔍 Fetching stacks from Commands.com...');
       expect(mockConsoleLog).toHaveBeenCalledWith(expect.stringContaining('All Public Stacks'));
-      expect(mockConsoleLog).toHaveBeenCalledWith(expect.stringContaining('Found 2 stack(s)'));
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('Found 2 remote stack(s)')
+      );
       expect(mockConsoleLog).toHaveBeenCalledWith(expect.stringContaining('1. test-stack'));
       expect(mockConsoleLog).toHaveBeenCalledWith(expect.stringContaining('2. another-stack'));
       expect(mockFetch).toHaveBeenCalledWith(
@@ -798,6 +834,76 @@ describe('browseAction', () => {
 
       expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining('No stacks found matching your criteria')
+      );
+    });
+  });
+
+  describe('local stacks navigation', () => {
+    beforeEach(() => {
+      // Mock listLocalStacks function
+      const mockListLocalStacks = jest.fn();
+      jest.doMock('../../../src/actions/list.js', () => ({
+        listLocalStacks: mockListLocalStacks,
+      }));
+
+      // Set up mock local stacks
+      mockListLocalStacks.mockResolvedValue([
+        {
+          name: 'local-stack-1',
+          version: '1.0.0',
+          filePath: '/path/to/local-stack-1.json',
+          commands: [{ name: 'cmd1' }, { name: 'cmd2' }],
+          agents: [{ name: 'agent1' }],
+          mcpServers: [],
+        },
+        {
+          name: 'local-stack-2',
+          version: '2.0.0',
+          filePath: '/path/to/local-stack-2.json',
+          commands: [{ name: 'cmd3' }],
+          agents: [],
+          mcpServers: [{ name: 'mcp1' }],
+        },
+      ]);
+    });
+
+    it('should display local stacks when l is pressed', async () => {
+      mockReadSingleChar
+        .mockResolvedValueOnce('l') // Select local stacks
+        .mockResolvedValueOnce('q'); // Quit
+
+      await browseAction();
+
+      expect(mockListAction).toHaveBeenCalled();
+    });
+
+    it('should handle empty local stacks', async () => {
+      mockReadSingleChar
+        .mockResolvedValueOnce('l') // Select local stacks
+        .mockResolvedValueOnce('q'); // Quit
+
+      await browseAction();
+
+      expect(mockListAction).toHaveBeenCalled();
+    });
+
+    it('should handle error fetching local stacks', async () => {
+      mockListAction.mockRejectedValue(new Error('Failed to read local stacks'));
+
+      mockReadSingleChar
+        .mockResolvedValueOnce('l') // Select local stacks
+        .mockResolvedValueOnce('q'); // Quit
+
+      await expect(browseAction()).rejects.toThrow('Failed to read local stacks');
+    });
+
+    it('should show Local option in main browse menu', async () => {
+      mockReadSingleChar.mockResolvedValueOnce('q');
+
+      await browseAction();
+
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('(l) Local - View your local development stacks')
       );
     });
   });

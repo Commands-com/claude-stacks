@@ -131,8 +131,8 @@ describe('Export Action', () => {
       expect(fs.writeJson).toHaveBeenCalledWith(
         '/home/.claude/stacks/test-stack.json',
         expect.objectContaining({
-          name: 'project Stack',
-          description: 'Stack for project project',
+          name: 'project',
+          description: 'project configuration',
           version: '1.0.0',
           commands: [],
           agents: [],
@@ -669,7 +669,7 @@ describe('Export Action', () => {
       expect(fs.writeJson).toHaveBeenCalledWith(
         '/home/.claude/stacks/test.json',
         expect.objectContaining({
-          description: 'Stack for project project',
+          description: 'project configuration',
         }),
         { spaces: 2 }
       );

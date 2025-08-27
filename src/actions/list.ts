@@ -1,10 +1,12 @@
 import fs from 'fs-extra';
 import * as path from 'path';
 import { getStacksPath } from '../constants/paths.js';
+import { colors } from '../utils/colors.js';
 
 import type { DeveloperStack } from '../types/index.js';
 import { BaseAction } from './BaseAction.js';
 import { showLocalStackDetailsAndActions } from '../ui/menus.js';
+import { navigationService } from '../services/NavigationService.js';
 
 /**
  * Action class for listing and managing local stacks
@@ -17,6 +19,9 @@ export class ListAction extends BaseAction {
    * Execute the list action
    */
   async execute(): Promise<void> {
+    // Set navigation context
+    navigationService.pushContext({ source: 'list' });
+
     try {
       // Keep showing the list until user exits
       let continueShowing = true;
@@ -26,7 +31,7 @@ export class ListAction extends BaseAction {
         const stacks = await this.listLocalStacks();
 
         if (stacks.length === 0) {
-          this.ui.info('📋 Local Development Stacks\n');
+          this.ui.info('💾 Local Development Stacks\n');
           this.ui.warning('No stacks found in ~/.claude/stacks/');
           this.ui.meta('Export your first stack with:');
           this.ui.meta('  claude-stacks export');
@@ -42,6 +47,9 @@ export class ListAction extends BaseAction {
       }
     } catch (error) {
       this.handleError(error, 'List');
+    } finally {
+      // Clean up navigation context
+      navigationService.popContext();
     }
   }
 
@@ -82,8 +90,14 @@ export class ListAction extends BaseAction {
   }
 
   private async showStackList(stacks: DeveloperStack[]): Promise<boolean> {
-    this.ui.info('📋 Local Development Stacks\n');
+    this.ui.info('💾 Local Development Stacks\n');
     this.ui.meta(`Found ${stacks.length} local stack(s):\n`);
+
+    // Show navigation breadcrumb if available
+    const breadcrumb = navigationService.getBreadcrumb();
+    if (breadcrumb) {
+      this.ui.meta(`Navigation: ${breadcrumb}\n`);
+    }
 
     stacks.forEach((stack, index) => {
       const filename = path.basename(stack.filePath ?? '');
@@ -98,12 +112,28 @@ export class ListAction extends BaseAction {
       );
     });
 
+    return await this.handleUserSelection(stacks);
+  }
+
+  private async handleUserSelection(stacks: DeveloperStack[]): Promise<boolean> {
     const selection = await this.ui.readSingleChar(
-      this.ui.colorMeta(`\nEnter a number (1-${stacks.length}) or press Enter to exit: `)
+      this.ui.colorMeta(`
+Enter a number `) +
+        colors.highlight(`(1-${stacks.length})`) +
+        this.ui.colorMeta(', ') +
+        colors.highlight('(b)') +
+        this.ui.colorMeta('rowse published stacks, or press Enter to exit: ')
     );
 
     if (!selection || selection === '') {
       return false; // Exit
+    }
+
+    if (selection.toLowerCase() === 'b') {
+      // Import and call browseAction
+      const { browseAction } = await import('./browse.js');
+      await browseAction();
+      return true; // Continue showing list
     }
 
     const selectedIndex = parseInt(selection) - 1;

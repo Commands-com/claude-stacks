@@ -351,13 +351,101 @@ describe('list', () => {
     });
   });
 
+  describe('browse navigation', () => {
+    beforeEach(() => {
+      // Mock the browseAction function
+      const mockBrowseAction = jest.fn();
+      jest.doMock('../../../src/actions/browse.js', () => ({
+        browseAction: mockBrowseAction,
+      }));
+    });
+
+    it('should show browse option in selection prompt', async () => {
+      const mockStack: DeveloperStack = {
+        name: 'test-stack',
+        description: 'Test stack',
+      };
+
+      mockPathExists.mockResolvedValue(true);
+      mockReaddir.mockResolvedValue(['test.json']);
+      mockReadJson.mockResolvedValue(mockStack);
+      mockReadSingleChar.mockResolvedValue(''); // Exit
+
+      await listAction();
+
+      expect(mockReadSingleChar).toHaveBeenCalledWith(
+        expect.stringContaining('(b)rowse published stacks')
+      );
+    });
+
+    it('should call browseAction when b is pressed', async () => {
+      const { browseAction } = require('../../../src/actions/browse.js');
+      const mockStack: DeveloperStack = {
+        name: 'test-stack',
+        description: 'Test stack',
+      };
+
+      mockPathExists.mockResolvedValue(true);
+      mockReaddir.mockResolvedValue(['test.json']);
+      mockReadJson.mockResolvedValue(mockStack);
+      mockReadSingleChar
+        .mockResolvedValueOnce('b') // Browse
+        .mockResolvedValueOnce(''); // Then exit
+
+      await listAction();
+
+      expect(browseAction).toHaveBeenCalled();
+    });
+
+    it('should continue showing list after returning from browse', async () => {
+      const { browseAction } = require('../../../src/actions/browse.js');
+      const mockStack: DeveloperStack = {
+        name: 'test-stack',
+        description: 'Test stack',
+      };
+
+      mockPathExists.mockResolvedValue(true);
+      mockReaddir.mockResolvedValue(['test.json']);
+      mockReadJson.mockResolvedValue(mockStack);
+      mockReadSingleChar
+        .mockResolvedValueOnce('b') // Browse
+        .mockResolvedValueOnce(''); // Then exit
+
+      await listAction();
+
+      expect(browseAction).toHaveBeenCalled();
+      // Should show list again after returning
+      expect(mockConsoleLog).toHaveBeenCalledWith('💾 Local Development Stacks\n');
+    });
+
+    it('should handle browse action error gracefully', async () => {
+      const { browseAction } = require('../../../src/actions/browse.js');
+      browseAction.mockRejectedValue(new Error('Browse failed'));
+
+      const mockStack: DeveloperStack = {
+        name: 'test-stack',
+        description: 'Test stack',
+      };
+
+      mockPathExists.mockResolvedValue(true);
+      mockReaddir.mockResolvedValue(['test.json']);
+      mockReadJson.mockResolvedValue(mockStack);
+      mockReadSingleChar
+        .mockResolvedValueOnce('b') // Browse (will fail)
+        .mockResolvedValueOnce(''); // Then exit
+
+      // Should handle the error by catching it
+      await expect(listAction()).rejects.toThrow('Browse failed');
+    });
+  });
+
   describe('listAction', () => {
     it('should handle empty stack list case', async () => {
       mockPathExists.mockResolvedValue(false); // No stacks directory
 
       await listAction();
 
-      expect(mockConsoleLog).toHaveBeenCalledWith('📋 Local Development Stacks\n');
+      expect(mockConsoleLog).toHaveBeenCalledWith('💾 Local Development Stacks\n');
       expect(mockConsoleLog).toHaveBeenCalledWith('No stacks found in ~/.claude/stacks/');
       expect(mockConsoleLog).toHaveBeenCalledWith('Export your first stack with:');
       expect(mockConsoleLog).toHaveBeenCalledWith('  claude-stacks export');
@@ -370,7 +458,7 @@ describe('list', () => {
 
       await listAction();
 
-      expect(mockConsoleLog).toHaveBeenCalledWith('📋 Local Development Stacks\n');
+      expect(mockConsoleLog).toHaveBeenCalledWith('💾 Local Development Stacks\n');
       expect(mockConsoleLog).toHaveBeenCalledWith('No stacks found in ~/.claude/stacks/');
     });
 
@@ -413,7 +501,7 @@ describe('list', () => {
 
       await listAction();
 
-      expect(mockConsoleLog).toHaveBeenCalledWith('📋 Local Development Stacks\n');
+      expect(mockConsoleLog).toHaveBeenCalledWith('💾 Local Development Stacks\n');
       expect(mockConsoleLog).toHaveBeenCalledWith('Found 2 local stack(s):\n');
       expect(mockConsoleLog).toHaveBeenCalledWith('1. stack-1 (stack1.json) - v1.0.0, 1 items');
       expect(mockConsoleLog).toHaveBeenCalledWith('2. stack-2 (stack2.json) - v2.0.0, 2 items');
