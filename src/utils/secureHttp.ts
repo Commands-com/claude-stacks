@@ -94,7 +94,7 @@ export class SecureHttpClient {
       ...options,
       agent: this.httpsAgent,
       headers: {
-        'User-Agent': 'claude-stacks-cli/1.2.2',
+        'User-Agent': 'claude-stacks-cli/1.3.7',
         Accept: 'application/json',
         'Accept-Encoding': 'gzip, deflate',
         Connection: 'keep-alive',

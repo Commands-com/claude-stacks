@@ -45,7 +45,7 @@ describe('SecureHttpClient', () => {
       expect(mockedFetch).toHaveBeenCalledWith('https://api.commands.com/test', {
         agent: expect.any(Object),
         headers: {
-          'User-Agent': 'claude-stacks-cli/1.2.2',
+          'User-Agent': 'claude-stacks-cli/1.3.7',
           Accept: 'application/json',
           'Accept-Encoding': 'gzip, deflate',
           Connection: 'keep-alive',
@@ -95,7 +95,7 @@ describe('SecureHttpClient', () => {
       expect(mockedFetch).toHaveBeenCalledWith('https://api.commands.com/test', {
         agent: expect.any(Object),
         headers: {
-          'User-Agent': 'claude-stacks-cli/1.2.2',
+          'User-Agent': 'claude-stacks-cli/1.3.7',
           Accept: 'application/json',
           'Accept-Encoding': 'gzip, deflate',
           Connection: 'keep-alive',
@@ -119,7 +119,7 @@ describe('SecureHttpClient', () => {
         body: JSON.stringify({ test: 'data' }),
         agent: expect.any(Object),
         headers: {
-          'User-Agent': 'claude-stacks-cli/1.2.2',
+          'User-Agent': 'claude-stacks-cli/1.3.7',
           Accept: 'application/json',
           'Accept-Encoding': 'gzip, deflate',
           Connection: 'keep-alive',
@@ -144,7 +144,7 @@ describe('SecureHttpClient', () => {
         body: 'text data',
         agent: expect.any(Object),
         headers: {
-          'User-Agent': 'claude-stacks-cli/1.2.2',
+          'User-Agent': 'claude-stacks-cli/1.3.7',
           Accept: 'application/json',
           'Accept-Encoding': 'gzip, deflate',
           Connection: 'keep-alive',
@@ -259,7 +259,7 @@ describe('SecureHttpClient', () => {
       expect(mockedFetch).toHaveBeenCalledWith('https://api.commands.com/data', {
         method: 'GET',
         headers: {
-          'User-Agent': 'claude-stacks-cli/1.2.2',
+          'User-Agent': 'claude-stacks-cli/1.3.7',
           Accept: 'application/json',
           'Accept-Encoding': 'gzip, deflate',
           Connection: 'keep-alive',
@@ -278,7 +278,7 @@ describe('SecureHttpClient', () => {
       expect(mockedFetch).toHaveBeenCalledWith('https://api.commands.com/data', {
         method: 'GET',
         headers: {
-          'User-Agent': 'claude-stacks-cli/1.2.2',
+          'User-Agent': 'claude-stacks-cli/1.3.7',
           Accept: 'application/json',
           'Accept-Encoding': 'gzip, deflate',
           Connection: 'keep-alive',
@@ -298,7 +298,7 @@ describe('SecureHttpClient', () => {
       expect(mockedFetch).toHaveBeenCalledWith('https://api.commands.com/data', {
         method: 'POST',
         headers: {
-          'User-Agent': 'claude-stacks-cli/1.2.2',
+          'User-Agent': 'claude-stacks-cli/1.3.7',
           Accept: 'application/json',
           'Accept-Encoding': 'gzip, deflate',
           Connection: 'keep-alive',
@@ -317,7 +317,7 @@ describe('SecureHttpClient', () => {
         method: 'POST',
         body: JSON.stringify(body),
         headers: {
-          'User-Agent': 'claude-stacks-cli/1.2.2',
+          'User-Agent': 'claude-stacks-cli/1.3.7',
           Accept: 'application/json',
           'Accept-Encoding': 'gzip, deflate',
           Connection: 'keep-alive',
@@ -337,7 +337,7 @@ describe('SecureHttpClient', () => {
         method: 'POST',
         body: 'text data',
         headers: {
-          'User-Agent': 'claude-stacks-cli/1.2.2',
+          'User-Agent': 'claude-stacks-cli/1.3.7',
           Accept: 'application/json',
           'Accept-Encoding': 'gzip, deflate',
           Connection: 'keep-alive',
@@ -360,7 +360,7 @@ describe('SecureHttpClient', () => {
         method: 'POST',
         body: JSON.stringify(body),
         headers: {
-          'User-Agent': 'claude-stacks-cli/1.2.2',
+          'User-Agent': 'claude-stacks-cli/1.3.7',
           Accept: 'application/json',
           'Accept-Encoding': 'gzip, deflate',
           Connection: 'keep-alive',
@@ -382,7 +382,7 @@ describe('SecureHttpClient', () => {
       expect(mockedFetch).toHaveBeenCalledWith('https://api.commands.com/data/123', {
         method: 'PUT',
         headers: {
-          'User-Agent': 'claude-stacks-cli/1.2.2',
+          'User-Agent': 'claude-stacks-cli/1.3.7',
           Accept: 'application/json',
           'Accept-Encoding': 'gzip, deflate',
           Connection: 'keep-alive',
@@ -401,7 +401,7 @@ describe('SecureHttpClient', () => {
         method: 'PUT',
         body: JSON.stringify(body),
         headers: {
-          'User-Agent': 'claude-stacks-cli/1.2.2',
+          'User-Agent': 'claude-stacks-cli/1.3.7',
           Accept: 'application/json',
           'Accept-Encoding': 'gzip, deflate',
           Connection: 'keep-alive',
@@ -421,7 +421,7 @@ describe('SecureHttpClient', () => {
         method: 'PUT',
         body: 'updated text',
         headers: {
-          'User-Agent': 'claude-stacks-cli/1.2.2',
+          'User-Agent': 'claude-stacks-cli/1.3.7',
           Accept: 'application/json',
           'Accept-Encoding': 'gzip, deflate',
           Connection: 'keep-alive',
@@ -441,7 +441,7 @@ describe('SecureHttpClient', () => {
       expect(mockedFetch).toHaveBeenCalledWith('https://api.commands.com/data/123', {
         method: 'DELETE',
         headers: {
-          'User-Agent': 'claude-stacks-cli/1.2.2',
+          'User-Agent': 'claude-stacks-cli/1.3.7',
           Accept: 'application/json',
           'Accept-Encoding': 'gzip, deflate',
           Connection: 'keep-alive',
@@ -460,7 +460,7 @@ describe('SecureHttpClient', () => {
       expect(mockedFetch).toHaveBeenCalledWith('https://api.commands.com/data/123', {
         method: 'DELETE',
         headers: {
-          'User-Agent': 'claude-stacks-cli/1.2.2',
+          'User-Agent': 'claude-stacks-cli/1.3.7',
           Accept: 'application/json',
           'Accept-Encoding': 'gzip, deflate',
           Connection: 'keep-alive',
