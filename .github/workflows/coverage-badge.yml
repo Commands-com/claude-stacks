@@ -9,6 +9,8 @@ jobs:
   coverage-badge:
     name: Update Coverage Badge
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
