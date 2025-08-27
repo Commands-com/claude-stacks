@@ -1,11 +1,10 @@
 # Claude Stacks
 
 ![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)
-
-Share your Claude Code environment in seconds - export and restore development stacks.
-
 [![npm version](https://badge.fury.io/js/claude-stacks.svg)](https://www.npmjs.com/package/claude-stacks)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+Share your Claude Code environment in seconds - export and restore development stacks.
 
 ## What is Claude Stacks?
 
