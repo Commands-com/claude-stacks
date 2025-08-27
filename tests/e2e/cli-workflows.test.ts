@@ -33,11 +33,13 @@ describe('CLI End-to-End Workflows', () => {
 
     // Build the CLI if needed (assumes dist exists)
     cliPath = join(process.cwd(), 'dist', 'cli.js');
-    
+
     // Verify CLI exists before running tests
     const fs = await import('fs');
     if (!fs.existsSync(cliPath)) {
-      throw new Error(`CLI file not found at ${cliPath}. Make sure to run 'npm run build' before e2e tests.`);
+      throw new Error(
+        `CLI file not found at ${cliPath}. Make sure to run 'npm run build' before e2e tests.`
+      );
     }
 
     // Test stacks directory is set globally in global-setup.ts
@@ -97,7 +99,10 @@ describe('CLI End-to-End Workflows', () => {
         console.error('Exit code:', result.exitCode);
         console.error('CLI stderr:', result.stderr);
         console.error('CLI stdout:', result.stdout);
-        console.error('Environment CLAUDE_STACKS_TEST_STACKS_PATH:', process.env.CLAUDE_STACKS_TEST_STACKS_PATH);
+        console.error(
+          'Environment CLAUDE_STACKS_TEST_STACKS_PATH:',
+          process.env.CLAUDE_STACKS_TEST_STACKS_PATH
+        );
         console.error('==============================');
       }
       if (result.exitCode !== 0) {
@@ -105,7 +110,10 @@ describe('CLI End-to-End Workflows', () => {
         console.error('Exit code:', result.exitCode);
         console.error('CLI stderr:', result.stderr);
         console.error('CLI stdout:', result.stdout);
-        console.error('Environment CLAUDE_STACKS_TEST_STACKS_PATH:', process.env.CLAUDE_STACKS_TEST_STACKS_PATH);
+        console.error(
+          'Environment CLAUDE_STACKS_TEST_STACKS_PATH:',
+          process.env.CLAUDE_STACKS_TEST_STACKS_PATH
+        );
         console.error('==============================');
       }
       expect(result.exitCode).toBe(0);
@@ -161,7 +169,10 @@ describe('CLI End-to-End Workflows', () => {
         console.error('Exit code:', result.exitCode);
         console.error('CLI stderr:', result.stderr);
         console.error('CLI stdout:', result.stdout);
-        console.error('Environment CLAUDE_STACKS_TEST_STACKS_PATH:', process.env.CLAUDE_STACKS_TEST_STACKS_PATH);
+        console.error(
+          'Environment CLAUDE_STACKS_TEST_STACKS_PATH:',
+          process.env.CLAUDE_STACKS_TEST_STACKS_PATH
+        );
         console.error('==============================');
       }
       expect(result.exitCode).toBe(0);
@@ -255,7 +266,10 @@ describe('CLI End-to-End Workflows', () => {
         console.error('Exit code:', result.exitCode);
         console.error('CLI stderr:', result.stderr);
         console.error('CLI stdout:', result.stdout);
-        console.error('Environment CLAUDE_STACKS_TEST_STACKS_PATH:', process.env.CLAUDE_STACKS_TEST_STACKS_PATH);
+        console.error(
+          'Environment CLAUDE_STACKS_TEST_STACKS_PATH:',
+          process.env.CLAUDE_STACKS_TEST_STACKS_PATH
+        );
         console.error('==============================');
       }
       expect(result.exitCode).toBe(0);
@@ -273,7 +287,10 @@ describe('CLI End-to-End Workflows', () => {
         console.error('Exit code:', result.exitCode);
         console.error('CLI stderr:', result.stderr);
         console.error('CLI stdout:', result.stdout);
-        console.error('Environment CLAUDE_STACKS_TEST_STACKS_PATH:', process.env.CLAUDE_STACKS_TEST_STACKS_PATH);
+        console.error(
+          'Environment CLAUDE_STACKS_TEST_STACKS_PATH:',
+          process.env.CLAUDE_STACKS_TEST_STACKS_PATH
+        );
         console.error('==============================');
       }
       expect(result.exitCode).toBe(0);
@@ -345,7 +362,10 @@ describe('CLI End-to-End Workflows', () => {
         console.error('Exit code:', result.exitCode);
         console.error('CLI stderr:', result.stderr);
         console.error('CLI stdout:', result.stdout);
-        console.error('Environment CLAUDE_STACKS_TEST_STACKS_PATH:', process.env.CLAUDE_STACKS_TEST_STACKS_PATH);
+        console.error(
+          'Environment CLAUDE_STACKS_TEST_STACKS_PATH:',
+          process.env.CLAUDE_STACKS_TEST_STACKS_PATH
+        );
         console.error('==============================');
       }
       expect(result.exitCode).toBe(0);
@@ -368,14 +388,14 @@ describe('CLI End-to-End Workflows', () => {
         // Explicitly pass the test stacks path to ensure it's available in CI
         CLAUDE_STACKS_TEST_STACKS_PATH: process.env.CLAUDE_STACKS_TEST_STACKS_PATH || '',
       };
-      
+
       // Debug logging for CI
       if (process.env.CI) {
         console.log('CLI command:', 'node', [cliPath, ...args]);
         console.log('Working directory:', cwd);
         console.log('Test stacks path:', testEnv.CLAUDE_STACKS_TEST_STACKS_PATH);
       }
-      
+
       const child = spawn('node', [cliPath, ...args], {
         cwd,
         env: testEnv,

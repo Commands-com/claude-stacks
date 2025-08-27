@@ -1,0 +1,149 @@
+{
+  "commands": {
+    "npx": {
+      "description": "Node.js package runner",
+      "type": "system",
+      "installInstructions": {
+        "default": "Install Node.js from https://nodejs.org/",
+        "darwin": {
+          "brew": "brew install node",
+          "default": "Install Node.js from https://nodejs.org/ or use: brew install node"
+        },
+        "linux": {
+          "apt": "sudo apt update && sudo apt install nodejs npm",
+          "yum": "sudo yum install nodejs npm",
+          "dnf": "sudo dnf install nodejs npm",
+          "default": "Install using your package manager or from https://nodejs.org/"
+        },
+        "win32": {
+          "winget": "winget install OpenJS.NodeJS",
+          "choco": "choco install nodejs",
+          "default": "Download from https://nodejs.org/"
+        }
+      }
+    },
+    "node": {
+      "description": "Node.js runtime",
+      "type": "system",
+      "installInstructions": {
+        "default": "Install Node.js from https://nodejs.org/",
+        "darwin": {
+          "brew": "brew install node",
+          "default": "Install Node.js from https://nodejs.org/ or use: brew install node"
+        },
+        "linux": {
+          "apt": "sudo apt update && sudo apt install nodejs",
+          "yum": "sudo yum install nodejs",
+          "dnf": "sudo dnf install nodejs",
+          "default": "Install using your package manager or from https://nodejs.org/"
+        },
+        "win32": {
+          "winget": "winget install OpenJS.NodeJS",
+          "choco": "choco install nodejs",
+          "default": "Download from https://nodejs.org/"
+        }
+      }
+    },
+    "python": {
+      "description": "Python interpreter",
+      "type": "system",
+      "installInstructions": {
+        "default": "Install Python from https://www.python.org/downloads/",
+        "darwin": {
+          "brew": "brew install python3",
+          "default": "Python3 is included with macOS, or install via: brew install python3"
+        },
+        "linux": {
+          "apt": "sudo apt update && sudo apt install python3",
+          "yum": "sudo yum install python3",
+          "dnf": "sudo dnf install python3",
+          "default": "Install using your package manager"
+        },
+        "win32": {
+          "winget": "winget install Python.Python.3",
+          "choco": "choco install python3",
+          "default": "Download from https://www.python.org/downloads/"
+        }
+      }
+    },
+    "python3": {
+      "description": "Python 3 interpreter",
+      "type": "system",
+      "installInstructions": {
+        "default": "Install Python from https://www.python.org/downloads/",
+        "darwin": {
+          "brew": "brew install python3",
+          "default": "Python3 is included with macOS, or install via: brew install python3"
+        },
+        "linux": {
+          "apt": "sudo apt update && sudo apt install python3",
+          "yum": "sudo yum install python3",
+          "dnf": "sudo dnf install python3",
+          "default": "Install using your package manager"
+        },
+        "win32": {
+          "winget": "winget install Python.Python.3",
+          "choco": "choco install python3",
+          "default": "Download from https://www.python.org/downloads/"
+        }
+      }
+    },
+    "docker": {
+      "description": "Container runtime",
+      "type": "system",
+      "installInstructions": {
+        "default": "Install Docker from https://docs.docker.com/get-docker/",
+        "darwin": {
+          "brew": "brew install --cask docker",
+          "default": "Download Docker Desktop from https://www.docker.com/products/docker-desktop/ or use: brew install --cask docker"
+        },
+        "linux": {
+          "default": "Follow instructions at https://docs.docker.com/engine/install/",
+          "apt": "Follow Docker's official apt instructions at https://docs.docker.com/engine/install/ubuntu/",
+          "yum": "Follow Docker's official yum instructions at https://docs.docker.com/engine/install/centos/",
+          "dnf": "Follow Docker's official dnf instructions at https://docs.docker.com/engine/install/fedora/"
+        },
+        "win32": {
+          "winget": "winget install Docker.DockerDesktop",
+          "choco": "choco install docker-desktop",
+          "default": "Download Docker Desktop from https://www.docker.com/products/docker-desktop/"
+        }
+      }
+    },
+    "uvx": {
+      "description": "Python package runner via uv",
+      "type": "system",
+      "installInstructions": {
+        "default": "curl -LsSf https://astral.sh/uv/install.sh | sh",
+        "darwin": {
+          "brew": "brew install uv",
+          "default": "brew install uv or curl -LsSf https://astral.sh/uv/install.sh | sh"
+        },
+        "linux": {
+          "default": "curl -LsSf https://astral.sh/uv/install.sh | sh"
+        },
+        "win32": {
+          "default": "powershell -ExecutionPolicy ByPass -c \"irm https://astral.sh/uv/install.ps1 | iex\""
+        }
+      }
+    },
+    "ccline": {
+      "description": "Claude Code status line",
+      "type": "statusline",
+      "checkPaths": ["ccline", "~/.claude/ccline/ccline"],
+      "installInstructions": {
+        "default": "npm install -g @cometix/ccline",
+        "notes": "Requires Node.js to be installed first"
+      }
+    },
+    "statusline.sh": {
+      "description": "CC status line script",
+      "type": "statusline",
+      "checkPaths": ["statusline.sh", ".claude/statusline.sh"],
+      "installInstructions": {
+        "default": "npx @chongdashu/cc-statusline@latest init",
+        "notes": "Creates a local statusline.sh script in your .claude directory. Requires Node.js to be installed first"
+      }
+    }
+  }
+}

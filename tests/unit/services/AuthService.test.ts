@@ -121,9 +121,9 @@ describe('AuthService', () => {
     it('should return null after clearToken', async () => {
       mockAuthenticate.mockResolvedValue(mockToken);
       await authService.authenticate();
-      
+
       authService.clearToken();
-      
+
       expect(authService.getAccessToken()).toBeNull();
     });
   });
@@ -143,17 +143,17 @@ describe('AuthService', () => {
     it('should return false after clearToken', async () => {
       mockAuthenticate.mockResolvedValue(mockToken);
       await authService.authenticate();
-      
+
       authService.clearToken();
-      
+
       expect(authService.isAuthenticated()).toBe(false);
     });
 
     it('should return false after failed authentication', async () => {
       mockAuthenticate.mockRejectedValue(new Error('Auth failed'));
-      
+
       await expect(authService.authenticate()).rejects.toThrow();
-      
+
       expect(authService.isAuthenticated()).toBe(false);
     });
   });
@@ -162,20 +162,20 @@ describe('AuthService', () => {
     it('should clear token when authenticated', async () => {
       mockAuthenticate.mockResolvedValue(mockToken);
       await authService.authenticate();
-      
+
       expect(authService.isAuthenticated()).toBe(true);
-      
+
       authService.clearToken();
-      
+
       expect(authService.getAccessToken()).toBeNull();
       expect(authService.isAuthenticated()).toBe(false);
     });
 
     it('should be safe to call when not authenticated', () => {
       expect(authService.isAuthenticated()).toBe(false);
-      
+
       authService.clearToken(); // Should not throw
-      
+
       expect(authService.getAccessToken()).toBeNull();
       expect(authService.isAuthenticated()).toBe(false);
     });
@@ -183,10 +183,10 @@ describe('AuthService', () => {
     it('should be safe to call multiple times', async () => {
       mockAuthenticate.mockResolvedValue(mockToken);
       await authService.authenticate();
-      
+
       authService.clearToken();
       authService.clearToken(); // Multiple calls should be safe
-      
+
       expect(authService.getAccessToken()).toBeNull();
       expect(authService.isAuthenticated()).toBe(false);
     });

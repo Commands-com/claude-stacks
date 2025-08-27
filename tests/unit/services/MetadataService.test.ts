@@ -118,9 +118,9 @@ describe('MetadataService', () => {
     it('should handle errors from getPublishedStackMetadata', async () => {
       mockGetPublishedStackMetadata.mockRejectedValue(new Error('Read error'));
 
-      await expect(
-        metadataService.getPublishedStackMetadata('/test/project')
-      ).rejects.toThrow('Read error');
+      await expect(metadataService.getPublishedStackMetadata('/test/project')).rejects.toThrow(
+        'Read error'
+      );
     });
   });
 
@@ -170,9 +170,9 @@ describe('MetadataService', () => {
     it('should handle errors from findStackByStackId', async () => {
       mockFindStackByStackId.mockRejectedValue(new Error('Find error'));
 
-      await expect(
-        metadataService.findStackByStackId('test-org/test-stack')
-      ).rejects.toThrow('Find error');
+      await expect(metadataService.findStackByStackId('test-org/test-stack')).rejects.toThrow(
+        'Find error'
+      );
     });
   });
 
@@ -188,9 +188,9 @@ describe('MetadataService', () => {
     it('should handle removal errors', async () => {
       mockRemovePublishedStackMetadata.mockRejectedValue(new Error('Remove error'));
 
-      await expect(
-        metadataService.removePublishedStackMetadata('/test/project')
-      ).rejects.toThrow('Remove error');
+      await expect(metadataService.removePublishedStackMetadata('/test/project')).rejects.toThrow(
+        'Remove error'
+      );
     });
   });
 

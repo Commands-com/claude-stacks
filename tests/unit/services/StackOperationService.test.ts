@@ -222,7 +222,7 @@ describe('StackOperationService', () => {
 
       await stackOperationService.checkDependencies(mockStack);
 
-      expect(mockUI.info).toHaveBeenCalledWith('🔍 Checking MCP server dependencies...');
+      expect(mockUI.info).toHaveBeenCalledWith('🔍 Checking dependencies...');
       expect(mockDependencies.checkMcpDependencies).toHaveBeenCalledWith(mockStack.mcpServers);
       expect(mockDependencies.displayMissingDependencies).toHaveBeenCalledWith(missingDeps);
     });
@@ -232,7 +232,7 @@ describe('StackOperationService', () => {
 
       await stackOperationService.checkDependencies(stackWithoutMcp);
 
-      expect(mockUI.info).not.toHaveBeenCalled();
+      expect(mockUI.info).toHaveBeenCalledWith('🔍 Checking dependencies...');
       expect(mockDependencies.checkMcpDependencies).not.toHaveBeenCalled();
     });
 

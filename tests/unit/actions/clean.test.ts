@@ -117,7 +117,9 @@ describe('cleanAction', () => {
       await cleanAction({});
 
       expect(mockConsoleLog).toHaveBeenCalledWith('🧹 Cleaning up project configurations...');
-      expect(mockConsoleLog).toHaveBeenCalledWith(expect.stringContaining('Found 1 missing project'));
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('Found 1 missing project')
+      );
       expect(mockWriteJson).toHaveBeenCalled();
       expect(mockProcessExit).not.toHaveBeenCalled();
     });
@@ -174,7 +176,9 @@ describe('cleanAction', () => {
 
       await cleanAction({});
 
-      expect(mockConsoleLog).toHaveBeenCalledWith('No project configurations found in ~/.claude.json');
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        'No project configurations found in ~/.claude.json'
+      );
       expect(mockWriteJson).not.toHaveBeenCalled();
     });
 
@@ -244,7 +248,9 @@ describe('cleanAction', () => {
 
       await cleanAction({});
 
-      expect(mockConsoleLog).toHaveBeenCalledWith(expect.stringContaining('Found 2 missing project'));
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('Found 2 missing project')
+      );
       expect(mockWriteJson).toHaveBeenCalledWith(
         expect.any(String),
         {
@@ -309,7 +315,9 @@ describe('cleanAction', () => {
       await cleanAction({});
 
       expect(mockConsoleLog).toHaveBeenCalledWith('🧹 Cleaning up project configurations...');
-      expect(mockConsoleLog).toHaveBeenCalledWith(expect.stringContaining('Found 2 missing project'));
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        expect.stringContaining('Found 2 missing project')
+      );
       expect(mockWriteJson).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({

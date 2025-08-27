@@ -232,7 +232,7 @@ describe('installAction', () => {
 
       await installAction('test-org/mcp-stack', {});
 
-      expect(mockConsoleLog).toHaveBeenCalledWith('🔍 Checking MCP server dependencies...');
+      expect(mockConsoleLog).toHaveBeenCalledWith('🔍 Checking dependencies...');
     });
   });
 });

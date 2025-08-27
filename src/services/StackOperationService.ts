@@ -52,11 +52,24 @@ export class StackOperationService {
    * Check MCP server dependencies for a stack
    */
   async checkDependencies(stack: DeveloperStack): Promise<void> {
+    this.ui.info('🔍 Checking dependencies...');
+    const allMissingDeps = [];
+
+    // Check MCP server dependencies
     if (stack.mcpServers && stack.mcpServers.length > 0) {
-      this.ui.info('🔍 Checking MCP server dependencies...');
-      const missingDeps = await this.dependencies.checkMcpDependencies(stack.mcpServers);
-      this.dependencies.displayMissingDependencies(missingDeps);
+      const mcpDeps = await this.dependencies.checkMcpDependencies(stack.mcpServers);
+      allMissingDeps.push(...mcpDeps);
     }
+
+    // Check statusLine dependencies
+    if (stack.settings?.statusLine) {
+      const statusLineDeps = await this.dependencies.checkStatusLineDependencies(
+        stack.settings.statusLine
+      );
+      allMissingDeps.push(...statusLineDeps);
+    }
+
+    this.dependencies.displayMissingDependencies(allMissingDeps);
   }
 
   /**

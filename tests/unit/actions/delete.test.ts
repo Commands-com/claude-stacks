@@ -119,16 +119,13 @@ describe('deleteAction', () => {
 
       expect(mockConsoleLog).toHaveBeenCalledWith('🗑️ Deleting stack test-org/test-stack...');
       expect(mockAuthenticate).toHaveBeenCalled();
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.test.com/v1/stacks/test-org/test-stack',
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: 'Bearer mock-token',
-            'User-Agent': 'claude-stacks-cli/1.0.0',
-          },
-        }
-      );
+      expect(mockFetch).toHaveBeenCalledWith('https://api.test.com/v1/stacks/test-org/test-stack', {
+        method: 'DELETE',
+        headers: {
+          Authorization: 'Bearer mock-token',
+          'User-Agent': 'claude-stacks-cli/1.0.0',
+        },
+      });
       expect(mockConsoleLog).toHaveBeenCalledWith('✅ Stack deleted successfully!');
       expect(mockConsoleLog).toHaveBeenCalledWith('   Stack ID: test-org/test-stack');
       expect(mockProcessExit).not.toHaveBeenCalled();
@@ -216,9 +213,7 @@ describe('deleteAction', () => {
     it('should handle authentication errors', async () => {
       mockAuthenticate.mockRejectedValue(new Error('Authentication failed'));
 
-      await expect(deleteAction('test-org/test-stack')).rejects.toThrow(
-        'Authentication failed'
-      );
+      await expect(deleteAction('test-org/test-stack')).rejects.toThrow('Authentication failed');
 
       expect(mockFetch).not.toHaveBeenCalled();
     });
@@ -252,9 +247,7 @@ describe('deleteAction', () => {
     it('should handle network errors', async () => {
       mockFetch.mockRejectedValue(new Error('Network error'));
 
-      await expect(deleteAction('test-org/network-error-stack')).rejects.toThrow(
-        'Network error'
-      );
+      await expect(deleteAction('test-org/network-error-stack')).rejects.toThrow('Network error');
     });
 
     it('should handle response body parsing errors', async () => {
@@ -281,9 +274,7 @@ describe('deleteAction', () => {
       mockFindStackByStackId.mockResolvedValue(mockMetadata);
       mockRemovePublishedStackMetadata.mockRejectedValue(new Error('Metadata cleanup failed'));
 
-      await expect(deleteAction('test-org/test-stack')).rejects.toThrow(
-        'Metadata cleanup failed'
-      );
+      await expect(deleteAction('test-org/test-stack')).rejects.toThrow('Metadata cleanup failed');
 
       expect(mockFetch).toHaveBeenCalled(); // Should still attempt API call first
     });
@@ -291,9 +282,7 @@ describe('deleteAction', () => {
     it('should handle metadata lookup errors', async () => {
       mockFindStackByStackId.mockRejectedValue(new Error('Metadata lookup failed'));
 
-      await expect(deleteAction('test-org/test-stack')).rejects.toThrow(
-        'Metadata lookup failed'
-      );
+      await expect(deleteAction('test-org/test-stack')).rejects.toThrow('Metadata lookup failed');
 
       expect(mockFetch).toHaveBeenCalled(); // Should still attempt API call first
     });
@@ -301,9 +290,7 @@ describe('deleteAction', () => {
     it('should handle non-Error exceptions', async () => {
       mockFetch.mockRejectedValue('String error');
 
-      await expect(deleteAction('test-org/string-error-stack')).rejects.toThrow(
-        'String error'
-      );
+      await expect(deleteAction('test-org/string-error-stack')).rejects.toThrow('String error');
     });
   });
 
@@ -311,16 +298,13 @@ describe('deleteAction', () => {
     it('should use correct API endpoint', async () => {
       await deleteAction('test-org/api-test');
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.test.com/v1/stacks/test-org/api-test',
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: 'Bearer mock-token',
-            'User-Agent': 'claude-stacks-cli/1.0.0',
-          },
-        }
-      );
+      expect(mockFetch).toHaveBeenCalledWith('https://api.test.com/v1/stacks/test-org/api-test', {
+        method: 'DELETE',
+        headers: {
+          Authorization: 'Bearer mock-token',
+          'User-Agent': 'claude-stacks-cli/1.0.0',
+        },
+      });
     });
 
     it('should handle different API base URLs', async () => {
@@ -364,7 +348,9 @@ describe('deleteAction', () => {
       await deleteAction('complete-org/complete-stack');
 
       // Verify all steps executed in order
-      expect(mockConsoleLog).toHaveBeenCalledWith('🗑️ Deleting stack complete-org/complete-stack...');
+      expect(mockConsoleLog).toHaveBeenCalledWith(
+        '🗑️ Deleting stack complete-org/complete-stack...'
+      );
       expect(mockAuthenticate).toHaveBeenCalled();
       expect(mockFetch).toHaveBeenCalledWith(
         'https://api.test.com/v1/stacks/complete-org/complete-stack',

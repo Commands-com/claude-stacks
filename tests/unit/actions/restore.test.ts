@@ -175,7 +175,9 @@ describe('restoreAction', () => {
     it('should handle MCP dependency check errors', async () => {
       mockPerformRestore.mockRejectedValue(new Error('Dependency check failed'));
 
-      await expect(restoreAction('/test/stack.json', {})).rejects.toThrow('Dependency check failed');
+      await expect(restoreAction('/test/stack.json', {})).rejects.toThrow(
+        'Dependency check failed'
+      );
     });
 
     it('should handle permission errors', async () => {

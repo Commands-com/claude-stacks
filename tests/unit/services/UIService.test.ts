@@ -14,7 +14,7 @@ jest.mock('../../../src/utils/input.js', () => ({
   readSingleChar: mockReadSingleChar,
 }));
 
-// Create mock color functions that return the text unchanged  
+// Create mock color functions that return the text unchanged
 const createMockColorFunction = () => jest.fn((text: string) => text);
 
 // Mock the colors module completely
@@ -397,9 +397,7 @@ describe('UIService', () => {
 
       uiService.log(composed);
 
-      expect(mockConsoleLog).toHaveBeenCalledWith(
-        'Stack: my-stack - A useful stack'
-      );
+      expect(mockConsoleLog).toHaveBeenCalledWith('Stack: my-stack - A useful stack');
     });
 
     it('should handle rapid successive calls', () => {
@@ -424,9 +422,7 @@ describe('UIService', () => {
       const combined = parts.join(' | ');
       uiService.log(combined);
 
-      expect(mockConsoleLog).toHaveBeenCalledWith(
-        'stack-name | description | 42'
-      );
+      expect(mockConsoleLog).toHaveBeenCalledWith('stack-name | description | 42');
     });
 
     it('should handle complex formatting scenarios', () => {
@@ -437,9 +433,7 @@ describe('UIService', () => {
       const message = `📦 ${name} v${version} is now ${status}!`;
       uiService.info(message);
 
-      expect(mockColors.info).toHaveBeenCalledWith(
-        '📦 test-stack v1.0.0 is now published!'
-      );
+      expect(mockColors.info).toHaveBeenCalledWith('📦 test-stack v1.0.0 is now published!');
     });
   });
 });

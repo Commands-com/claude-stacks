@@ -1,6 +1,7 @@
 import {
   type MissingDependency,
   checkMcpDependencies,
+  checkStatusLineDependencies,
   displayMissingDependencies,
 } from '../utils/dependencies.js';
 import type { StackMcpServer } from '../types/index.js';
@@ -25,6 +26,19 @@ export class DependencyService {
    */
   async checkMcpDependencies(mcpServers: StackMcpServer[]): Promise<MissingDependency[]> {
     return await checkMcpDependencies(mcpServers);
+  }
+
+  /**
+   * Check for missing statusLine dependencies
+   *
+   * @param statusLine - StatusLine configuration to check
+   * @returns Promise that resolves to array of missing dependencies
+   */
+  async checkStatusLineDependencies(statusLine?: {
+    type?: string;
+    command?: string;
+  }): Promise<MissingDependency[]> {
+    return await checkStatusLineDependencies(statusLine);
   }
 
   /**

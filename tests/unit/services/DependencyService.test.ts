@@ -3,10 +3,12 @@ import type { StackMcpServer, MissingDependency } from '../../../src/types/index
 
 // Mock the dependencies utilities before importing DependencyService
 const mockCheckMcpDependencies = jest.fn();
+const mockCheckStatusLineDependencies = jest.fn();
 const mockDisplayMissingDependencies = jest.fn();
 
 jest.mock('../../../src/utils/dependencies.ts', () => ({
   checkMcpDependencies: mockCheckMcpDependencies,
+  checkStatusLineDependencies: mockCheckStatusLineDependencies,
   displayMissingDependencies: mockDisplayMissingDependencies,
 }));
 
@@ -24,7 +26,7 @@ describe('DependencyService', () => {
       args: ['server1.js'],
     },
     {
-      name: 'test-server-2', 
+      name: 'test-server-2',
       type: 'stdio',
       command: 'python',
       args: ['server2.py'],
@@ -46,11 +48,12 @@ describe('DependencyService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+    mockCheckStatusLineDependencies.mockReset();
+
     // Reset mock implementations
     mockCheckMcpDependencies.mockReset();
     mockDisplayMissingDependencies.mockReset();
-    
+
     dependencyService = new DependencyService();
   });
 
@@ -90,9 +93,9 @@ describe('DependencyService', () => {
       const error = new Error('Dependency check failed');
       mockCheckMcpDependencies.mockRejectedValue(error);
 
-      await expect(
-        dependencyService.checkMcpDependencies(mockMcpServers)
-      ).rejects.toThrow('Dependency check failed');
+      await expect(dependencyService.checkMcpDependencies(mockMcpServers)).rejects.toThrow(
+        'Dependency check failed'
+      );
     });
   });
 
@@ -122,6 +125,66 @@ describe('DependencyService', () => {
       dependencyService.displayMissingDependencies(multipleMissing);
 
       expect(mockDisplayMissingDependencies).toHaveBeenCalledWith(multipleMissing);
+    });
+  });
+
+  describe('checkStatusLineDependencies', () => {
+    it('should call checkStatusLineDependencies utility and return result', async () => {
+      const statusLineConfig = { type: 'command', command: 'ccline' };
+      const expectedResult = [
+        {
+          command: 'ccline',
+          type: 'statusline' as const,
+          requiredBy: ['Status line display'],
+          installInstructions: 'npm install -g @cometix/ccline',
+        },
+      ];
+
+      mockCheckStatusLineDependencies.mockResolvedValue(expectedResult);
+
+      const result = await dependencyService.checkStatusLineDependencies(statusLineConfig);
+
+      expect(result).toEqual(expectedResult);
+      expect(mockCheckStatusLineDependencies).toHaveBeenCalledWith(statusLineConfig);
+    });
+
+    it('should return empty array when statusLine config is undefined', async () => {
+      mockCheckStatusLineDependencies.mockResolvedValue([]);
+
+      const result = await dependencyService.checkStatusLineDependencies(undefined);
+
+      expect(result).toEqual([]);
+      expect(mockCheckStatusLineDependencies).toHaveBeenCalledWith(undefined);
+    });
+
+    it('should handle different statusLine types', async () => {
+      const commandConfig = { type: 'command', command: 'statusline.sh' };
+      const expectedResult = [
+        {
+          command: 'statusline.sh',
+          type: 'statusline' as const,
+          requiredBy: ['Status line display'],
+          installInstructions: 'npx @chongdashu/cc-statusline@latest init',
+        },
+      ];
+
+      mockCheckStatusLineDependencies.mockResolvedValue(expectedResult);
+
+      const result = await dependencyService.checkStatusLineDependencies(commandConfig);
+
+      expect(result).toEqual(expectedResult);
+      expect(mockCheckStatusLineDependencies).toHaveBeenCalledWith(commandConfig);
+    });
+
+    it('should propagate errors from checkStatusLineDependencies utility', async () => {
+      const statusLineConfig = { type: 'command', command: 'ccline' };
+      const error = new Error('StatusLine dependency check failed');
+
+      mockCheckStatusLineDependencies.mockRejectedValue(error);
+
+      await expect(dependencyService.checkStatusLineDependencies(statusLineConfig)).rejects.toThrow(
+        'StatusLine dependency check failed'
+      );
     });
   });
 
@@ -204,7 +267,7 @@ describe('DependencyService', () => {
           installInstructions: 'Install Node.js',
         },
         {
-          command: 'python', 
+          command: 'python',
           servers: ['test-server-2'],
           installInstructions: 'Install Python',
         },
@@ -254,9 +317,9 @@ describe('DependencyService', () => {
       const error = new Error('Dependency check failed');
       mockCheckMcpDependencies.mockRejectedValue(error);
 
-      await expect(
-        dependencyService.areAllDependenciesSatisfied(mockMcpServers)
-      ).rejects.toThrow('Dependency check failed');
+      await expect(dependencyService.areAllDependenciesSatisfied(mockMcpServers)).rejects.toThrow(
+        'Dependency check failed'
+      );
     });
   });
 
@@ -310,9 +373,9 @@ describe('DependencyService', () => {
       const error = new Error('Dependency check failed');
       mockCheckMcpDependencies.mockRejectedValue(error);
 
-      await expect(
-        dependencyService.getMissingDependencyNames(mockMcpServers)
-      ).rejects.toThrow('Dependency check failed');
+      await expect(dependencyService.getMissingDependencyNames(mockMcpServers)).rejects.toThrow(
+        'Dependency check failed'
+      );
     });
   });
 
@@ -367,7 +430,7 @@ describe('DependencyService', () => {
         },
         {
           name: 'server-2',
-          type: 'stdio', 
+          type: 'stdio',
           command: 'node',
           args: ['server2.js'],
         },

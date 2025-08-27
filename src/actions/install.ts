@@ -28,12 +28,25 @@ export class InstallAction extends BaseAction {
       this.ui.meta(`By: ${remoteStack.author ?? 'Unknown'}`);
       this.ui.log(`Description: ${this.ui.colorDescription(stack.description)}\n`);
 
-      // Check for missing MCP server dependencies
+      // Check for missing dependencies
+      this.ui.info('🔍 Checking dependencies...');
+      const allMissingDeps = [];
+
+      // Check MCP server dependencies
       if (stack.mcpServers && stack.mcpServers.length > 0) {
-        this.ui.info('🔍 Checking MCP server dependencies...');
-        const missingDeps = await this.dependencies.checkMcpDependencies(stack.mcpServers);
-        this.dependencies.displayMissingDependencies(missingDeps);
+        const mcpDeps = await this.dependencies.checkMcpDependencies(stack.mcpServers);
+        allMissingDeps.push(...mcpDeps);
       }
+
+      // Check statusLine dependencies
+      if (stack.settings?.statusLine) {
+        const statusLineDeps = await this.dependencies.checkStatusLineDependencies(
+          stack.settings.statusLine
+        );
+        allMissingDeps.push(...statusLineDeps);
+      }
+
+      this.dependencies.displayMissingDependencies(allMissingDeps);
 
       // Use StackOperationService for installation
       await this.stackOperations.performInstallation(stack, remoteStack, stackId, options);
