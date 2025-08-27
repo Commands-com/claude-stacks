@@ -79,10 +79,9 @@ function isCommonExecutablePattern(value: string): string | null {
  * Cross-platform basename that handles both Unix and Windows paths
  */
 function getFilename(filePath: string): string {
-  // Handle both types of separators
-  const unixSeparated = filePath.split('/').pop() ?? filePath;
-  const windowsSeparated = unixSeparated.split('\\').pop() ?? unixSeparated;
-  return windowsSeparated;
+  // Handle both types of separators by normalizing first
+  const normalizedPath = filePath.replace(/\\/g, '/');
+  return normalizedPath.split('/').pop() ?? filePath;
 }
 
 /**
@@ -116,8 +115,59 @@ export function isCommonExecutable(value: string): boolean {
 }
 
 /**
- * Sanitize a single path value by replacing it with a generic placeholder
+ * Patterns that indicate a filename contains sensitive information that should be generalized
  */
+const SENSITIVE_FILENAME_PATTERNS = {
+  // OAuth client credentials (Google, etc.)
+  OAUTH_CLIENT_ID: /client_secret.*\.apps\.googleusercontent\.com/i,
+  OAUTH_CREDENTIALS: /credentials.*\d{10,}/i,
+  OAUTH_GENERAL: /(oauth|client_secret)/i,
+
+  // API keys and tokens
+  API_KEYS: /_key_\w+|api_key_\w+|token_\w+/i,
+
+  // User-specific identifiers
+  USER_IDS: /\d{10,}/,
+
+  // Long random strings (likely tokens/keys)
+  RANDOM_STRINGS: /[a-zA-Z0-9]{20,}/,
+};
+
+/**
+ * Check if a filename contains sensitive information that should be generalized
+ */
+function containsSensitiveFilename(filename: string): boolean {
+  return Object.values(SENSITIVE_FILENAME_PATTERNS).some(pattern => pattern.test(filename));
+}
+
+/**
+ * Generate a generic filename based on the original filename's purpose
+ */
+function generateGenericFilename(originalFilename: string): string {
+  const extension = path.extname(originalFilename);
+  const baseName = path.basename(originalFilename, extension).toLowerCase();
+
+  // Map common patterns to generic names
+  if (baseName.includes('client_secret') || baseName.includes('oauth')) {
+    return `oauth_credentials${extension}`;
+  }
+  if (baseName.includes('credentials')) {
+    return `credentials${extension}`;
+  }
+  if (baseName.includes('config')) {
+    return `config${extension}`;
+  }
+  if (baseName.includes('key') || baseName.includes('token')) {
+    return `api_key${extension}`;
+  }
+  if (baseName.includes('cert')) {
+    return `certificate${extension}`;
+  }
+
+  // Default generic name
+  return `sensitive_file${extension}`;
+}
+
 export function sanitizePath(originalPath: string): string {
   if (!originalPath || typeof originalPath !== 'string') {
     return originalPath;
@@ -138,6 +188,12 @@ export function sanitizePath(originalPath: string): string {
   // Handle both Unix and Windows path separators
   const filename = getFilename(originalPath);
   const extension = path.extname(filename);
+
+  // Check if filename contains sensitive information
+  if (containsSensitiveFilename(filename)) {
+    const genericFilename = generateGenericFilename(filename);
+    return `/path/to/${genericFilename}`;
+  }
 
   if (extension) {
     // Keep the filename structure but generalize the path
@@ -280,4 +336,95 @@ export function getSanitizationSummary(server: StackMcpServer): {
     serverName: server.name,
     sensitiveFields,
   };
+}
+
+/**
+ * Sanitize settings object, focusing on permissions that may contain local paths
+ */
+export function sanitizeSettings(
+  settings?: Record<string, unknown>
+): Record<string, unknown> | undefined {
+  if (!settings || typeof settings !== 'object') {
+    return settings;
+  }
+
+  const sanitizedSettings: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(settings)) {
+    if (key === 'permissions' && value && typeof value === 'object') {
+      sanitizedSettings[key] = sanitizePermissions(value as Record<string, unknown>);
+    } else {
+      sanitizedSettings[key] = value;
+    }
+  }
+
+  return sanitizedSettings;
+}
+
+/**
+ * Sanitize permissions object, removing or sanitizing local paths
+ */
+function sanitizePermissions(permissions: Record<string, unknown>): Record<string, unknown> {
+  const sanitizedPermissions: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(permissions)) {
+    if (key === 'allow' && Array.isArray(value)) {
+      // Filter out or sanitize permission entries with local paths
+      sanitizedPermissions[key] = value
+        .map(permission => {
+          if (typeof permission === 'string') {
+            return sanitizePermissionString(permission);
+          }
+          return permission as string;
+        })
+        .filter((permission): permission is string => permission !== null);
+    } else {
+      sanitizedPermissions[key] = value;
+    }
+  }
+
+  return sanitizedPermissions;
+}
+
+/**
+ * Sanitize a single permission string, removing local paths
+ */
+function sanitizePermissionString(permission: string): string | null {
+  // Match patterns like "Read(//Users/username/...)" or "Read(/home/user/...)"
+  const localPathPermissionPattern = /^(\w+\()(\/\/[^/]+\/[^/]+\/|\/(?:Users|home)\/[^/]+\/)/i;
+
+  if (localPathPermissionPattern.test(permission)) {
+    // For local paths, we could either remove them entirely or replace with generic paths
+    // For security, it's safer to remove them entirely since they're user-specific
+    return null;
+  }
+
+  return permission;
+}
+
+/**
+ * Check if settings contain any sensitive data that would be sanitized
+ */
+export function settingsContainsSensitiveData(settings?: Record<string, unknown>): boolean {
+  if (!settings || typeof settings !== 'object') {
+    return false;
+  }
+
+  const { permissions } = settings;
+  if (!permissions || typeof permissions !== 'object') {
+    return false;
+  }
+
+  const { allow } = permissions as Record<string, unknown>;
+  if (!Array.isArray(allow)) {
+    return false;
+  }
+
+  return allow.some(permission => {
+    if (typeof permission === 'string') {
+      const localPathPermissionPattern = /^(\w+\()(\/\/[^/]+\/[^/]+\/|\/(?:Users|home)\/[^/]+\/)/i;
+      return localPathPermissionPattern.test(permission);
+    }
+    return false;
+  });
 }

@@ -19,6 +19,8 @@ import {
   containsSensitiveData,
   getSanitizationSummary,
   sanitizeMcpServers,
+  sanitizeSettings,
+  settingsContainsSensitiveData,
 } from '../utils/sanitize.js';
 
 // Create service instances
@@ -226,7 +228,9 @@ function checkAndWarnAboutSensitiveData(stack: DeveloperStack, options: PublishO
     .filter(containsSensitiveData)
     .map(getSanitizationSummary);
 
-  if (serversWithSensitiveData.length > 0) {
+  const hasSettingsSensitiveData = settingsContainsSensitiveData(stack.settings);
+
+  if (serversWithSensitiveData.length > 0 || hasSettingsSensitiveData) {
     console.log(ui.colorInfo('🔐 Sanitizing sensitive data for publication...'));
     console.log(ui.colorMeta('   The following will be replaced with generic placeholders:'));
 
@@ -234,6 +238,10 @@ function checkAndWarnAboutSensitiveData(stack: DeveloperStack, options: PublishO
       console.log(
         ui.colorMeta(`   • ${summary.serverName}: ${summary.sensitiveFields.join(', ')}`)
       );
+    }
+
+    if (hasSettingsSensitiveData) {
+      console.log(ui.colorMeta('   • settings: local file permissions removed'));
     }
 
     console.log(ui.colorMeta('   💡 Your local stack file remains unchanged\n'));
@@ -257,6 +265,11 @@ function createSanitizedBasePayload(
   // Sanitize MCP servers to remove sensitive paths
   if (basePayload.mcpServers) {
     basePayload.mcpServers = sanitizeMcpServers(basePayload.mcpServers) ?? [];
+  }
+
+  // Sanitize settings to remove local file permissions
+  if (basePayload.settings) {
+    basePayload.settings = sanitizeSettings(basePayload.settings);
   }
 
   return basePayload;

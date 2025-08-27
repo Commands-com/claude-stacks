@@ -9,6 +9,8 @@ import {
   sanitizeMcpServers,
   containsSensitiveData,
   getSanitizationSummary,
+  sanitizeSettings,
+  settingsContainsSensitiveData,
 } from '../../../src/utils/sanitize.js';
 
 import type { StackMcpServer } from '../../../src/types/index.js';
@@ -113,6 +115,35 @@ describe('sanitize utilities', () => {
       expect(sanitizePath('C:\\Program Files\\nodejs\\node.exe')).toBe('node');
     });
 
+    it('should sanitize OAuth credentials with sensitive filenames', () => {
+      expect(
+        sanitizePath(
+          '/Users/john/client_secret_141820589951-3eegvnqm57c2e6nmmaam39hg7tbci7bg.apps.googleusercontent.com.json'
+        )
+      ).toBe('/path/to/oauth_credentials.json');
+      expect(sanitizePath('./credentials_123456789012345.json')).toBe('/path/to/credentials.json');
+      expect(sanitizePath('/home/user/oauth_client_secret.json')).toBe(
+        '/path/to/oauth_credentials.json'
+      );
+    });
+
+    it('should sanitize API keys and tokens with sensitive filenames', () => {
+      expect(sanitizePath('/path/api_key_abcd1234567890.txt')).toBe('/path/to/api_key.txt');
+      expect(sanitizePath('/secrets/token_xyz9876543210.env')).toBe('/path/to/api_key.env');
+      expect(sanitizePath('/config/service_key_longrandomstring.json')).toBe(
+        '/path/to/api_key.json'
+      );
+    });
+
+    it('should sanitize files with long random strings', () => {
+      expect(sanitizePath('/path/certificate_abcdef1234567890123456.pem')).toBe(
+        '/path/to/certificate.pem'
+      );
+      expect(sanitizePath('/keys/secret_verylongstringwithlotsofcharacters.key')).toBe(
+        '/path/to/sensitive_file.key'
+      );
+    });
+
     it('should create generic placeholders for script files', () => {
       expect(sanitizePath('/Users/john/project/app.js')).toBe('/path/to/app.js');
       expect(sanitizePath('/home/user/config.json')).toBe('/path/to/config.json');
@@ -184,7 +215,7 @@ describe('sanitize utilities', () => {
       };
 
       const expected = {
-        GOOGLE_OAUTH_CREDENTIALS: '/path/to/client_secret.json',
+        GOOGLE_OAUTH_CREDENTIALS: '/path/to/oauth_credentials.json',
         CONFIG_PATH: '/path/to/app.yaml',
         API_KEY: 'secret123',
         NODE_ENV: 'production',
@@ -239,7 +270,7 @@ describe('sanitize utilities', () => {
         command: 'node',
         args: ['/path/to/index.js', '--verbose'],
         env: {
-          GOOGLE_OAUTH_CREDENTIALS: '/path/to/client_secret.json',
+          GOOGLE_OAUTH_CREDENTIALS: '/path/to/oauth_credentials.json',
           NODE_ENV: 'production',
         },
       };
@@ -387,6 +418,114 @@ describe('sanitize utilities', () => {
 
       expect(summary.serverName).toBe('clean-server');
       expect(summary.sensitiveFields).toEqual([]);
+    });
+  });
+
+  describe('sanitizeSettings', () => {
+    it('should remove local file permissions from settings', () => {
+      const input = {
+        someOtherSetting: 'value',
+        permissions: {
+          allow: [
+            'Read(//Users/dtannen/.claude/stacks/**)',
+            'Read(/home/user/.claude/**)',
+            'mcp__serena__read_file',
+            'Bash(npm run build:*)',
+          ],
+        },
+      };
+
+      const expected = {
+        someOtherSetting: 'value',
+        permissions: {
+          allow: ['mcp__serena__read_file', 'Bash(npm run build:*)'],
+        },
+      };
+
+      expect(sanitizeSettings(input)).toEqual(expected);
+    });
+
+    it('should handle settings without permissions', () => {
+      const input = {
+        someOtherSetting: 'value',
+        anotherSetting: true,
+      };
+
+      expect(sanitizeSettings(input)).toEqual(input);
+    });
+
+    it('should handle undefined and empty settings', () => {
+      expect(sanitizeSettings(undefined)).toBe(undefined);
+      expect(sanitizeSettings({})).toEqual({});
+    });
+
+    it('should handle non-object input gracefully', () => {
+      // @ts-expect-error Testing invalid input
+      expect(sanitizeSettings('not-an-object')).toBe('not-an-object');
+    });
+
+    it('should preserve non-allow permission properties', () => {
+      const input = {
+        permissions: {
+          allow: ['Read(//Users/test/.claude/**)', 'mcp__serena__read_file'],
+          deny: ['some-permission'],
+          other: 'value',
+        },
+      };
+
+      const expected = {
+        permissions: {
+          allow: ['mcp__serena__read_file'],
+          deny: ['some-permission'],
+          other: 'value',
+        },
+      };
+
+      expect(sanitizeSettings(input)).toEqual(expected);
+    });
+  });
+
+  describe('settingsContainsSensitiveData', () => {
+    it('should detect local file permissions', () => {
+      const settings = {
+        permissions: {
+          allow: ['Read(//Users/dtannen/.claude/stacks/**)', 'mcp__serena__read_file'],
+        },
+      };
+
+      expect(settingsContainsSensitiveData(settings)).toBe(true);
+    });
+
+    it('should detect Unix home paths', () => {
+      const settings = {
+        permissions: {
+          allow: ['Read(/home/user/.claude/**)', 'mcp__serena__read_file'],
+        },
+      };
+
+      expect(settingsContainsSensitiveData(settings)).toBe(true);
+    });
+
+    it('should return false for safe permissions', () => {
+      const settings = {
+        permissions: {
+          allow: ['mcp__serena__read_file', 'Bash(npm run build:*)', 'Read(project/**)'],
+        },
+      };
+
+      expect(settingsContainsSensitiveData(settings)).toBe(false);
+    });
+
+    it('should return false for settings without permissions', () => {
+      const settings = {
+        someOtherSetting: 'value',
+      };
+
+      expect(settingsContainsSensitiveData(settings)).toBe(false);
+    });
+
+    it('should handle undefined settings', () => {
+      expect(settingsContainsSensitiveData(undefined)).toBe(false);
     });
   });
 });
