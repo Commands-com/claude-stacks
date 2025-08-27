@@ -22,7 +22,7 @@
     "pretest": "npm run build",
     "test": "jest --coverage --verbose",
     "test:watch": "jest --watch --coverage=false",
-    "test:coverage": "jest --coverage --coverage-reporters=html --coverage-reporters=text",
+    "test:coverage": "jest --coverage --coverage-reporters=html --coverage-reporters=text --coverage-reporters=json-summary",
     "test:ci": "npm run build && jest --coverage --ci --watchAll=false --passWithNoTests",
     "test:unit": "jest tests/unit",
     "test:integration": "jest tests/integration",
