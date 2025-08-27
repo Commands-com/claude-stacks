@@ -1,4 +1,4 @@
-import * as fs from 'fs-extra';
+import fs from 'fs-extra';
 import * as path from 'path';
 import { FileSystemError } from '../types/index.js';
 import { PathSecurity } from '../utils/pathSecurity.js';
@@ -54,9 +54,12 @@ export class FileService {
   /**
    * Safely read and parse a JSON file with validation
    */
-  async readJsonFile<T = unknown>(filePath: string): Promise<T> {
+  async readJsonFile<T = unknown>(
+    filePath: string,
+    options: { allowedBase?: string } = {}
+  ): Promise<T> {
     // Validate file path for security
-    this.validateFilePath(filePath);
+    this.validateFilePath(filePath, options.allowedBase);
 
     try {
       if (!(await fs.pathExists(filePath))) {
@@ -78,10 +81,10 @@ export class FileService {
   async writeJsonFile<T>(
     filePath: string,
     data: T,
-    options: { spaces?: number } = {}
+    options: { spaces?: number; allowedBase?: string } = {}
   ): Promise<void> {
     // Validate file path for security
-    this.validateFilePath(filePath);
+    this.validateFilePath(filePath, options.allowedBase);
 
     try {
       await fs.ensureDir(path.dirname(filePath));
@@ -115,9 +118,9 @@ export class FileService {
   /**
    * Safely write text content to a file
    */
-  async writeTextFile(filePath: string, content: string): Promise<void> {
+  async writeTextFile(filePath: string, content: string, allowedBase?: string): Promise<void> {
     // Validate file path for security
-    this.validateFilePath(filePath);
+    this.validateFilePath(filePath, allowedBase);
 
     try {
       await fs.ensureDir(path.dirname(filePath));

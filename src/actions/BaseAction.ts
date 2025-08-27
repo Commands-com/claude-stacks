@@ -76,7 +76,10 @@ export abstract class BaseAction {
   }
 
   private initializeStackOperations(services?: ActionServices): StackOperationService {
-    return services?.stackOperations ?? new StackOperationService(this.ui, this.dependencies);
+    return (
+      services?.stackOperations ??
+      new StackOperationService(this.ui, this.dependencies, this.fileService)
+    );
   }
 
   /**

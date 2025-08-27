@@ -13,21 +13,25 @@ const mockPathExists = jest.fn();
 const mockReadJson = jest.fn();
 const mockWriteJson = jest.fn();
 const mockRemove = jest.fn();
+const mockMove = jest.fn();
 
 jest.mock('fs-extra', () => ({
   pathExists: mockPathExists,
   readJson: mockReadJson,
   writeJson: mockWriteJson,
   remove: mockRemove,
+  move: mockMove,
 }));
 
 jest.mock('os', () => ({
   tmpdir: jest.fn(() => '/tmp'),
+  homedir: jest.fn(() => '/home/testuser'),
 }));
 
 jest.mock('path', () => ({
   join: jest.fn((...args) => args.join('/')),
   isAbsolute: jest.fn((p: string) => p.startsWith('/')),
+  dirname: jest.fn((p: string) => p.split('/').slice(0, -1).join('/') || '/'),
 }));
 
 jest.mock('../../../src/constants/paths.js', () => ({
@@ -41,6 +45,8 @@ const mockUI = {
   log: jest.fn(),
   success: jest.fn(),
   meta: jest.fn(),
+  error: jest.fn(),
+  warning: jest.fn(),
   colorStackName: jest.fn((text: string) => text),
   colorDescription: jest.fn((text: string) => text),
 };
@@ -53,6 +59,9 @@ const mockDependencies = {
 const mockFileService = {
   readJsonFile: jest.fn(),
   writeJsonFile: jest.fn(),
+  writeTextFile: jest.fn(),
+  exists: jest.fn(),
+  ensureDir: jest.fn(),
 };
 
 // Import StackOperationService after setting up mocks
@@ -119,6 +128,7 @@ describe('StackOperationService', () => {
     mockReadJson.mockReset();
     mockWriteJson.mockReset();
     mockRemove.mockReset();
+    mockMove.mockReset();
 
     // Re-setup fs-extra mocks to ensure they work correctly
     const fsExtra = require('fs-extra');
@@ -126,6 +136,7 @@ describe('StackOperationService', () => {
     fsExtra.readJson = mockReadJson;
     fsExtra.writeJson = mockWriteJson;
     fsExtra.remove = mockRemove;
+    fsExtra.move = mockMove;
 
     // Re-setup path mocks to ensure they work correctly
     const path = require('path');
@@ -135,6 +146,7 @@ describe('StackOperationService', () => {
     // Re-setup os mocks to ensure they work correctly
     const os = require('os');
     os.tmpdir = jest.fn(() => '/tmp');
+    os.homedir = jest.fn(() => '/home/testuser');
 
     // Re-setup paths mocks to ensure they work correctly
     const pathConstants = require('../../../src/constants/paths.js');
@@ -258,6 +270,7 @@ describe('StackOperationService', () => {
     beforeEach(() => {
       mockPathExists.mockResolvedValue(true);
       mockReadJson.mockResolvedValue(mockStack);
+      mockMove.mockResolvedValue(undefined);
       mockDependencies.checkMcpDependencies.mockResolvedValue([]);
     });
 
@@ -278,8 +291,8 @@ describe('StackOperationService', () => {
 
       await stackOperationService.performRestore('test-stack.json', options);
 
-      expect(mockUI.info).toHaveBeenCalledWith('📝 Restoring 1 global command(s)...');
-      expect(mockUI.info).toHaveBeenCalledWith('🤖 Restoring 1 global agent(s)...');
+      expect(mockUI.success).toHaveBeenCalledWith('✓ Added global command: global-cmd');
+      expect(mockUI.success).toHaveBeenCalledWith('✓ Added global agent: global-agent');
       expect(mockUI.meta).toHaveBeenCalledWith('   Global commands: 1');
       expect(mockUI.meta).toHaveBeenCalledWith('   Global agents: 1');
     });
@@ -289,8 +302,8 @@ describe('StackOperationService', () => {
 
       await stackOperationService.performRestore('test-stack.json', options);
 
-      expect(mockUI.info).toHaveBeenCalledWith('📝 Restoring 1 local command(s)...');
-      expect(mockUI.info).toHaveBeenCalledWith('🤖 Restoring 1 local agent(s)...');
+      expect(mockUI.success).toHaveBeenCalledWith('✓ Added local command: local-cmd');
+      expect(mockUI.success).toHaveBeenCalledWith('✓ Added local agent: local-agent');
       expect(mockUI.meta).toHaveBeenCalledWith('   Local commands: 1');
       expect(mockUI.meta).toHaveBeenCalledWith('   Local agents: 1');
     });
@@ -329,26 +342,27 @@ describe('StackOperationService', () => {
     it('should restore MCP servers when present', async () => {
       await stackOperationService.performRestore('test-stack.json');
 
-      expect(mockUI.info).toHaveBeenCalledWith('🔌 Restoring 1 MCP server(s)...');
+      expect(mockUI.success).toHaveBeenCalledWith('✓ Added MCP server: test-server');
       expect(mockUI.meta).toHaveBeenCalledWith('   MCP servers: 1');
     });
 
     it('should restore settings when present', async () => {
       await stackOperationService.performRestore('test-stack.json');
 
-      expect(mockUI.info).toHaveBeenCalledWith('⚙️  Restoring settings...');
+      expect(mockUI.success).toHaveBeenCalledWith('✓ Merged local settings');
     });
 
     it('should restore Claude.md files when present', async () => {
       await stackOperationService.performRestore('test-stack.json');
 
-      expect(mockUI.info).toHaveBeenCalledWith('📄 Restoring Claude.md files...');
+      expect(mockUI.success).toHaveBeenCalledWith('✓ Added global CLAUDE.md');
     });
   });
 
   describe('performInstallation', () => {
     beforeEach(() => {
       mockWriteJson.mockResolvedValue(undefined);
+      mockMove.mockResolvedValue(undefined);
       mockRemove.mockResolvedValue(undefined);
       mockPathExists.mockResolvedValue(true);
       mockReadJson.mockResolvedValue(mockStack);
@@ -522,6 +536,7 @@ describe('StackOperationService', () => {
       const options: InstallOptions = { force: true };
 
       mockWriteJson.mockResolvedValue(undefined);
+      mockMove.mockResolvedValue(undefined);
       mockPathExists.mockResolvedValue(true);
       mockReadJson.mockResolvedValue(mockStack);
       mockDependencies.checkMcpDependencies.mockResolvedValue([]);
@@ -545,13 +560,520 @@ describe('StackOperationService', () => {
       await stackOperationService.performRestore('full-stack.json');
 
       // Verify all component types were processed
-      expect(mockUI.info).toHaveBeenCalledWith('📝 Restoring 1 global command(s)...');
-      expect(mockUI.info).toHaveBeenCalledWith('📝 Restoring 1 local command(s)...');
-      expect(mockUI.info).toHaveBeenCalledWith('🤖 Restoring 1 global agent(s)...');
-      expect(mockUI.info).toHaveBeenCalledWith('🤖 Restoring 1 local agent(s)...');
-      expect(mockUI.info).toHaveBeenCalledWith('🔌 Restoring 1 MCP server(s)...');
-      expect(mockUI.info).toHaveBeenCalledWith('⚙️  Restoring settings...');
-      expect(mockUI.info).toHaveBeenCalledWith('📄 Restoring Claude.md files...');
+      expect(mockUI.success).toHaveBeenCalledWith('✓ Added global command: global-cmd');
+      expect(mockUI.success).toHaveBeenCalledWith('✓ Added local command: local-cmd');
+      expect(mockUI.success).toHaveBeenCalledWith('✓ Added global agent: global-agent');
+      expect(mockUI.success).toHaveBeenCalledWith('✓ Added local agent: local-agent');
+      expect(mockUI.success).toHaveBeenCalledWith('✓ Added MCP server: test-server');
+      expect(mockUI.success).toHaveBeenCalledWith('✓ Merged local settings');
+      expect(mockUI.success).toHaveBeenCalledWith('✓ Added global CLAUDE.md');
+    });
+  });
+
+  // New tests for actual implementations
+  describe('restore methods implementation', () => {
+    beforeEach(() => {
+      mockFileService.ensureDir.mockResolvedValue(undefined);
+      mockFileService.writeTextFile.mockResolvedValue(undefined);
+      mockFileService.writeJsonFile.mockResolvedValue(undefined);
+      mockFileService.exists.mockResolvedValue(false);
+      mockFileService.readJsonFile.mockResolvedValue({});
+
+      // Mock fs-extra for file operations
+      mockPathExists.mockResolvedValue(true);
+      mockReadJson.mockResolvedValue(mockStack);
+      mockDependencies.checkMcpDependencies.mockResolvedValue([]);
+    });
+
+    describe('restoreGlobalCommands', () => {
+      it('should create directory and write command files', async () => {
+        const commands: StackCommand[] = [
+          {
+            name: 'test-cmd',
+            filePath: '/global/test-cmd.md',
+            content: '# Test Command',
+            description: 'Test',
+          },
+        ];
+
+        // Call private method via performRestore
+        await stackOperationService.performRestore('test-stack.json', { globalOnly: true });
+
+        expect(mockFileService.ensureDir).toHaveBeenCalledWith(
+          expect.stringContaining('.claude/commands')
+        );
+        expect(mockUI.success).toHaveBeenCalledWith(
+          expect.stringContaining('✓ Added global command:')
+        );
+      });
+
+      it('should skip existing files when overwrite is false', async () => {
+        mockFileService.exists.mockResolvedValue(true);
+
+        await stackOperationService.performRestore('test-stack.json', {
+          globalOnly: true,
+          overwrite: false,
+        });
+
+        expect(mockUI.warning).toHaveBeenCalledWith(
+          expect.stringContaining('Skipped existing global command:')
+        );
+      });
+
+      it('should handle errors gracefully', async () => {
+        mockFileService.ensureDir.mockRejectedValue(new Error('Permission denied'));
+
+        await expect(
+          stackOperationService.performRestore('test-stack.json', { globalOnly: true })
+        ).rejects.toThrow('Permission denied');
+      });
+    });
+
+    describe('restoreMcpServers', () => {
+      const mockClaudeConfig = {
+        projects: {
+          '/current/project': {
+            mcpServers: {
+              'existing-server': { type: 'stdio', command: 'existing' },
+            },
+          },
+        },
+      };
+
+      it('should create .claude.json with MCP server config', async () => {
+        mockFileService.exists.mockResolvedValue(false);
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        // Expect fs-extra atomic write calls instead of FileService
+        expect(mockWriteJson).toHaveBeenCalledWith(
+          expect.stringContaining('.claude.json.tmp'),
+          expect.objectContaining({
+            projects: expect.objectContaining({
+              [process.cwd()]: expect.objectContaining({
+                mcpServers: expect.objectContaining({
+                  'test-server': expect.objectContaining({
+                    type: 'stdio',
+                    command: 'node',
+                    args: ['server.js'],
+                  }),
+                }),
+              }),
+            }),
+          }),
+          { spaces: 2 }
+        );
+
+        expect(mockMove).toHaveBeenCalledWith(
+          expect.stringContaining('.claude.json.tmp'),
+          expect.stringContaining('.claude.json'),
+          { overwrite: true }
+        );
+      });
+
+      it('should merge with existing configuration', async () => {
+        mockFileService.exists.mockResolvedValue(true);
+        mockFileService.readJsonFile.mockResolvedValue(mockClaudeConfig);
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        // Expect fs-extra atomic write calls instead of FileService
+        expect(mockWriteJson).toHaveBeenCalledWith(
+          expect.stringContaining('.claude.json.tmp'),
+          expect.objectContaining({
+            projects: expect.any(Object),
+          }),
+          { spaces: 2 }
+        );
+
+        expect(mockMove).toHaveBeenCalledWith(
+          expect.stringContaining('.claude.json.tmp'),
+          expect.stringContaining('.claude.json'),
+          { overwrite: true }
+        );
+      });
+
+      it('should skip existing servers when overwrite is false', async () => {
+        const configWithTestServer = {
+          projects: {
+            [process.cwd()]: {
+              mcpServers: {
+                'test-server': { type: 'stdio', command: 'existing' },
+              },
+            },
+          },
+        };
+        mockFileService.exists.mockResolvedValue(true);
+        mockFileService.readJsonFile.mockResolvedValue(configWithTestServer);
+
+        await stackOperationService.performRestore('test-stack.json', { overwrite: false });
+
+        expect(mockUI.warning).toHaveBeenCalledWith('Skipped existing MCP server: test-server');
+      });
+    });
+
+    describe('restoreSettings', () => {
+      it('should write local settings by default', async () => {
+        const stack = { ...mockStack, settings: { theme: 'dark', editor: 'vscode' } };
+        mockReadJson.mockResolvedValue(stack);
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        expect(mockFileService.writeJsonFile).toHaveBeenCalledWith(
+          expect.stringContaining('.claude/settings.local.json'),
+          expect.objectContaining({ theme: 'dark', editor: 'vscode' }),
+          expect.objectContaining({ allowedBase: expect.any(String) })
+        );
+        expect(mockUI.success).toHaveBeenCalledWith('✓ Merged local settings');
+      });
+
+      it('should write global settings when globalOnly option is set', async () => {
+        const stack = { ...mockStack, settings: { theme: 'dark' } };
+        mockReadJson.mockResolvedValue(stack);
+
+        await stackOperationService.performRestore('test-stack.json', { globalOnly: true });
+
+        expect(mockFileService.writeJsonFile).toHaveBeenCalledWith(
+          expect.stringContaining('.claude/settings.json'),
+          expect.objectContaining({ theme: 'dark' }),
+          expect.objectContaining({ allowedBase: expect.any(String) })
+        );
+        expect(mockUI.success).toHaveBeenCalledWith('✓ Merged global settings');
+      });
+
+      it('should merge with existing settings', async () => {
+        mockFileService.exists.mockResolvedValue(true);
+        mockFileService.readJsonFile.mockResolvedValue({ existingKey: 'existingValue' });
+
+        const stack = { ...mockStack, settings: { newKey: 'newValue' } };
+        mockReadJson.mockResolvedValue(stack);
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        expect(mockFileService.writeJsonFile).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({
+            existingKey: 'existingValue',
+            newKey: 'newValue',
+          }),
+          expect.objectContaining({ allowedBase: expect.any(String) })
+        );
+      });
+
+      it('should replace settings when overwrite is true', async () => {
+        const stack = { ...mockStack, settings: { onlyNew: 'value' } };
+        mockReadJson.mockResolvedValue(stack);
+
+        await stackOperationService.performRestore('test-stack.json', { overwrite: true });
+
+        expect(mockFileService.writeJsonFile).toHaveBeenCalledWith(
+          expect.any(String),
+          {
+            onlyNew: 'value',
+          },
+          expect.objectContaining({ allowedBase: expect.any(String) })
+        );
+        expect(mockUI.success).toHaveBeenCalledWith('✓ Replaced local settings');
+      });
+    });
+
+    describe('restoreClaudeMdFiles', () => {
+      const stackWithClaudeMd = {
+        ...mockStack,
+        claudeMd: {
+          global: { path: '~/.claude/CLAUDE.md', content: '# Global CLAUDE.md' },
+          local: { path: './.claude/CLAUDE.md', content: '# Local CLAUDE.md' },
+        },
+      };
+
+      it('should restore both global and local CLAUDE.md files', async () => {
+        mockReadJson.mockResolvedValue(stackWithClaudeMd);
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        expect(mockFileService.writeTextFile).toHaveBeenCalledWith(
+          expect.stringContaining('.claude/CLAUDE.md'),
+          '# Global CLAUDE.md',
+          expect.any(String)
+        );
+        expect(mockFileService.writeTextFile).toHaveBeenCalledWith(
+          expect.stringContaining('.claude/CLAUDE.md'),
+          '# Local CLAUDE.md',
+          expect.any(String)
+        );
+        expect(mockUI.success).toHaveBeenCalledWith('✓ Added global CLAUDE.md');
+        expect(mockUI.success).toHaveBeenCalledWith('✓ Added local CLAUDE.md');
+      });
+
+      it('should skip global when localOnly option is set', async () => {
+        const claudeMdOnlyStack = {
+          ...mockStack,
+          commands: [],
+          agents: [],
+          mcpServers: [],
+          settings: undefined,
+          claudeMd: stackWithClaudeMd.claudeMd,
+        };
+        mockReadJson.mockResolvedValue(claudeMdOnlyStack);
+
+        await stackOperationService.performRestore('test-stack.json', { localOnly: true });
+
+        expect(mockFileService.writeTextFile).toHaveBeenCalledTimes(1);
+        expect(mockFileService.writeTextFile).toHaveBeenCalledWith(
+          expect.stringContaining('.claude/CLAUDE.md'),
+          '# Local CLAUDE.md',
+          expect.any(String)
+        );
+      });
+
+      it('should skip local when globalOnly option is set', async () => {
+        const claudeMdOnlyStack = {
+          ...mockStack,
+          commands: [],
+          agents: [],
+          mcpServers: [],
+          settings: undefined,
+          claudeMd: stackWithClaudeMd.claudeMd,
+        };
+        mockReadJson.mockResolvedValue(claudeMdOnlyStack);
+
+        await stackOperationService.performRestore('test-stack.json', { globalOnly: true });
+
+        expect(mockFileService.writeTextFile).toHaveBeenCalledTimes(1);
+        expect(mockFileService.writeTextFile).toHaveBeenCalledWith(
+          expect.stringContaining('.claude/CLAUDE.md'),
+          '# Global CLAUDE.md',
+          expect.any(String)
+        );
+      });
+
+      it('should skip existing files when overwrite is false', async () => {
+        mockFileService.exists.mockResolvedValue(true);
+        mockReadJson.mockResolvedValue(stackWithClaudeMd);
+
+        await stackOperationService.performRestore('test-stack.json', { overwrite: false });
+
+        expect(mockUI.warning).toHaveBeenCalledWith('Skipped existing global CLAUDE.md');
+        expect(mockUI.warning).toHaveBeenCalledWith('Skipped existing local CLAUDE.md');
+      });
+    });
+
+    describe('error handling', () => {
+      it('should handle file system errors in commands restore', async () => {
+        mockFileService.ensureDir.mockRejectedValue(new Error('Directory creation failed'));
+
+        await expect(stackOperationService.performRestore('test-stack.json')).rejects.toThrow(
+          'Directory creation failed'
+        );
+      });
+
+      it('should handle JSON parsing errors in MCP config', async () => {
+        mockFileService.exists.mockResolvedValue(true);
+        mockFileService.readJsonFile.mockRejectedValue(new Error('Invalid JSON'));
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        expect(mockUI.warning).toHaveBeenCalledWith(
+          'Warning: Could not read existing .claude.json (Invalid JSON), creating new one'
+        );
+      });
+
+      it('should handle settings file errors gracefully', async () => {
+        const stack = { ...mockStack, settings: { theme: 'dark' } };
+        mockReadJson.mockResolvedValue(stack);
+        mockFileService.exists.mockResolvedValue(true);
+        mockFileService.readJsonFile.mockRejectedValue(new Error('Settings read error'));
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        expect(mockUI.warning).toHaveBeenCalledWith(
+          'Warning: Could not read existing local settings'
+        );
+      });
+    });
+
+    describe('edge cases and performance', () => {
+      beforeEach(() => {
+        mockFileService.ensureDir.mockResolvedValue(undefined);
+        mockFileService.writeTextFile.mockResolvedValue(undefined);
+        mockFileService.writeJsonFile.mockResolvedValue(undefined);
+        mockFileService.exists.mockResolvedValue(false);
+        mockFileService.readJsonFile.mockResolvedValue({});
+
+        mockPathExists.mockResolvedValue(true);
+        mockReadJson.mockResolvedValue(mockStack);
+        mockDependencies.checkMcpDependencies.mockResolvedValue([]);
+      });
+
+      it('should handle concurrent file operations efficiently', async () => {
+        const stackWithManyFiles = {
+          ...mockStack,
+          commands: Array(10)
+            .fill(null)
+            .map((_, i) => ({
+              name: `cmd-${i}`,
+              filePath: `/global/cmd-${i}.md`,
+              content: `# Command ${i}`,
+              description: `Command ${i}`,
+            })),
+          agents: Array(10)
+            .fill(null)
+            .map((_, i) => ({
+              name: `agent-${i}`,
+              filePath: `/global/agent-${i}.md`,
+              content: `# Agent ${i}`,
+              description: `Agent ${i}`,
+            })),
+          mcpServers: [],
+          settings: undefined,
+          claudeMd: undefined,
+        };
+        mockReadJson.mockResolvedValue(stackWithManyFiles);
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        // Should have called writeTextFile for all commands and agents
+        expect(mockFileService.writeTextFile).toHaveBeenCalledTimes(20);
+        expect(mockUI.success).toHaveBeenCalledTimes(21); // 20 files + 1 success message
+      });
+
+      it('should handle empty arrays gracefully', async () => {
+        const emptyStack = {
+          ...mockStack,
+          commands: [],
+          agents: [],
+          mcpServers: [],
+          settings: undefined,
+          claudeMd: undefined,
+        };
+        mockReadJson.mockResolvedValue(emptyStack);
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        expect(mockUI.success).toHaveBeenCalledWith(
+          '\n✅ Stack "test-stack" restored successfully!'
+        );
+      });
+
+      it('should handle mixed local/global components correctly', async () => {
+        const mixedStack = {
+          ...mockStack,
+          commands: [
+            {
+              name: 'global-cmd',
+              filePath: '/global/global-cmd.md',
+              content: '# Global',
+              description: 'Global',
+            },
+            {
+              name: 'local-cmd',
+              filePath: './.claude/commands/local-cmd.md',
+              content: '# Local',
+              description: 'Local',
+            },
+          ],
+          agents: [
+            {
+              name: 'global-agent',
+              filePath: '/global/global-agent.md',
+              content: '# Global Agent',
+              description: 'Global Agent',
+            },
+            {
+              name: 'local-agent',
+              filePath: './.claude/agents/local-agent.md',
+              content: '# Local Agent',
+              description: 'Local Agent',
+            },
+          ],
+          mcpServers: [],
+          settings: undefined,
+          claudeMd: undefined,
+        };
+        mockReadJson.mockResolvedValue(mixedStack);
+
+        await stackOperationService.performRestore('test-stack.json', { globalOnly: true });
+
+        expect(mockUI.success).toHaveBeenCalledWith('✓ Added global command: global-cmd');
+        expect(mockUI.success).toHaveBeenCalledWith('✓ Added global agent: global-agent');
+        expect(mockUI.success).not.toHaveBeenCalledWith('✓ Added local command: local-cmd');
+        expect(mockUI.success).not.toHaveBeenCalledWith('✓ Added local agent: local-agent');
+      });
+
+      it('should handle file name sanitization', async () => {
+        const stackWithSpecialNames = {
+          ...mockStack,
+          commands: [
+            {
+              name: 'cmd (global)',
+              filePath: '/global/cmd.md',
+              content: '# CMD',
+              description: 'CMD',
+            },
+            {
+              name: 'another cmd (local)',
+              filePath: './.claude/commands/another.md',
+              content: '# Another',
+              description: 'Another',
+            },
+          ],
+          agents: [],
+          mcpServers: [],
+          settings: undefined,
+          claudeMd: undefined,
+        };
+        mockReadJson.mockResolvedValue(stackWithSpecialNames);
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        // Should remove (local)/(global) suffixes from filenames
+        expect(mockFileService.writeTextFile).toHaveBeenCalledWith(
+          expect.stringContaining('cmd.md'),
+          '# CMD',
+          expect.any(String)
+        );
+        expect(mockFileService.writeTextFile).toHaveBeenCalledWith(
+          expect.stringContaining('another cmd.md'),
+          '# Another',
+          expect.any(String)
+        );
+      });
+
+      it('should handle statusLine dependencies', async () => {
+        const stackWithStatusLine = {
+          ...mockStack,
+          commands: [],
+          agents: [],
+          mcpServers: [],
+          settings: {
+            statusLine: {
+              enabled: true,
+              format: '%branch %status',
+            },
+          },
+          claudeMd: undefined,
+        };
+        mockReadJson.mockResolvedValue(stackWithStatusLine);
+        mockDependencies.checkStatusLineDependencies = jest.fn().mockResolvedValue([]);
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        expect(mockDependencies.checkStatusLineDependencies).toHaveBeenCalledWith(
+          stackWithStatusLine.settings.statusLine
+        );
+      });
+
+      it('should handle path resolution edge cases', async () => {
+        // Test with relative path
+        mockPathExists.mockResolvedValueOnce(true);
+        await stackOperationService.resolveStackPath('relative/path/stack.json');
+        expect(mockPathExists).toHaveBeenCalledWith('relative/path/stack.json');
+
+        // Test with just filename (should resolve to stacks directory)
+        mockPathExists.mockResolvedValueOnce(true);
+        await stackOperationService.resolveStackPath('stack.json');
+        expect(mockPathExists).toHaveBeenCalledWith('/test/stacks/stack.json');
+      });
     });
   });
 });
