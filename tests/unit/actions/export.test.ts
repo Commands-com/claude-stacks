@@ -131,8 +131,8 @@ describe('Export Action', () => {
       expect(fs.writeJson).toHaveBeenCalledWith(
         '/home/.claude/stacks/test-stack.json',
         expect.objectContaining({
-          name: 'project Development Stack',
-          description: 'Development stack for project project',
+          name: 'project Stack',
+          description: 'Stack for project project',
           version: '1.0.0',
           commands: [],
           agents: [],
@@ -149,7 +149,7 @@ describe('Export Action', () => {
     it('should use custom name and description when provided', async () => {
       const options: ExportOptions = {
         name: 'Custom Stack',
-        description: 'Custom development stack',
+        description: 'Custom stack',
         stackVersion: '2.0.0',
       };
 
@@ -159,7 +159,7 @@ describe('Export Action', () => {
         '/home/.claude/stacks/custom-stack.json',
         expect.objectContaining({
           name: 'Custom Stack',
-          description: 'Custom development stack',
+          description: 'Custom stack',
           version: '2.0.0',
         }),
         { spaces: 2 }
@@ -606,7 +606,7 @@ describe('Export Action', () => {
       expect(fs.writeJson).toHaveBeenCalledWith(
         '/home/.claude/stacks/test.json',
         expect.objectContaining({
-          description: 'Amazing project for testing - Development stack',
+          description: 'Amazing project for testing',
         }),
         { spaces: 2 }
       );
@@ -630,7 +630,7 @@ describe('Export Action', () => {
       expect(fs.writeJson).toHaveBeenCalledWith(
         '/home/.claude/stacks/test.json',
         expect.objectContaining({
-          description: 'Development stack for project project',
+          description: 'Stack for project project',
         }),
         { spaces: 2 }
       );

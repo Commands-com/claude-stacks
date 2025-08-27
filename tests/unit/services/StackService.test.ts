@@ -432,7 +432,7 @@ describe('StackService', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.data.description).toBe('Development stack for test-org/minimal-stack');
+          expect(result.data.description).toBe('Stack for test-org/minimal-stack');
         }
       });
 

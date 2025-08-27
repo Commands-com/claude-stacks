@@ -358,7 +358,7 @@ describe('ConfigService', () => {
         name: 'my-stack',
         version: '1.0.0',
         dependencies: [],
-        description: 'Development stack for my-stack',
+        description: 'Stack for my-stack',
       });
     });
 
@@ -369,7 +369,7 @@ describe('ConfigService', () => {
         name: 'my-stack',
         version: '2.1.0',
         dependencies: [],
-        description: 'Development stack for my-stack',
+        description: 'Stack for my-stack',
       });
     });
 

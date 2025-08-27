@@ -204,7 +204,7 @@ export class ConfigService {
       name,
       version,
       dependencies: [],
-      description: `Development stack for ${name}`,
+      description: `Stack for ${name}`,
     };
   }
 
