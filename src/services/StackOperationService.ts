@@ -494,8 +494,29 @@ export class StackOperationService {
     settingsType: string,
     allowedBase: string
   ): Promise<void> {
-    await this.fileService.writeJsonFile(targetPath, settings, { allowedBase });
-    this.ui.success(`✓ Replaced ${settingsType} settings`);
+    // Read existing settings first to preserve non-stack fields
+    let existingSettings: Record<string, unknown> = {};
+    if (await this.fileService.exists(targetPath)) {
+      try {
+        existingSettings = (await this.fileService.readJsonFile(targetPath)) as Record<
+          string,
+          unknown
+        >;
+      } catch {
+        this.ui.warning(`Warning: Could not read existing ${settingsType} settings`);
+      }
+    }
+
+    // Selectively overwrite only the fields that exist in the stack
+    const updatedSettings: Record<string, unknown> = { ...existingSettings };
+    for (const key in settings) {
+      if (Object.prototype.hasOwnProperty.call(settings, key)) {
+        updatedSettings[key] = (settings as Record<string, unknown>)[key];
+      }
+    }
+
+    await this.fileService.writeJsonFile(targetPath, updatedSettings, { allowedBase });
+    this.ui.success(`✓ Overwritten ${settingsType} settings (selective)`);
   }
 
   private async mergeSettings(

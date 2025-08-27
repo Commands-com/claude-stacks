@@ -761,19 +761,30 @@ describe('StackOperationService', () => {
       });
 
       it('should replace settings when overwrite is true', async () => {
-        const stack = { ...mockStack, settings: { onlyNew: 'value' } };
-        mockReadJson.mockResolvedValue(stack);
+        // Create a stack with ONLY settings, no MCP servers to avoid conflicts
+        const stackWithOnlySettings = {
+          name: 'test-stack',
+          description: 'A test stack',
+          version: '1.0.0',
+          settings: { onlyNew: 'value' },
+        };
+        mockReadJson.mockResolvedValue(stackWithOnlySettings);
+
+        // Mock that settings file exists and has existing content that should be preserved
+        mockFileService.exists.mockResolvedValue(true);
+        mockFileService.readJsonFile.mockResolvedValue({ existingKey: 'preserve' });
 
         await stackOperationService.performRestore('test-stack.json', { overwrite: true });
 
         expect(mockFileService.writeJsonFile).toHaveBeenCalledWith(
           expect.any(String),
           {
-            onlyNew: 'value',
+            existingKey: 'preserve', // Should preserve existing
+            onlyNew: 'value', // Should overwrite with new
           },
           expect.objectContaining({ allowedBase: expect.any(String) })
         );
-        expect(mockUI.success).toHaveBeenCalledWith('✓ Replaced local settings');
+        expect(mockUI.success).toHaveBeenCalledWith('✓ Overwritten local settings (selective)');
       });
     });
 
