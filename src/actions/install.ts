@@ -20,33 +20,30 @@ export class InstallAction extends BaseAction {
       this.displayApiEnvironment();
 
       const { org, name } = this.validateStackId(stackId);
-      const accessToken = await this.auth.authenticate();
-      const remoteStack = await this.api.fetchStack(stackId, accessToken);
+
+      // Try to fetch as public stack first
+      let remoteStack: RemoteStack;
+
+      try {
+        remoteStack = await this.api.fetchPublicStack(stackId);
+      } catch (error: unknown) {
+        // If it's a 401/403 error, the stack might require authentication
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes('401') || errorMessage.includes('403')) {
+          const accessToken = await this.auth.authenticate();
+          remoteStack = await this.api.fetchStack(stackId, accessToken);
+        } else {
+          throw error;
+        }
+      }
       const stack = this.convertToLocalStack(remoteStack);
 
       this.ui.log(this.ui.colorStackName(`Installing: ${stack.name}`));
       this.ui.meta(`By: ${remoteStack.author ?? 'Unknown'}`);
       this.ui.log(`Description: ${this.ui.colorDescription(stack.description)}\n`);
 
-      // Check for missing dependencies
-      this.ui.info('🔍 Checking dependencies...');
-      const allMissingDeps = [];
-
-      // Check MCP server dependencies
-      if (stack.mcpServers && stack.mcpServers.length > 0) {
-        const mcpDeps = await this.dependencies.checkMcpDependencies(stack.mcpServers);
-        allMissingDeps.push(...mcpDeps);
-      }
-
-      // Check statusLine dependencies
-      if (stack.settings?.statusLine) {
-        const statusLineDeps = await this.dependencies.checkStatusLineDependencies(
-          stack.settings.statusLine
-        );
-        allMissingDeps.push(...statusLineDeps);
-      }
-
-      this.dependencies.displayMissingDependencies(allMissingDeps);
+      // Check dependencies and display warnings
+      await this.checkAndDisplayDependencies(stack);
 
       // Use StackOperationService for installation
       await this.stackOperations.performInstallation(stack, remoteStack, stackId, options);
@@ -70,6 +67,27 @@ export class InstallAction extends BaseAction {
     }
 
     return { org, name };
+  }
+
+  private async checkAndDisplayDependencies(stack: DeveloperStack): Promise<void> {
+    this.ui.info('🔍 Checking dependencies...');
+    const allMissingDeps = [];
+
+    // Check MCP server dependencies
+    if (stack.mcpServers && stack.mcpServers.length > 0) {
+      const mcpDeps = await this.dependencies.checkMcpDependencies(stack.mcpServers);
+      allMissingDeps.push(...mcpDeps);
+    }
+
+    // Check statusLine dependencies
+    if (stack.settings?.statusLine) {
+      const statusLineDeps = await this.dependencies.checkStatusLineDependencies(
+        stack.settings.statusLine
+      );
+      allMissingDeps.push(...statusLineDeps);
+    }
+
+    this.dependencies.displayMissingDependencies(allMissingDeps);
   }
 
   private convertToLocalStack(remoteStack: RemoteStack): DeveloperStack {

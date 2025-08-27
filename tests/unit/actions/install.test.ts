@@ -38,6 +38,7 @@ jest.mock('../../../src/services/index.js', () => ({
   })),
   ApiService: jest.fn().mockImplementation(() => ({
     fetchStack: mockFetchStack,
+    fetchPublicStack: mockFetchStack, // Use same mock for both methods
     publishStack: jest.fn(),
     getBaseUrl: jest.fn().mockReturnValue('https://api.commands.com'),
     getConfig: jest.fn().mockReturnValue({ baseUrl: 'https://api.commands.com' }),
@@ -54,6 +55,7 @@ jest.mock('../../../src/services/index.js', () => ({
   })),
   DependencyService: jest.fn().mockImplementation(() => ({
     checkMcpDependencies: mockCheckMcpDependencies,
+    checkStatusLineDependencies: jest.fn().mockResolvedValue([]),
     displayMissingDependencies: jest.fn(),
     getMissingDependencyNames: jest.fn().mockResolvedValue([]),
   })),

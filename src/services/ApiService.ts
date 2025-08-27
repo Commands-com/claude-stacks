@@ -78,6 +78,28 @@ export class ApiService {
   }
 
   /**
+   * Fetch a public stack without authentication
+   * Falls back to authenticated request if the stack requires authentication
+   */
+  async fetchPublicStack(stackId: string): Promise<RemoteStack> {
+    const url = `${this.config.baseUrl}/v1/stacks/${stackId}`;
+
+    const response = await SecureHttpClient.get(url, {
+      'User-Agent': 'claude-stacks-cli/1.0.0',
+      Accept: 'application/json',
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      throw new Error(
+        `Failed to fetch stack: ${response.status} ${response.statusText}\n${errorText}`
+      );
+    }
+
+    return validateRemoteStack(await response.json());
+  }
+
+  /**
    * Publish a stack to the API
    *
    * @param payload - The stack data to publish

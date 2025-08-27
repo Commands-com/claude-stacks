@@ -113,11 +113,20 @@ function validateStackSettings(settings: unknown): StackSettings {
   }
 
   const s = settings as any;
-  return {
+  const result: StackSettings = {
     theme: isOptionalString(s.theme),
     fontSize: s.fontSize !== undefined ? isValidNumber(s.fontSize, 'fontSize') : undefined,
-    // Add other settings validation as needed
+    statusLine: s.statusLine, // Preserve statusLine settings
   };
+
+  // Preserve all other settings
+  Object.keys(s).forEach(key => {
+    if (!['theme', 'fontSize', 'statusLine'].includes(key)) {
+      result[key] = s[key];
+    }
+  });
+
+  return result;
 }
 
 /**
@@ -135,7 +144,9 @@ export function validateRemoteStack(data: unknown): RemoteStack {
   const stack = data as any;
 
   // Validate required fields
-  const org = isValidString(stack.org, 'org');
+  // Handle org field mapping from API response
+  const orgField = stack.org ?? stack.organizationUsername;
+  const org = isValidString(orgField, 'org');
   const name = isValidString(stack.name, 'name');
   const description = isValidString(stack.description, 'description');
 

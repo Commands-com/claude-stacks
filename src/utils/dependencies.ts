@@ -35,8 +35,30 @@ let dependencyMappings: DependencyMappings | null = null;
 function loadDependencyMappings(): DependencyMappings {
   if (!dependencyMappings) {
     try {
-      const mappingsPath = join(process.cwd(), 'src', 'config', 'dependency-mappings.json');
-      const mappingsData = readFileSync(mappingsPath, 'utf-8');
+      // Try multiple paths to find the dependency mappings file
+      const possiblePaths = [
+        // During development
+        join(process.cwd(), 'src', 'config', 'dependency-mappings.json'),
+        // In built distribution
+        join(process.cwd(), 'dist', 'config', 'dependency-mappings.json'),
+        // In tests or when installed globally
+        join(__dirname, '..', 'config', 'dependency-mappings.json'),
+      ];
+
+      let mappingsData: string | null = null;
+      for (const mappingsPath of possiblePaths) {
+        try {
+          mappingsData = readFileSync(mappingsPath, 'utf-8');
+          break;
+        } catch {
+          // Try next path
+        }
+      }
+
+      if (!mappingsData) {
+        throw new Error('Dependency mappings file not found');
+      }
+
       dependencyMappings = JSON.parse(mappingsData) as DependencyMappings;
     } catch {
       console.warn('Failed to load dependency mappings, using fallback');
