@@ -205,6 +205,19 @@ describe('Export Action', () => {
         return Promise.resolve([]);
       });
 
+      fs.stat.mockImplementation((path: string) => {
+        if (path.endsWith('.md')) {
+          return Promise.resolve({
+            isFile: () => true,
+            isDirectory: () => false,
+          });
+        }
+        return Promise.resolve({
+          isFile: () => false,
+          isDirectory: () => true,
+        });
+      });
+
       fs.readFile.mockImplementation((filePath: string) => {
         if (filePath === '/project/.claude/commands/test-command.md') {
           return Promise.resolve('# Test Command\n\nThis is a test command.');
@@ -252,6 +265,19 @@ describe('Export Action', () => {
           return Promise.resolve(['test-agent.md']);
         }
         return Promise.resolve([]);
+      });
+
+      fs.stat.mockImplementation((path: string) => {
+        if (path.endsWith('.md')) {
+          return Promise.resolve({
+            isFile: () => true,
+            isDirectory: () => false,
+          });
+        }
+        return Promise.resolve({
+          isFile: () => false,
+          isDirectory: () => true,
+        });
       });
 
       fs.readFile.mockImplementation((filePath: string) => {
@@ -307,6 +333,19 @@ describe('Export Action', () => {
           return Promise.resolve('Global agent content');
         }
         return Promise.resolve('');
+      });
+
+      fs.stat.mockImplementation((path: string) => {
+        if (path.endsWith('.md')) {
+          return Promise.resolve({
+            isFile: () => true,
+            isDirectory: () => false,
+          });
+        }
+        return Promise.resolve({
+          isFile: () => false,
+          isDirectory: () => true,
+        });
       });
 
       await exportAction('test.json', { includeGlobal: true });

@@ -83,7 +83,8 @@ function extractDescriptionFromContent(content: string): string {
 async function scanDirectory<T>(
   dirPath: string,
   // eslint-disable-next-line no-unused-vars
-  itemFactory: (filename: string, fileContent: string) => T
+  itemFactory: (filename: string, fileContent: string) => T,
+  basePath: string = ''
 ): Promise<Map<string, T>> {
   const itemsMap = new Map<string, T>();
 
@@ -91,23 +92,89 @@ async function scanDirectory<T>(
     return itemsMap;
   }
 
-  const files = await fs.readdir(dirPath);
-  const mdFiles = files.filter(f => f.endsWith('.md'));
+  const entries = await getDirectoryEntries(dirPath);
+  const { directoryPromises, filePromises } = await processEntries(entries.entries, {
+    dirPath,
+    basePath,
+    itemFactory,
+    itemsMap,
+  });
 
-  const fileContents = await Promise.all(
-    mdFiles.map(async file => {
-      const filePath = path.join(dirPath, file);
-      const content = await fs.readFile(filePath, 'utf-8');
-      const name = file.replace('.md', '');
-      return { name, content };
-    })
-  );
-
-  for (const { name, content } of fileContents) {
-    itemsMap.set(name, itemFactory(name, content));
-  }
+  // Wait for all operations to complete
+  await Promise.all([...directoryPromises, ...filePromises]);
 
   return itemsMap;
+}
+
+async function getDirectoryEntries(
+  dirPath: string
+): Promise<{ entries: string[]; usesDirent: boolean }> {
+  try {
+    const dirents = await fs.readdir(dirPath, { withFileTypes: true });
+    // Check if we actually got Dirent objects or strings (in case mock returns strings)
+    if (dirents.length > 0 && typeof dirents[0] === 'string') {
+      return { entries: dirents as unknown as string[], usesDirent: false };
+    }
+    // Type assertion for Dirent objects - we know they have name property
+    return { entries: (dirents as Array<{ name: string }>).map(d => d.name), usesDirent: true };
+  } catch {
+    // Fallback to old behavior for compatibility
+    const entries = await fs.readdir(dirPath);
+    return { entries, usesDirent: false };
+  }
+}
+
+async function processEntries<T>(
+  entries: string[],
+  context: {
+    dirPath: string;
+    basePath: string;
+    // eslint-disable-next-line no-unused-vars
+    itemFactory: (filename: string, fileContent: string) => T;
+    itemsMap: Map<string, T>;
+  }
+): Promise<{ directoryPromises: Promise<void>[]; filePromises: Promise<void>[] }> {
+  const { dirPath, basePath, itemFactory, itemsMap } = context;
+  const directoryPromises: Promise<void>[] = [];
+  const filePromises: Promise<void>[] = [];
+
+  const entryPromises = entries.map(async entryName => {
+    const fullPath = path.join(dirPath, entryName);
+    const { isDirectory, isFile } = await getEntryType(fullPath);
+
+    if (isDirectory) {
+      const subPath = basePath ? `${basePath}/${entryName}` : entryName;
+      const promise = scanDirectory(fullPath, itemFactory, subPath).then(subItems => {
+        for (const [key, value] of subItems) {
+          itemsMap.set(key, value);
+        }
+      });
+      directoryPromises.push(promise);
+    } else if (isFile && entryName.endsWith('.md')) {
+      const promise = fs.readFile(fullPath, 'utf-8').then(content => {
+        const name = entryName.replace('.md', '');
+        const fullName = basePath ? `${basePath}/${name}` : name;
+        itemsMap.set(fullName, itemFactory(fullName, content));
+      });
+      filePromises.push(promise);
+    }
+  });
+
+  await Promise.all(entryPromises);
+  return { directoryPromises, filePromises };
+}
+
+async function getEntryType(fullPath: string): Promise<{ isDirectory: boolean; isFile: boolean }> {
+  // Both cases need to check the file system since mocks may not behave like real Dirent objects
+  try {
+    const stat = await fs.stat(fullPath);
+    return {
+      isDirectory: stat.isDirectory(),
+      isFile: stat.isFile(),
+    };
+  } catch {
+    return { isDirectory: false, isFile: false };
+  }
 }
 
 /**

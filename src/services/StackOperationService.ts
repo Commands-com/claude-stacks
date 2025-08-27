@@ -210,8 +210,15 @@ export class StackOperationService {
       // Process commands in parallel for better performance
       await Promise.all(
         commands.map(async command => {
-          const fileName = `${command.name.replace(/ \((local|global)\)/g, '')}.md`;
+          const cleanName = command.name.replace(/ \((local|global)\)/g, '');
+          const fileName = `${cleanName}.md`;
           const filePath = path.join(globalCommandsDir, fileName);
+
+          // Ensure nested directory exists for commands with paths (e.g., "pm/init" -> "pm/" subdirectory)
+          const fileDir = path.dirname(filePath);
+          if (fileDir !== globalCommandsDir) {
+            await this.fileService.ensureDir(fileDir);
+          }
 
           // Check if file exists and handle based on options
           if (!options.overwrite && (await this.fileService.exists(filePath))) {
@@ -245,8 +252,15 @@ export class StackOperationService {
       // Process commands in parallel for better performance
       await Promise.all(
         commands.map(async command => {
-          const fileName = `${command.name.replace(/ \((local|global)\)/g, '')}.md`;
+          const cleanName = command.name.replace(/ \((local|global)\)/g, '');
+          const fileName = `${cleanName}.md`;
           const filePath = path.join(localCommandsDir, fileName);
+
+          // Ensure nested directory exists for commands with paths (e.g., "pm/init" -> "pm/" subdirectory)
+          const fileDir = path.dirname(filePath);
+          if (fileDir !== localCommandsDir) {
+            await this.fileService.ensureDir(fileDir);
+          }
 
           // Check if file exists and handle based on options
           if (!options.overwrite && (await this.fileService.exists(filePath))) {
