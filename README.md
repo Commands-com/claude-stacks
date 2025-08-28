@@ -1,6 +1,6 @@
 # Claude Stacks
 
-![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-91%25-brightgreen)
 [![npm version](https://badge.fury.io/js/claude-stacks.svg)](https://www.npmjs.com/package/claude-stacks)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
