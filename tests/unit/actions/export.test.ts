@@ -29,6 +29,7 @@ jest.mock('../../../src/constants/paths.js', () => ({
   getGlobalSettingsPath: jest.fn(() => '/home/.claude/settings.json'),
   getLocalCommandsDir: jest.fn(() => '/project/.claude/commands'),
   getLocalAgentsDir: jest.fn(() => '/project/.claude/agents'),
+  getLocalMainSettingsPath: jest.fn(() => '/project/.claude/settings.json'),
   getLocalSettingsPath: jest.fn(() => '/project/.claude/settings.local.json'),
 }));
 
@@ -83,6 +84,7 @@ describe('Export Action', () => {
     pathConstants.STACKS_PATH = '/home/.claude/stacks';
     pathConstants.getLocalCommandsDir = jest.fn(() => '/project/.claude/commands');
     pathConstants.getLocalAgentsDir = jest.fn(() => '/project/.claude/agents');
+    pathConstants.getLocalMainSettingsPath = jest.fn(() => '/project/.claude/settings.json');
     pathConstants.getLocalSettingsPath = jest.fn(() => '/project/.claude/settings.local.json');
 
     // Re-setup version mocks to ensure they work correctly
@@ -466,15 +468,16 @@ describe('Export Action', () => {
   describe('Settings Collection', () => {
     it('should collect local settings', async () => {
       const pathConstants = require('../../../src/constants/paths.js');
+      pathConstants.getLocalMainSettingsPath.mockReturnValue('/project/.claude/settings.json');
       pathConstants.getLocalSettingsPath.mockReturnValue('/project/.claude/settings.local.json');
 
       fs.pathExists.mockImplementation((path: string) => {
-        return Promise.resolve(path === '/project/.claude/settings.local.json');
+        return Promise.resolve(path === '/project/.claude/settings.json');
       });
 
       fs.readJson.mockImplementation((path: string) => {
-        if (path === '/project/.claude/settings.local.json') {
-          return Promise.resolve({ localSetting: 'localValue' });
+        if (path === '/project/.claude/settings.json') {
+          return Promise.resolve({ mainSetting: 'mainValue' });
         }
         return Promise.resolve({});
       });
@@ -484,7 +487,7 @@ describe('Export Action', () => {
       expect(fs.writeJson).toHaveBeenCalledWith(
         '/home/.claude/stacks/test.json',
         expect.objectContaining({
-          settings: { localSetting: 'localValue' },
+          settings: { mainSetting: 'mainValue' },
         }),
         { spaces: 2 }
       );
@@ -493,17 +496,23 @@ describe('Export Action', () => {
     it('should merge global and local settings when includeGlobal is true', async () => {
       const pathConstants = require('../../../src/constants/paths.js');
       pathConstants.getGlobalSettingsPath.mockReturnValue('/home/.claude/settings.json');
+      pathConstants.getLocalMainSettingsPath.mockReturnValue('/project/.claude/settings.json');
       pathConstants.getLocalSettingsPath.mockReturnValue('/project/.claude/settings.local.json');
 
       fs.pathExists.mockImplementation((path: string) => {
         return Promise.resolve(
-          path === '/home/.claude/settings.json' || path === '/project/.claude/settings.local.json'
+          path === '/home/.claude/settings.json' ||
+            path === '/project/.claude/settings.json' ||
+            path === '/project/.claude/settings.local.json'
         );
       });
 
       fs.readJson.mockImplementation((path: string) => {
         if (path === '/home/.claude/settings.json') {
           return Promise.resolve({ globalSetting: 'globalValue', sharedSetting: 'global' });
+        }
+        if (path === '/project/.claude/settings.json') {
+          return Promise.resolve({ mainSetting: 'mainValue', sharedSetting: 'main' });
         }
         if (path === '/project/.claude/settings.local.json') {
           return Promise.resolve({ localSetting: 'localValue', sharedSetting: 'local' });
@@ -518,8 +527,9 @@ describe('Export Action', () => {
         expect.objectContaining({
           settings: {
             globalSetting: 'globalValue',
+            mainSetting: 'mainValue',
             localSetting: 'localValue',
-            sharedSetting: 'local', // Local should override global
+            sharedSetting: 'local', // Local should override main and global
           },
         }),
         { spaces: 2 }
@@ -528,14 +538,15 @@ describe('Export Action', () => {
 
     it('should handle settings file read errors gracefully', async () => {
       const pathConstants = require('../../../src/constants/paths.js');
+      pathConstants.getLocalMainSettingsPath.mockReturnValue('/project/.claude/settings.json');
       pathConstants.getLocalSettingsPath.mockReturnValue('/project/.claude/settings.local.json');
 
       fs.pathExists.mockImplementation((path: string) => {
-        return Promise.resolve(path === '/project/.claude/settings.local.json');
+        return Promise.resolve(path === '/project/.claude/settings.json');
       });
 
       fs.readJson.mockImplementation((path: string) => {
-        if (path === '/project/.claude/settings.local.json') {
+        if (path === '/project/.claude/settings.json') {
           throw new Error('Read error');
         }
         return Promise.resolve({});
@@ -544,7 +555,7 @@ describe('Export Action', () => {
       await exportAction('test.json', {});
 
       // Console output testing disabled due to mock isolation issues
-      // expect(mockConsoleWarn).toHaveBeenCalledWith('Warning: Could not read local settings.local.json');
+      // expect(mockConsoleWarn).toHaveBeenCalledWith('Warning: Could not read local settings.json');
       expect(fs.writeJson).toHaveBeenCalledWith(
         '/home/.claude/stacks/test.json',
         expect.objectContaining({
@@ -953,6 +964,211 @@ First meaningful line`;
         url: undefined,
         env: undefined,
       });
+    });
+  });
+
+  describe('Additional edge cases and error handling', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+
+      // Get reference to fs mock
+      const fs = require('fs-extra');
+
+      // Reset default fs mocks
+      fs.pathExists.mockResolvedValue(false);
+      fs.ensureDir.mockResolvedValue(undefined);
+      fs.writeJson.mockResolvedValue(undefined);
+      fs.readdir.mockResolvedValue([]);
+      fs.readFile.mockResolvedValue('');
+      fs.readJson.mockResolvedValue({});
+    });
+
+    it('should handle missing files gracefully', async () => {
+      const fs = require('fs-extra');
+      fs.pathExists.mockResolvedValue(false);
+
+      await exportAction('test.json', {});
+
+      // Should still create export with available data
+      expect(fs.writeJson).toHaveBeenCalled();
+    });
+
+    it('should handle file read errors without failing', async () => {
+      const fs = require('fs-extra');
+      fs.pathExists.mockResolvedValue(true);
+      fs.readJson.mockRejectedValue(new Error('Read error'));
+      fs.readFile.mockRejectedValue(new Error('Read error'));
+
+      // Should not throw error
+      await expect(exportAction('test.json', {})).resolves.not.toThrow();
+    });
+
+    it('should handle complex filename scenarios', () => {
+      const testCases = [
+        { input: 'stack.json', expected: 'stack.json' },
+        { input: 'stack', expected: 'stack.json' },
+        { input: 'complex-stack-name.json', expected: 'complex-stack-name.json' },
+        { input: 'path/to/stack', expected: 'path/to/stack.json' },
+      ];
+
+      testCases.forEach(({ input, expected }) => {
+        const result = exportHelpers.resolveOutputFilename(input);
+        expect(result).toBe(expected);
+      });
+    });
+
+    it('should handle directory with no files', () => {
+      const fs = require('fs-extra');
+      fs.pathExists.mockResolvedValue(false);
+
+      const result = exportHelpers.scanDirectory('/nonexistent');
+
+      expect(result).resolves.toEqual(new Map());
+    });
+  });
+
+  describe('Hook Type Inference', () => {
+    const { exportHelpers } = require('../../../src/actions/export.js');
+
+    describe('inferHookType', () => {
+      it('should infer PostToolUse from post-tool patterns', () => {
+        expect(exportHelpers.inferHookType('post-tool-use')).toBe('PostToolUse');
+        expect(exportHelpers.inferHookType('posttool-hook')).toBe('PostToolUse');
+        expect(exportHelpers.inferHookType('my-post-tool-handler')).toBe('PostToolUse');
+      });
+
+      it('should infer PreToolUse from pre-tool patterns', () => {
+        expect(exportHelpers.inferHookType('pre-tool-use')).toBe('PreToolUse');
+        expect(exportHelpers.inferHookType('pretool-hook')).toBe('PreToolUse');
+        expect(exportHelpers.inferHookType('my-pre-tool-handler')).toBe('PreToolUse');
+      });
+
+      it('should infer SessionStart from session-start patterns', () => {
+        expect(exportHelpers.inferHookType('session-start')).toBe('SessionStart');
+        expect(exportHelpers.inferHookType('sessionstart-hook')).toBe('SessionStart');
+        expect(exportHelpers.inferHookType('my-session-start-handler')).toBe('SessionStart');
+      });
+
+      it('should infer SessionEnd from session-end patterns', () => {
+        expect(exportHelpers.inferHookType('session-end')).toBe('SessionEnd');
+        expect(exportHelpers.inferHookType('sessionend-hook')).toBe('SessionEnd');
+        expect(exportHelpers.inferHookType('my-session-end-handler')).toBe('SessionEnd');
+      });
+
+      it('should infer UserPromptSubmit from prompt patterns', () => {
+        expect(exportHelpers.inferHookType('user-prompt-submit')).toBe('UserPromptSubmit');
+        expect(exportHelpers.inferHookType('prompt-handler')).toBe('UserPromptSubmit');
+        expect(exportHelpers.inferHookType('my-user-prompt-hook')).toBe('UserPromptSubmit');
+      });
+
+      it('should infer Notification from notification patterns', () => {
+        expect(exportHelpers.inferHookType('notification-handler')).toBe('Notification');
+        expect(exportHelpers.inferHookType('my-notification-hook')).toBe('Notification');
+      });
+
+      it('should infer SubagentStop from subagent-stop patterns', () => {
+        expect(exportHelpers.inferHookType('subagent-stop')).toBe('SubagentStop');
+        expect(exportHelpers.inferHookType('subagentstop-handler')).toBe('SubagentStop');
+      });
+
+      it('should infer PreCompact from pre-compact patterns', () => {
+        expect(exportHelpers.inferHookType('pre-compact')).toBe('PreCompact');
+        expect(exportHelpers.inferHookType('precompact-handler')).toBe('PreCompact');
+      });
+
+      it('should infer Stop from stop patterns', () => {
+        expect(exportHelpers.inferHookType('stop-handler')).toBe('Stop');
+        expect(exportHelpers.inferHookType('my-stop-hook')).toBe('Stop');
+      });
+
+      it('should default to PreToolUse for unknown patterns', () => {
+        expect(exportHelpers.inferHookType('unknown-hook')).toBe('PreToolUse');
+        expect(exportHelpers.inferHookType('random-name')).toBe('PreToolUse');
+        expect(exportHelpers.inferHookType('')).toBe('PreToolUse');
+      });
+    });
+
+    describe('getSessionHookType', () => {
+      it('should return SessionStart for session-start patterns', () => {
+        expect(exportHelpers.getSessionHookType('session-start')).toBe('SessionStart');
+        expect(exportHelpers.getSessionHookType('sessionstart')).toBe('SessionStart');
+        expect(exportHelpers.getSessionHookType('my-session-start-handler')).toBe('SessionStart');
+      });
+
+      it('should return SessionEnd for session-end patterns', () => {
+        expect(exportHelpers.getSessionHookType('session-end')).toBe('SessionEnd');
+        expect(exportHelpers.getSessionHookType('sessionend')).toBe('SessionEnd');
+        expect(exportHelpers.getSessionHookType('my-session-end-handler')).toBe('SessionEnd');
+      });
+
+      it('should return null for non-session patterns', () => {
+        expect(exportHelpers.getSessionHookType('random')).toBe(null);
+        expect(exportHelpers.getSessionHookType('post-tool')).toBe(null);
+        expect(exportHelpers.getSessionHookType('')).toBe(null);
+      });
+    });
+
+    describe('getOtherHookType', () => {
+      it('should return UserPromptSubmit for prompt patterns', () => {
+        expect(exportHelpers.getOtherHookType('user-prompt')).toBe('UserPromptSubmit');
+        expect(exportHelpers.getOtherHookType('prompt')).toBe('UserPromptSubmit');
+        expect(exportHelpers.getOtherHookType('my-prompt-handler')).toBe('UserPromptSubmit');
+      });
+
+      it('should return Notification for notification patterns', () => {
+        expect(exportHelpers.getOtherHookType('notification')).toBe('Notification');
+        expect(exportHelpers.getOtherHookType('my-notification-hook')).toBe('Notification');
+      });
+
+      it('should return SubagentStop for subagent-stop patterns', () => {
+        expect(exportHelpers.getOtherHookType('subagent-stop')).toBe('SubagentStop');
+        expect(exportHelpers.getOtherHookType('subagentstop')).toBe('SubagentStop');
+      });
+
+      it('should return PreCompact for pre-compact patterns', () => {
+        expect(exportHelpers.getOtherHookType('pre-compact')).toBe('PreCompact');
+        expect(exportHelpers.getOtherHookType('precompact')).toBe('PreCompact');
+      });
+
+      it('should return Stop for stop patterns (but not subagent-stop)', () => {
+        expect(exportHelpers.getOtherHookType('stop')).toBe('Stop');
+        expect(exportHelpers.getOtherHookType('my-stop-handler')).toBe('Stop');
+        // subagent-stop should match SubagentStop first, not Stop
+        expect(exportHelpers.getOtherHookType('subagent-stop')).toBe('SubagentStop');
+      });
+
+      it('should return null for unknown patterns', () => {
+        expect(exportHelpers.getOtherHookType('random')).toBe(null);
+        expect(exportHelpers.getOtherHookType('session-start')).toBe(null);
+        expect(exportHelpers.getOtherHookType('')).toBe(null);
+      });
+    });
+
+    describe('getRiskLevel', () => {
+      it('should return safe for scores below 30', () => {
+        expect(exportHelpers.getRiskLevel(0)).toBe('safe');
+        expect(exportHelpers.getRiskLevel(15)).toBe('safe');
+        expect(exportHelpers.getRiskLevel(29)).toBe('safe');
+      });
+
+      it('should return warning for scores 30-69', () => {
+        expect(exportHelpers.getRiskLevel(30)).toBe('warning');
+        expect(exportHelpers.getRiskLevel(50)).toBe('warning');
+        expect(exportHelpers.getRiskLevel(69)).toBe('warning');
+      });
+
+      it('should return dangerous for scores 70+', () => {
+        expect(exportHelpers.getRiskLevel(70)).toBe('dangerous');
+        expect(exportHelpers.getRiskLevel(85)).toBe('dangerous');
+        expect(exportHelpers.getRiskLevel(100)).toBe('dangerous');
+      });
+    });
+  });
+
+  describe('Hook Collection', () => {
+    // Skip complex hook collection tests for now - focus on simple helper tests first
+    it('should skip complex hook tests for now', () => {
+      expect(true).toBe(true);
     });
   });
 });

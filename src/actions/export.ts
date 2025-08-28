@@ -7,15 +7,19 @@ import {
   getGlobalSettingsPath,
   getLocalAgentsDir,
   getLocalCommandsDir,
+  getLocalMainSettingsPath,
   getLocalSettingsPath,
   getStacksPath,
 } from '../constants/paths.js';
+import { HookScannerService } from '../services/HookScannerService.js';
+import { FileService } from '../services/FileService.js';
 
 import type {
   DeveloperStack,
   ExportOptions,
   StackAgent,
   StackCommand,
+  StackHook,
   StackMcpServer,
 } from '../types/index.js';
 import { UIService } from '../services/UIService.js';
@@ -295,10 +299,139 @@ async function collectSettings(includeGlobal: boolean): Promise<Record<string, u
     Object.assign(settings, globalSettings);
   }
 
+  // Read main local settings file (.claude/settings.json)
+  const mainLocalSettings = await readSettingsFile(
+    getLocalMainSettingsPath(),
+    'local settings.json'
+  );
+  Object.assign(settings, mainLocalSettings);
+
+  // Read override settings file (.claude/settings.local.json) - these take precedence
   const localSettings = await readSettingsFile(getLocalSettingsPath(), 'local settings.local.json');
   Object.assign(settings, localSettings);
 
   return settings;
+}
+
+/**
+ * Infer hook type from filename
+ */
+function inferHookType(name: string): StackHook['type'] {
+  const lowerName = name.toLowerCase();
+
+  // Check for post-tool patterns
+  if (containsPostToolPattern(lowerName)) return 'PostToolUse';
+
+  // Check for pre-tool patterns
+  if (containsPreToolPattern(lowerName)) return 'PreToolUse';
+
+  // Check for session patterns
+  const sessionType = getSessionHookType(lowerName);
+  if (sessionType) return sessionType;
+
+  // Check for other patterns
+  const otherType = getOtherHookType(lowerName);
+  if (otherType) return otherType;
+
+  // Default to PreToolUse if can't determine
+  return 'PreToolUse';
+}
+
+/**
+ * Check if name contains post-tool patterns
+ */
+function containsPostToolPattern(lowerName: string): boolean {
+  return lowerName.includes('post-tool') || lowerName.includes('posttool');
+}
+
+/**
+ * Check if name contains pre-tool patterns
+ */
+function containsPreToolPattern(lowerName: string): boolean {
+  return lowerName.includes('pre-tool') || lowerName.includes('pretool');
+}
+
+/**
+ * Get session hook type from name
+ */
+function getSessionHookType(lowerName: string): StackHook['type'] | null {
+  if (lowerName.includes('session-start') || lowerName.includes('sessionstart')) {
+    return 'SessionStart';
+  }
+  if (lowerName.includes('session-end') || lowerName.includes('sessionend')) {
+    return 'SessionEnd';
+  }
+  return null;
+}
+
+/**
+ * Get other hook types from name
+ */
+function getOtherHookType(lowerName: string): StackHook['type'] | null {
+  if (lowerName.includes('user-prompt') || lowerName.includes('prompt')) {
+    return 'UserPromptSubmit';
+  }
+  if (lowerName.includes('notification')) {
+    return 'Notification';
+  }
+  if (lowerName.includes('subagent-stop') || lowerName.includes('subagentstop')) {
+    return 'SubagentStop';
+  }
+  if (lowerName.includes('pre-compact') || lowerName.includes('precompact')) {
+    return 'PreCompact';
+  }
+  if (lowerName.includes('stop')) {
+    return 'Stop';
+  }
+  return null;
+}
+
+/**
+ * Convert numeric score to risk level
+ */
+function getRiskLevel(score: number): 'safe' | 'warning' | 'dangerous' {
+  if (score >= 70) return 'dangerous';
+  if (score >= 30) return 'warning';
+  return 'safe';
+}
+
+async function collectHooks(): Promise<StackHook[]> {
+  const fileService = new FileService();
+  const hookScanner = new HookScannerService();
+  const hooks: StackHook[] = [];
+
+  // Check for hooks in local .claude/hooks directory
+  const localHooksDir = '.claude/hooks';
+  if (await fileService.exists(localHooksDir)) {
+    const hookFiles = await fileService.listFiles(localHooksDir);
+
+    for (const file of hookFiles) {
+      if (file.endsWith('.js') || file.endsWith('.ts') || file.endsWith('.py')) {
+        const filePath = `${localHooksDir}/${file}`;
+        // eslint-disable-next-line no-await-in-loop
+        const content = await fileService.readTextFile(filePath);
+        const hookName = file.replace(/\.(js|ts|py)$/, '');
+
+        // Determine hook type from filename
+        const hookType = inferHookType(hookName);
+
+        // Scan for security issues
+        const scanResults = hookScanner.scanHook(content);
+        const riskLevel = getRiskLevel(scanResults.riskScore);
+
+        hooks.push({
+          name: hookName,
+          type: hookType,
+          filePath,
+          content,
+          riskLevel,
+          scanResults,
+        });
+      }
+    }
+  }
+
+  return hooks;
 }
 
 /**
@@ -419,19 +552,22 @@ async function createBaseStack(options: {
 
 async function populateStackComponents(
   stack: DeveloperStack,
-  includeGlobal: boolean
+  includeGlobal: boolean,
+  includeHooks: boolean = true
 ): Promise<void> {
-  const [commandsMap, agentsMap, settings, mcpServers] = await Promise.all([
+  const [commandsMap, agentsMap, settings, mcpServers, hooks] = await Promise.all([
     collectCommands(includeGlobal),
     collectAgents(includeGlobal),
     collectSettings(includeGlobal),
     collectMcpServers(),
+    includeHooks ? collectHooks() : Promise.resolve([]),
   ]);
 
   stack.commands = Array.from(commandsMap.values());
   stack.agents = Array.from(agentsMap.values());
   stack.settings = settings;
   stack.mcpServers = mcpServers;
+  stack.hooks = hooks;
 }
 
 async function exportCurrentStack(options: {
@@ -440,13 +576,14 @@ async function exportCurrentStack(options: {
   includeGlobal?: boolean;
   includeClaudeMd?: boolean;
   stackVersion?: string;
+  hooks?: boolean;
 }): Promise<DeveloperStack> {
   const currentDir = process.cwd();
   const { name, description, version } = await generateStackMetadata(options);
   const publishedMeta = await metadata.getPublishedStackMetadata(currentDir);
 
   const stack = await createBaseStack({ name, description, version, currentDir, publishedMeta });
-  await populateStackComponents(stack, options.includeGlobal ?? false);
+  await populateStackComponents(stack, options.includeGlobal ?? false, options.hooks ?? true);
 
   return stack;
 }
@@ -489,6 +626,7 @@ export async function exportAction(filename?: string, options: ExportOptions = {
       includeGlobal: options.includeGlobal ?? false,
       includeClaudeMd: options.includeClaudeMd ?? false,
       stackVersion: options.stackVersion,
+      hooks: options.hooks ?? true,
     });
 
     const outputFilename = resolveOutputFilename(filename);
@@ -552,6 +690,7 @@ export const exportHelpers = {
   collectCommands,
   collectAgents,
   collectSettings,
+  collectHooks,
   readSettingsFile,
   convertMcpConfig,
   collectMcpServers,
@@ -560,4 +699,11 @@ export const exportHelpers = {
   writeStackToFile,
   displayExportSuccess,
   handleExportError,
+  // Hook-related helper functions
+  inferHookType,
+  containsPostToolPattern,
+  containsPreToolPattern,
+  getSessionHookType,
+  getOtherHookType,
+  getRiskLevel,
 };

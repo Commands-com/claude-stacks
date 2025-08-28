@@ -9,6 +9,7 @@ import type {
   RestoreOptions,
   StackAgent,
   StackCommand,
+  StackHook,
   StackMcpServer,
   StackSettings,
 } from '../types/index.js';
@@ -180,6 +181,7 @@ export class StackOperationService {
     return {
       commands: this.buildCommandsTracking(stack, options),
       agents: this.buildAgentsTracking(stack, options),
+      hooks: this.buildHooksTracking(stack),
       mcpServers: this.buildMcpServersTracking(stack),
       settings: this.buildSettingsTracking(stack, options),
       claudeMd: this.buildClaudeMdTracking(stack, options),
@@ -220,6 +222,20 @@ export class StackOperationService {
     }
 
     return agents;
+  }
+
+  private buildHooksTracking(
+    stack: DeveloperStack
+  ): { name: string; path: string; type: string }[] {
+    if (!stack.hooks) {
+      return [];
+    }
+
+    return stack.hooks.map(hook => ({
+      name: hook.name,
+      path: hook.filePath,
+      type: hook.type,
+    }));
   }
 
   private buildMcpServersTracking(stack: DeveloperStack): string[] {
@@ -303,6 +319,7 @@ export class StackOperationService {
   private async restoreComponents(stack: DeveloperStack, options: RestoreOptions): Promise<void> {
     await this.restoreCommandComponents(stack, options);
     await this.restoreAgentComponents(stack, options);
+    await this.restoreHookComponents(stack);
     await this.restoreOtherComponents(stack, options);
   }
 
@@ -345,6 +362,153 @@ export class StackOperationService {
       if (localAgents.length > 0) {
         await this.restoreLocalAgents(localAgents, options);
       }
+    }
+  }
+
+  private async restoreHookComponents(stack: DeveloperStack): Promise<void> {
+    if (!stack.hooks || stack.hooks.length === 0) {
+      return;
+    }
+
+    this.ui.info(`📎 Installing ${stack.hooks.length} hook(s)...`);
+
+    try {
+      const localHooksDir = path.join(process.cwd(), '.claude', 'hooks');
+      await this.fileService.ensureDir(localHooksDir);
+
+      // Process hooks in parallel for better performance
+      await Promise.all(
+        stack.hooks.map(async hook => {
+          const hookFileName = this.getHookFileName(hook);
+          const hookFilePath = path.join(localHooksDir, hookFileName);
+
+          // Write hook file
+          await this.fileService.writeTextFile(hookFilePath, hook.content, process.cwd());
+
+          // Set executable permissions for script files
+          await this.setExecutablePermissions(hookFilePath);
+
+          this.ui.success(`✓ Installed hook: ${hook.name} (${hook.type})`);
+        })
+      );
+
+      this.ui.success(`✅ Successfully installed ${stack.hooks.length} hook(s)`);
+    } catch (error) {
+      this.ui.error(
+        `Failed to restore hooks: ${error instanceof Error ? error.message : String(error)}`
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Generate appropriate filename for a hook based on its original file path
+   */
+  private getHookFileName(hook: StackHook): string {
+    // If the hook has a filePath, extract just the filename
+    if (hook.filePath) {
+      const fileName = path.basename(hook.filePath);
+      if (fileName && fileName !== hook.filePath) {
+        return fileName;
+      }
+    }
+
+    // Otherwise, generate filename from hook name and infer extension
+    const extension = this.inferHookExtension(hook.content);
+    return `${hook.name}${extension}`;
+  }
+
+  /**
+   * Infer file extension from hook content
+   */
+  private inferHookExtension(content: string): string {
+    // Check shebang line first
+    const shebangExtension = this.getExtensionFromShebang(content);
+    if (shebangExtension) {
+      return shebangExtension;
+    }
+
+    // Check content patterns
+    const contentExtension = this.getExtensionFromContent(content);
+    if (contentExtension) {
+      return contentExtension;
+    }
+
+    // Default to .py since most hooks are Python
+    return '.py';
+  }
+
+  /**
+   * Get file extension from shebang line
+   */
+  private getExtensionFromShebang(content: string): string | null {
+    const lines = content.split('\n');
+    const firstLine = lines[0]?.trim() || '';
+
+    if (!firstLine.startsWith('#!')) {
+      return null;
+    }
+
+    if (firstLine.includes('python')) return '.py';
+    if (firstLine.includes('node') || firstLine.includes('javascript')) return '.js';
+    if (firstLine.includes('bash') || firstLine.includes('sh')) return '.sh';
+
+    return null;
+  }
+
+  /**
+   * Get file extension from content patterns
+   */
+  private getExtensionFromContent(content: string): string | null {
+    const contentStart = content.substring(0, 500).toLowerCase();
+
+    if (this.isPythonContent(contentStart)) {
+      return '.py';
+    }
+
+    if (this.isJavaScriptContent(contentStart)) {
+      return '.js';
+    }
+
+    return null;
+  }
+
+  /**
+   * Check if content appears to be Python
+   */
+  private isPythonContent(contentStart: string): boolean {
+    return (
+      contentStart.includes('import ') ||
+      contentStart.includes('from ') ||
+      contentStart.includes('def ')
+    );
+  }
+
+  /**
+   * Check if content appears to be JavaScript
+   */
+  private isJavaScriptContent(contentStart: string): boolean {
+    return (
+      contentStart.includes('require(') ||
+      contentStart.includes('module.exports') ||
+      contentStart.includes('const ')
+    );
+  }
+
+  /**
+   * Set executable permissions on a hook file
+   */
+  private async setExecutablePermissions(filePath: string): Promise<void> {
+    try {
+      const fsModule = await import('fs');
+      const stats = await fsModule.promises.stat(filePath);
+      const mode = stats.mode | parseInt('755', 8); // Add execute permissions
+      await fsModule.promises.chmod(filePath, mode);
+    } catch {
+      // Don't fail the entire restoration if permissions can't be set
+      this.ui.warning(
+        `Warning: Could not set executable permissions for ${path.basename(filePath)}`
+      );
     }
   }
 
@@ -869,6 +1033,9 @@ export class StackOperationService {
     if (summary.localAgents > 0) {
       this.ui.meta(`   Local agents: ${summary.localAgents}`);
     }
+    if (summary.hooks > 0) {
+      this.ui.meta(`   Hooks: ${summary.hooks}`);
+    }
     if (summary.mcpServers > 0) {
       this.ui.meta(`   MCP servers: ${summary.mcpServers}`);
     }
@@ -882,6 +1049,7 @@ export class StackOperationService {
       localCommands: this.countLocalCommands(stack, globalOnly ?? false),
       globalAgents: this.countGlobalAgents(stack, localOnly ?? false),
       localAgents: this.countLocalAgents(stack, globalOnly ?? false),
+      hooks: stack.hooks?.length ?? 0,
       mcpServers: stack.mcpServers?.length ?? 0,
     };
   }

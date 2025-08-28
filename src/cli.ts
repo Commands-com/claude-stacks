@@ -20,6 +20,7 @@ import { deleteAction } from './actions/delete.js';
 import { cleanAction } from './actions/clean.js';
 import { renameAction } from './actions/rename.js';
 import { uninstallAction } from './actions/uninstall.js';
+import { listHooksAction, scanHooksAction, viewHookAction } from './actions/hooks.js';
 
 // Set up CLI structure
 program
@@ -41,6 +42,7 @@ program
   )
   .option('--include-global', 'Include global ~/.claude configurations (default: local only)')
   .option('--include-claude-md', 'Include CLAUDE.md files in the export')
+  .option('--no-hooks', 'Exclude hooks from export')
   .description('Export your Claude Code environment to a shareable stack file')
   .action((filename, options) => exportAction(filename, options));
 
@@ -122,6 +124,32 @@ program
   .option('--dry-run', 'Show what would be removed without making changes')
   .description('Remove project entries for directories that no longer exist')
   .action(options => cleanAction(options));
+
+// View hook command
+program
+  .command('view-hook')
+  .argument('<stack-file>', 'Path to stack file or stack ID')
+  .argument('<hook-name>', 'Name of the hook to view')
+  .description('Display the contents and safety analysis of a specific hook')
+  .action((stackFile, hookName) => viewHookAction(stackFile, hookName));
+
+// Scan hooks command
+program
+  .command('scan-hooks')
+  .argument('[stack-file]', 'Path to stack file or stack ID (default: current project)')
+  .option('--show-safe', 'Include safe hooks in output (default: warnings and dangers only)')
+  .option('--details', 'Show detailed scan results for each hook')
+  .description('Scan hooks for potential security issues')
+  .action((stackFile, options) => scanHooksAction(stackFile, options));
+
+// List hooks command
+program
+  .command('list-hooks')
+  .argument('[stack-file]', 'Path to stack file or stack ID (default: current project)')
+  .option('--type <type>', 'Filter by hook type (PreToolUse, PostToolUse, etc.)')
+  .option('--risk-level <level>', 'Filter by risk level (safe, warning, dangerous)')
+  .description('List all hooks in a stack or current project')
+  .action((stackFile, options) => listHooksAction(stackFile, options));
 
 // Parse and execute
 program.parse();

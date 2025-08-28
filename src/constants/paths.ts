@@ -127,6 +127,10 @@ export function getLocalCommandsDir(projectPath?: string): string {
   return path.join(getLocalClaudeDir(projectPath), 'commands');
 }
 
+export function getLocalHooksDir(projectPath?: string): string {
+  return path.join(getLocalClaudeDir(projectPath), 'hooks');
+}
+
 /**
  * Get the path to local project agents directory
  *
@@ -203,6 +207,25 @@ export function getLocalSettingsPath(projectPath?: string): string {
 }
 
 /**
+ * Get the path to local main settings file
+ *
+ * @param projectPath - Optional project path (defaults to current working directory)
+ * @returns Full path to the local settings.json file
+ *
+ * @example
+ * ```typescript
+ * const mainSettingsPath = getLocalMainSettingsPath();
+ * // Returns: /current/project/.claude/settings.json
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
+export function getLocalMainSettingsPath(projectPath?: string): string {
+  return path.join(getLocalClaudeDir(projectPath), 'settings.json');
+}
+
+/**
  * Get the path to global commands directory
  *
  * @returns Full path to the global commands directory
@@ -218,6 +241,10 @@ export function getLocalSettingsPath(projectPath?: string): string {
  */
 export function getGlobalCommandsDir(): string {
   return path.join(CLAUDE_CONFIG_PATH, 'commands');
+}
+
+export function getGlobalHooksDir(): string {
+  return path.join(CLAUDE_CONFIG_PATH, 'hooks');
 }
 
 /**

@@ -169,10 +169,11 @@ export class UninstallAction extends BaseAction {
   ): Promise<void> {
     this.ui.info('\n📋 Components to be removed:');
 
-    const { commands, agents, mcpServers, settings, claudeMd } = stackEntry.components;
+    const { commands, agents, hooks = [], mcpServers, settings, claudeMd } = stackEntry.components;
 
     await this.showCommandsPreview(commands, options);
     await this.showAgentsPreview(agents, options);
+    await this.showHooksPreview(hooks, options);
     this.showMcpServersPreview(mcpServers, options);
     this.showSettingsPreview(settings, options);
     await this.showClaudeMdPreview(claudeMd, options);
@@ -220,9 +221,16 @@ export class UninstallAction extends BaseAction {
   }
 
   private shouldSkipComponent(
-    component: { isGlobal: boolean },
+    component: { isGlobal: boolean } | string,
     options: UninstallOptions
   ): boolean {
+    // Handle string component types (like 'hooks')
+    if (typeof component === 'string') {
+      // Hooks don't have global/local distinction, so never skip based on scope
+      return false;
+    }
+
+    // Handle component objects with isGlobal property
     if (options.global && !component.isGlobal) return true;
     if (options.local && component.isGlobal) return true;
     return false;
@@ -235,6 +243,49 @@ export class UninstallAction extends BaseAction {
     if (this.shouldShowAgents(options, agents)) {
       this.ui.info('\n  🤖 Agents:');
       await this.displayComponentList(agents, options);
+    }
+  }
+
+  private async showHooksPreview(
+    hooks: { name: string; path: string; type: string }[],
+    options: UninstallOptions
+  ): Promise<void> {
+    if (!this.shouldShowHooks(hooks, options)) {
+      return;
+    }
+
+    this.ui.info('\n📎 Hooks:');
+    await this.displayHooksList(hooks, options);
+  }
+
+  private shouldShowHooks(
+    hooks: { name: string; path: string; type: string }[],
+    options: UninstallOptions
+  ): boolean {
+    return (
+      hooks.length > 0 &&
+      !this.shouldSkipComponent('hooks', options) &&
+      this.shouldRemoveHooks(options)
+    );
+  }
+
+  private async displayHooksList(
+    hooks: { name: string; path: string; type: string }[],
+    options: UninstallOptions
+  ): Promise<void> {
+    for (const hook of hooks) {
+      if (this.shouldSkipComponent('hooks', options)) {
+        continue;
+      }
+
+      // eslint-disable-next-line no-await-in-loop
+      const status = await this.getFileStatus(hook.path);
+      const statusText =
+        status === 'exists' ? this.ui.colorSuccess(status) : this.ui.colorWarning(status);
+
+      this.ui.meta(
+        `   • ${hook.name} (${hook.type}): ${this.ui.colorMeta(hook.path)} [${statusText}]`
+      );
     }
   }
 
@@ -427,6 +478,10 @@ export class UninstallAction extends BaseAction {
       removedCount += await this.removeAgents(stackEntry.components.agents, options);
     }
 
+    if (this.shouldRemoveHooks(options)) {
+      removedCount += await this.removeHooks(stackEntry.components.hooks || [], options);
+    }
+
     if (this.shouldRemoveMcpServers(options)) {
       removedCount += await this.removeMcpServers(stackEntry.components.mcpServers);
     }
@@ -448,6 +503,12 @@ export class UninstallAction extends BaseAction {
 
   private shouldRemoveAgents(options: UninstallOptions): boolean {
     return !options.commandsOnly && !options.mcpOnly && !options.settingsOnly;
+  }
+
+  private shouldRemoveHooks(options: UninstallOptions): boolean {
+    return (
+      !options.commandsOnly && !options.agentsOnly && !options.mcpOnly && !options.settingsOnly
+    );
   }
 
   private shouldRemoveMcpServers(options: UninstallOptions): boolean {
@@ -529,6 +590,47 @@ export class UninstallAction extends BaseAction {
         this.ui.warning(
           `⚠️  Failed to remove agent "${agent.name}": ${error instanceof Error ? error.message : 'unknown error'}`
         );
+      }
+    }
+
+    return removedCount;
+  }
+
+  private async removeHooks(
+    hooks: { name: string; path: string; type: string }[],
+    options: UninstallOptions
+  ): Promise<number> {
+    if (hooks.length === 0) {
+      return 0;
+    }
+
+    let removedCount = 0;
+    this.ui.info(`\n🗑️  Removing ${hooks.length} hook(s)...`);
+
+    for (const hook of hooks) {
+      // eslint-disable-next-line no-await-in-loop
+      const status = await this.getFileStatus(hook.path);
+
+      if (options.dryRun) {
+        this.ui.meta(`  🔍 Would remove ${hook.name} (${hook.type}): ${hook.path} [${status}]`);
+        if (status === 'exists') {
+          removedCount++;
+        }
+      } else {
+        if (status === 'exists') {
+          try {
+            // eslint-disable-next-line no-await-in-loop
+            await this.fileService.remove(hook.path);
+            this.ui.success(`  ✅ Removed ${hook.name} (${hook.type}): ${hook.path}`);
+            removedCount++;
+          } catch (error) {
+            this.ui.error(
+              `  ❌ Failed to remove ${hook.name}: ${error instanceof Error ? error.message : 'Unknown error'}`
+            );
+          }
+        } else {
+          this.ui.warning(`  ⚠️  ${hook.name} not found: ${hook.path} [${status}]`);
+        }
       }
     }
 

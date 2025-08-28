@@ -10,6 +10,7 @@ export interface StackRegistryEntry {
   components: {
     commands: { name: string; path: string; isGlobal: boolean }[];
     agents: { name: string; path: string; isGlobal: boolean }[];
+    hooks: { name: string; path: string; type: string }[];
     mcpServers: string[];
     settings: { type: 'global' | 'local'; fields: string[] }[];
     claudeMd: { type: 'global' | 'local'; path: string }[];
@@ -134,13 +135,26 @@ export class StackRegistryService {
   /**
    * Find stacks that have a specific command or agent
    */
+  /**
+   * Find stacks that have a specific command, agent, or hook
+   */
   async findStacksWithComponent(
     componentName: string,
-    componentType: 'commands' | 'agents'
+    componentType: 'commands' | 'agents' | 'hooks'
   ): Promise<StackRegistryEntry[]> {
     const registry = await this.getRegistry();
     return Object.values(registry.stacks).filter(stack =>
       stack.components[componentType].some(comp => comp.name === componentName)
+    );
+  }
+
+  /**
+   * Find stacks that have a specific hook
+   */
+  async findStacksWithHook(hookName: string): Promise<StackRegistryEntry[]> {
+    const registry = await this.getRegistry();
+    return Object.values(registry.stacks).filter(stack =>
+      (stack.components.hooks || []).some(hook => hook.name === hookName)
     );
   }
 
@@ -214,6 +228,7 @@ export class StackRegistryService {
         entry.components = {
           commands: [],
           agents: [],
+          hooks: [],
           mcpServers: [],
           settings: [],
           claudeMd: [],
@@ -223,6 +238,7 @@ export class StackRegistryService {
       // Ensure all component arrays exist
       entry.components.commands ??= [];
       entry.components.agents ??= [];
+      entry.components.hooks ??= [];
       entry.components.mcpServers ??= [];
       entry.components.settings ??= [];
       entry.components.claudeMd ??= [];
@@ -237,9 +253,10 @@ export class StackRegistryService {
   private async hasExistingComponents(entry: StackRegistryEntry): Promise<boolean> {
     // Collect all file paths to check
     const filePaths = [
-      ...entry.components.commands.map(c => c.path),
-      ...entry.components.agents.map(a => a.path),
-      ...entry.components.claudeMd.map(md => md.path),
+      ...(entry.components.commands || []).map(c => c.path),
+      ...(entry.components.agents || []).map(a => a.path),
+      ...(entry.components.hooks || []).map(h => h.path),
+      ...(entry.components.claudeMd || []).map(md => md.path),
     ];
 
     // Check all files in parallel and return true if any exist

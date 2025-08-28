@@ -737,6 +737,7 @@ describe('StackRegistryService', () => {
         mcpServers: [],
         settings: [],
         claudeMd: [],
+        hooks: [],
       });
     });
 

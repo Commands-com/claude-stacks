@@ -161,6 +161,85 @@ describe('ApiService', () => {
     });
   });
 
+  describe('fetchPublicStack', () => {
+    const mockStack: RemoteStack = {
+      org: 'test-org',
+      name: 'public-stack',
+      title: 'Public Test Stack',
+      description: 'A public test stack',
+      version: '1.0.0',
+      author: 'test-author',
+    };
+
+    it('should successfully fetch a public stack without authentication', async () => {
+      mockGet.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockStack),
+      });
+
+      const result = await apiService.fetchPublicStack('test-org/public-stack');
+
+      expect(result).toEqual(mockStack);
+      expect(mockGet).toHaveBeenCalledWith('https://api.test.com/v1/stacks/test-org/public-stack', {
+        'User-Agent': 'claude-stacks-cli/1.0.0',
+        Accept: 'application/json',
+      });
+
+      // Verify no Authorization header is sent
+      const [, headers] = mockGet.mock.calls[0];
+      expect(headers.Authorization).toBeUndefined();
+    });
+
+    it('should handle API errors for public stack requests', async () => {
+      mockGet.mockResolvedValue({
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+        text: jest.fn().mockResolvedValue('Public stack not found'),
+      });
+
+      await expect(apiService.fetchPublicStack('test-org/nonexistent-public')).rejects.toThrow(
+        'Failed to fetch stack: 404 Not Found\nPublic stack not found'
+      );
+    });
+
+    it('should handle API errors without response text for public stacks', async () => {
+      mockGet.mockResolvedValue({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        text: jest.fn().mockRejectedValue(new Error('Parse error')),
+      });
+
+      await expect(apiService.fetchPublicStack('test-org/error-public-stack')).rejects.toThrow(
+        'Failed to fetch stack: 500 Internal Server Error\nUnknown error'
+      );
+    });
+
+    it('should handle network errors for public stack requests', async () => {
+      mockGet.mockRejectedValue(new Error('Network connection failed'));
+
+      await expect(apiService.fetchPublicStack('test-org/public-stack')).rejects.toThrow(
+        'Network connection failed'
+      );
+    });
+
+    it('should validate the returned stack data', async () => {
+      const invalidStack = {
+        org: 'test-org',
+        // missing required fields like name and description
+      };
+
+      mockGet.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(invalidStack),
+      });
+
+      // This should throw due to validation failure
+      await expect(apiService.fetchPublicStack('test-org/invalid-stack')).rejects.toThrow();
+    });
+  });
+
   describe('publishStack', () => {
     const mockPayload = {
       name: 'Test Stack',

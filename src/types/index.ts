@@ -35,6 +35,7 @@ export interface DeveloperStack {
   commands?: StackCommand[];
   agents?: StackAgent[];
   mcpServers?: StackMcpServer[];
+  hooks?: StackHook[];
   settings?: StackSettings;
   claudeMd?: {
     global?: {
@@ -89,6 +90,36 @@ export interface StackSettings {
   [key: string]: unknown;
 }
 
+export interface StackHook {
+  name: string;
+  type:
+    | 'PreToolUse'
+    | 'PostToolUse'
+    | 'Notification'
+    | 'UserPromptSubmit'
+    | 'Stop'
+    | 'SubagentStop'
+    | 'SessionEnd'
+    | 'PreCompact'
+    | 'SessionStart';
+  filePath: string;
+  content: string;
+  description?: string;
+  matcher?: string; // Tool pattern matcher (regex or exact)
+  riskLevel?: 'safe' | 'warning' | 'dangerous';
+  scanResults?: HookScanResult;
+}
+
+export interface HookScanResult {
+  hasFileSystemAccess: boolean;
+  hasNetworkAccess: boolean;
+  hasProcessExecution: boolean;
+  hasDangerousImports: boolean;
+  hasCredentialAccess: boolean;
+  suspiciousPatterns: string[];
+  riskScore: number; // 0-100
+}
+
 export interface OAuthConfig {
   clientId: string;
   authUrl: string;
@@ -118,6 +149,7 @@ export interface ExportOptions {
   name?: string;
   description?: string;
   stackVersion?: string;
+  hooks?: boolean;
 }
 
 export interface RestoreOptions {

@@ -556,4 +556,46 @@ describe('FileService', () => {
       expect(mockFs.writeJson).toHaveBeenCalledWith(testPath, undefined, { spaces: 2 });
     });
   });
+
+  describe('path validation security (non-test paths)', () => {
+    // Mock testHelpers to return false for security validation tests
+    beforeEach(() => {
+      const testHelpers = require('../../../src/utils/testHelpers.js');
+      testHelpers.isTestEnvironment = jest.fn(() => false);
+      testHelpers.isTestPath = jest.fn(() => false);
+    });
+
+    it('should reject dangerous file extensions', async () => {
+      const dangerousFile = '/production/script.exe';
+
+      await expect(fileService.readTextFile(dangerousFile)).rejects.toThrow(FileSystemError);
+    });
+
+    it('should reject paths with null bytes', async () => {
+      const nullBytePath = '/production/file\0hidden.txt';
+
+      await expect(fileService.readTextFile(nullBytePath)).rejects.toThrow(FileSystemError);
+    });
+
+    it('should reject excessively long paths', async () => {
+      const longPath = `/production/${'a'.repeat(4100)}.txt`;
+
+      await expect(fileService.readTextFile(longPath)).rejects.toThrow(FileSystemError);
+    });
+
+    it('should reject other dangerous file extensions', async () => {
+      const dangerousFiles = [
+        '/production/script.bat',
+        '/production/script.cmd',
+        '/production/script.scr',
+        '/production/script.vbs',
+        '/production/script.ps1',
+        '/production/script.sh',
+      ];
+
+      for (const file of dangerousFiles) {
+        await expect(fileService.readTextFile(file)).rejects.toThrow(FileSystemError);
+      }
+    });
+  });
 });

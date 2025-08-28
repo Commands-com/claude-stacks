@@ -160,6 +160,13 @@ function displayStackComponents(stack: DeveloperStack): void {
   displayGlobalComponents(global, stack.claudeMd?.global);
   displayLocalComponents(local, stack.claudeMd?.local);
   displayMcpServers(stack.mcpServers ?? []);
+
+  // Display hooks if they exist
+  if (stack.hooks && stack.hooks.length > 0) {
+    console.log(chalk.cyan.bold('HOOKS:'));
+    displayHooks('hooks', stack.hooks);
+  }
+
   displaySettings(stack.settings);
 }
 
@@ -338,15 +345,75 @@ function displayHooks(key: string, hooks: unknown): void {
     return;
   }
 
-  const hooksObj = hooks as Record<string, unknown>;
-
   console.log(chalk.blue(`  ${key}:`));
+
+  if (Array.isArray(hooks)) {
+    displayHookArray(hooks);
+  } else {
+    displayHookSettings(hooks as Record<string, unknown>);
+  }
+}
+
+/**
+ * Display array of StackHook objects
+ */
+function displayHookArray(hooks: unknown[]): void {
+  hooks.forEach((hook: unknown) => {
+    if (hook && typeof hook === 'object') {
+      displaySingleHook(hook);
+    }
+  });
+}
+
+/**
+ * Display a single hook with risk information
+ */
+function displaySingleHook(hook: unknown): void {
+  if (!hook || typeof hook !== 'object') return;
+
+  const hookObj = hook as Record<string, unknown>;
+  const riskLevel = (hookObj.riskLevel as string) ?? 'safe';
+  const name = (hookObj.name as string) ?? 'unknown';
+  const type = (hookObj.type as string) ?? 'unknown';
+  const filePath = hookObj.filePath as string;
+
+  const riskEmoji = getRiskEmoji(riskLevel);
+  const hookInfo = `${name} (${type})`;
+
+  if (riskLevel && riskLevel !== 'safe') {
+    console.log(`    ${riskEmoji} ${chalk.yellow(hookInfo)} - ${chalk.gray(filePath)}`);
+    displaySuspiciousPatterns(hookObj.scanResults);
+  } else {
+    console.log(`    ${riskEmoji} ${chalk.green(hookInfo)} - ${chalk.gray(filePath)}`);
+  }
+}
+
+/**
+ * Display suspicious patterns for a hook
+ */
+function displaySuspiciousPatterns(scanResults: unknown): void {
+  if (!scanResults || typeof scanResults !== 'object') return;
+
+  const results = scanResults as Record<string, unknown>;
+  const patterns = results.suspiciousPatterns as string[] | undefined;
+
+  if (patterns && Array.isArray(patterns) && patterns.length > 0) {
+    patterns.slice(0, 2).forEach((pattern: string) => {
+      console.log(`      • ${chalk.gray(pattern)}`);
+    });
+    if (patterns.length > 2) {
+      console.log(`      • ${chalk.gray(`... and ${patterns.length - 2} more`)}`);
+    }
+  }
+}
+
+/**
+ * Display settings-based hooks
+ */
+function displayHookSettings(hooksObj: Record<string, unknown>): void {
   Object.entries(hooksObj).forEach(([hookName, hookConfig]) => {
     if (Array.isArray(hookConfig)) {
-      const totalHooks = hookConfig.reduce((sum: number, matcher: unknown) => {
-        const matcherObj = matcher as Record<string, unknown>;
-        return sum + (Array.isArray(matcherObj.hooks) ? (matcherObj.hooks as unknown[]).length : 0);
-      }, 0);
+      const totalHooks = calculateTotalHooks(hookConfig);
       console.log(
         chalk.green(`    ✓ ${hookName}:`),
         `${hookConfig.length} matcher(s), ${totalHooks} hook(s)`
@@ -354,3 +421,211 @@ function displayHooks(key: string, hooks: unknown): void {
     }
   });
 }
+
+/**
+ * Calculate total hooks in configuration
+ */
+function calculateTotalHooks(hookConfig: unknown[]): number {
+  return hookConfig.reduce((sum: number, matcher: unknown) => {
+    const matcherObj = matcher as Record<string, unknown>;
+    return sum + (Array.isArray(matcherObj.hooks) ? (matcherObj.hooks as unknown[]).length : 0);
+  }, 0);
+}
+
+function displayHookSafetySummary(hooks: unknown[], inlineResults?: Map<string, unknown>): void {
+  if (!hooks?.length && (!inlineResults || inlineResults.size === 0)) {
+    return;
+  }
+
+  console.log(chalk.blue('\n🔍 Hook Safety Analysis'));
+  console.log('═'.repeat(50));
+
+  displayFileBasedHooks(hooks);
+  displayInlineHooks(inlineResults);
+  displaySafetySummary(hooks, inlineResults);
+}
+
+/**
+ * Display file-based hooks with their analysis
+ */
+function displayFileBasedHooks(hooks: unknown[]): void {
+  if (!hooks?.length) {
+    return;
+  }
+
+  console.log(chalk.cyan('\n📄 File-based hooks:'));
+  hooks.forEach(hook => {
+    displayHookAnalysis(hook);
+  });
+}
+
+/**
+ * Display analysis for a single hook
+ */
+function displayHookAnalysis(hook: unknown): void {
+  if (!hook || typeof hook !== 'object') return;
+
+  const hookObj = hook as Record<string, unknown>;
+  const riskLevel = (hookObj.riskLevel as string) ?? 'safe';
+  const name = hookObj.name as string;
+  const type = (hookObj.type as string) ?? 'unknown';
+  const description = hookObj.description as string;
+  const scanResults = hookObj.scanResults as Record<string, unknown> | undefined;
+
+  const riskEmoji = getRiskEmoji(riskLevel);
+  console.log(`  ${riskEmoji} ${name} (${type})`);
+
+  if (scanResults?.suspiciousPatterns) {
+    const patterns = scanResults.suspiciousPatterns as string[];
+    if (Array.isArray(patterns) && patterns.length > 0) {
+      patterns.forEach((pattern: string) => {
+        console.log(`    • ${chalk.gray(pattern)}`);
+      });
+    }
+  }
+
+  if (description) {
+    console.log(`    ${chalk.gray(`Description: ${description}`)}`);
+  }
+}
+
+/**
+ * Display inline hooks with their analysis
+ */
+function displayInlineHooks(inlineResults?: Map<string, unknown>): void {
+  if (!inlineResults || inlineResults.size === 0) {
+    return;
+  }
+
+  console.log(chalk.cyan('\n📝 Inline hooks:'));
+  for (const [hookPath, scanResult] of inlineResults) {
+    displayInlineHookAnalysis(hookPath, scanResult);
+  }
+}
+
+/**
+ * Display analysis for a single inline hook
+ */
+function displayInlineHookAnalysis(hookPath: string, scanResult: unknown): void {
+  if (!scanResult || typeof scanResult !== 'object') return;
+
+  const result = scanResult as Record<string, unknown>;
+  const riskScore = result.riskScore as number;
+  const patterns = result.suspiciousPatterns as string[] | undefined;
+
+  const riskLevel = calculateRiskLevel(riskScore);
+  const riskEmoji = getRiskEmoji(riskLevel);
+  console.log(`  ${riskEmoji} ${hookPath} (risk: ${riskScore})`);
+
+  if (patterns && Array.isArray(patterns) && patterns.length > 0) {
+    patterns.forEach((pattern: string) => {
+      console.log(`    • ${chalk.gray(pattern)}`);
+    });
+  }
+}
+
+/**
+ * Display summary of hook safety analysis
+ */
+function displaySafetySummary(hooks: unknown[], inlineResults?: Map<string, unknown>): void {
+  const counts = calculateSafetyCounts(hooks, inlineResults);
+
+  console.log(chalk.blue('\n📊 Summary:'));
+  console.log(`  ✅ Safe: ${counts.safe} hooks`);
+  console.log(`  ⚠️  Warning: ${counts.warning} hooks`);
+  console.log(`  🔴 Dangerous: ${counts.dangerous} hooks`);
+  console.log(`  📝 Inline hooks: ${inlineResults?.size ?? 0}`);
+  console.log(`  📄 File hooks: ${hooks?.length ?? 0}`);
+}
+
+/**
+ * Calculate safety counts for hooks
+ */
+function calculateSafetyCounts(hooks: unknown[], inlineResults?: Map<string, unknown>) {
+  const fileHookCounts = calculateFileHookCounts(hooks);
+  const inlineHookCounts = calculateInlineHookCounts(inlineResults);
+
+  return {
+    safe: fileHookCounts.safe + inlineHookCounts.safe,
+    warning: fileHookCounts.warning + inlineHookCounts.warning,
+    dangerous: fileHookCounts.dangerous + inlineHookCounts.dangerous,
+  };
+}
+
+/**
+ * Calculate counts for file-based hooks
+ */
+function calculateFileHookCounts(hooks: unknown[]) {
+  const safeCount =
+    hooks?.filter(h => {
+      return h && typeof h === 'object' && (h as Record<string, unknown>).riskLevel === 'safe';
+    }).length ?? 0;
+
+  const warningCount =
+    hooks?.filter(h => {
+      return h && typeof h === 'object' && (h as Record<string, unknown>).riskLevel === 'warning';
+    }).length ?? 0;
+
+  const dangerousCount =
+    hooks?.filter(h => {
+      return h && typeof h === 'object' && (h as Record<string, unknown>).riskLevel === 'dangerous';
+    }).length ?? 0;
+
+  return {
+    safe: safeCount,
+    warning: warningCount,
+    dangerous: dangerousCount,
+  };
+}
+
+/**
+ * Calculate counts for inline hooks
+ */
+function calculateInlineHookCounts(inlineResults?: Map<string, unknown>) {
+  if (!inlineResults) {
+    return { safe: 0, warning: 0, dangerous: 0 };
+  }
+
+  const values = Array.from(inlineResults.values());
+  const safeCount = values.filter(r => {
+    if (!r || typeof r !== 'object') return false;
+    const riskScore = (r as Record<string, unknown>).riskScore as number;
+    return calculateRiskLevel(riskScore) === 'safe';
+  }).length;
+
+  const warningCount = values.filter(r => {
+    if (!r || typeof r !== 'object') return false;
+    const riskScore = (r as Record<string, unknown>).riskScore as number;
+    return calculateRiskLevel(riskScore) === 'warning';
+  }).length;
+
+  const dangerousCount = values.filter(r => {
+    if (!r || typeof r !== 'object') return false;
+    const riskScore = (r as Record<string, unknown>).riskScore as number;
+    return calculateRiskLevel(riskScore) === 'dangerous';
+  }).length;
+
+  return {
+    safe: safeCount,
+    warning: warningCount,
+    dangerous: dangerousCount,
+  };
+}
+
+function calculateRiskLevel(riskScore: number): 'safe' | 'warning' | 'dangerous' {
+  if (riskScore >= 70) return 'dangerous';
+  if (riskScore >= 30) return 'warning';
+  return 'safe';
+}
+
+function getRiskEmoji(riskLevel: string): string {
+  const riskEmojis = {
+    safe: '✅',
+    warning: '⚠️',
+    dangerous: '🔴',
+  };
+  return riskEmojis[riskLevel as keyof typeof riskEmojis] || '❓';
+}
+
+// Export the new hook-related display functions
+export { displayHookSafetySummary, getRiskEmoji, calculateRiskLevel };

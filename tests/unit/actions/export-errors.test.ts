@@ -25,6 +25,7 @@ jest.mock('../../../src/constants/paths.js', () => ({
   getGlobalSettingsPath: jest.fn(() => '/home/.claude/settings.json'),
   getLocalCommandsDir: jest.fn(() => '/project/.claude/commands'),
   getLocalAgentsDir: jest.fn(() => '/project/.claude/agents'),
+  getLocalMainSettingsPath: jest.fn(() => '/project/.claude/settings.json'),
   getLocalSettingsPath: jest.fn(() => '/project/.claude/settings.local.json'),
 }));
 
