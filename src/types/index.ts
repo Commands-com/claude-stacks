@@ -207,6 +207,7 @@ export interface RemoteStack {
   agents?: StackAgent[];
   mcpServers?: StackMcpServer[];
   settings?: StackSettings;
+  hooks?: StackHook[];
   metadata?: ApiStackMetadata;
   createdAt?: string;
   updatedAt?: string;

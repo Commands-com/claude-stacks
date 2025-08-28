@@ -99,6 +99,7 @@ export class InstallAction extends BaseAction {
       agents: remoteStack.agents ?? [],
       mcpServers: remoteStack.mcpServers ?? [],
       settings: remoteStack.settings ?? {},
+      hooks: remoteStack.hooks ?? [],
       metadata: {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

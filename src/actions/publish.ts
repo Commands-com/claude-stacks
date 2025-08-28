@@ -183,6 +183,7 @@ interface StackPayload {
   agents?: StackAgent[];
   mcpServers?: StackMcpServer[];
   settings?: StackSettings;
+  hooks?: DeveloperStack['hooks'];
   claudeMd?: DeveloperStack['claudeMd'];
   public?: boolean;
   metadata?: Record<string, unknown>;
@@ -203,6 +204,7 @@ function createBasePayload(stack: DeveloperStack): Partial<StackPayload> {
     agents: stack.agents ?? [],
     mcpServers: stack.mcpServers ?? [],
     settings: stack.settings ?? {},
+    hooks: stack.hooks ?? [],
     ...(stack.claudeMd && { claudeMd: stack.claudeMd }),
   };
 }
@@ -411,7 +413,8 @@ function calculateComponentCount(stackPayload: StackPayload): number {
   const commandCount = stackPayload.commands?.length ?? 0;
   const agentCount = stackPayload.agents?.length ?? 0;
   const mcpServerCount = stackPayload.mcpServers?.length ?? 0;
-  return commandCount + agentCount + mcpServerCount;
+  const hookCount = stackPayload.hooks?.length ?? 0;
+  return commandCount + agentCount + mcpServerCount + hookCount;
 }
 
 function displayPublishResult(params: DisplayResultParams): void {

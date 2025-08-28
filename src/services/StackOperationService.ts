@@ -1,4 +1,5 @@
 import fs from 'fs-extra';
+import { realpathSync } from 'fs';
 import { type StackRegistryEntry, StackRegistryService } from './StackRegistryService.js';
 import * as os from 'os';
 import * as path from 'path';
@@ -251,11 +252,19 @@ export class StackOperationService {
       return [];
     }
 
-    return stack.hooks.map(hook => ({
-      name: hook.name,
-      path: hook.filePath,
-      type: hook.type,
-    }));
+    return stack.hooks.map(hook => {
+      const hookFileName = this.getHookFileName(hook);
+      // Use canonical path resolution to match installation location
+      const canonicalCwd = realpathSync(process.cwd());
+      const localHooksDir = path.join(canonicalCwd, '.claude', 'hooks');
+      const hookFilePath = path.join(localHooksDir, hookFileName);
+
+      return {
+        name: hook.name,
+        path: hookFilePath,
+        type: hook.type,
+      };
+    });
   }
 
   private buildMcpServersTracking(stack: DeveloperStack): string[] {
@@ -423,7 +432,9 @@ export class StackOperationService {
     this.ui.info(`📎 Installing ${stack.hooks.length} hook(s)...`);
 
     try {
-      const localHooksDir = path.join(process.cwd(), '.claude', 'hooks');
+      // Use canonical path resolution to ensure consistency with tracking
+      const canonicalCwd = realpathSync(process.cwd());
+      const localHooksDir = path.join(canonicalCwd, '.claude', 'hooks');
       await this.fileService.ensureDir(localHooksDir);
 
       // Process hooks in parallel for better performance
@@ -433,7 +444,7 @@ export class StackOperationService {
           const hookFilePath = path.join(localHooksDir, hookFileName);
 
           // Write hook file
-          await this.fileService.writeTextFile(hookFilePath, hook.content, process.cwd());
+          await this.fileService.writeTextFile(hookFilePath, hook.content, canonicalCwd);
 
           // Set executable permissions for script files
           await this.setExecutablePermissions(hookFilePath);

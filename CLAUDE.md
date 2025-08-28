@@ -156,6 +156,29 @@ mcp__firecrawl -
 - Use only `["markdown"]` format for better token efficiency
 - Reference specific documentation sections when answering Claude Code questions
 
+## Local Development Against Commands.com
+
+**Running CLI Against Local Backend**: To run the CLI against your local Commands.com server on port 3000:
+
+```bash
+CLAUDE_STACKS_DEV=true node dist/cli.js [command]
+```
+
+**Examples**:
+
+```bash
+# Publish against local server
+CLAUDE_STACKS_DEV=true node dist/cli.js publish
+
+# Install from local server
+CLAUDE_STACKS_DEV=true node dist/cli.js install org/stack-name
+
+# Browse local server
+CLAUDE_STACKS_DEV=true node dist/cli.js browse
+```
+
+This environment variable switches the API base URL from `https://backend.commands.com` to `http://localhost:3000`.
+
 ## Lint Failures Tracking
 
 **Lint Hook Configuration**: The project has a hook that captures all lint failures and logs them to `lint_failures.log` for debugging purposes.

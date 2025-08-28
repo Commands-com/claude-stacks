@@ -273,20 +273,18 @@ export class UninstallAction extends BaseAction {
     hooks: { name: string; path: string; type: string }[],
     options: UninstallOptions
   ): Promise<void> {
-    for (const hook of hooks) {
-      if (this.shouldSkipComponent('hooks', options)) {
-        continue;
-      }
+    const validHooks = hooks.filter(() => !this.shouldSkipComponent('hooks', options));
 
-      // eslint-disable-next-line no-await-in-loop
-      const status = await this.getFileStatus(hook.path);
-      const statusText =
-        status === 'exists' ? this.ui.colorSuccess(status) : this.ui.colorWarning(status);
+    const hookDisplays = await Promise.all(
+      validHooks.map(async hook => {
+        const status = await this.getFileStatus(hook.path);
+        return { name: hook.name, type: hook.type, status };
+      })
+    );
 
-      this.ui.meta(
-        `   • ${hook.name} (${hook.type}): ${this.ui.colorMeta(hook.path)} [${statusText}]`
-      );
-    }
+    hookDisplays.forEach(({ name, type, status }) => {
+      this.ui.meta(`     • ${name} (${type}) (local) ${status}`);
+    });
   }
 
   private shouldShowAgents(
@@ -608,28 +606,28 @@ export class UninstallAction extends BaseAction {
     this.ui.info(`\n🗑️  Removing ${hooks.length} hook(s)...`);
 
     for (const hook of hooks) {
-      // eslint-disable-next-line no-await-in-loop
-      const status = await this.getFileStatus(hook.path);
-
       if (options.dryRun) {
+        // eslint-disable-next-line no-await-in-loop
+        const status = await this.getFileStatus(hook.path);
         this.ui.meta(`  🔍 Would remove ${hook.name} (${hook.type}): ${hook.path} [${status}]`);
         if (status === 'exists') {
           removedCount++;
         }
       } else {
-        if (status === 'exists') {
-          try {
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          if (await this.fileService.exists(hook.path)) {
             // eslint-disable-next-line no-await-in-loop
             await this.fileService.remove(hook.path);
-            this.ui.success(`  ✅ Removed ${hook.name} (${hook.type}): ${hook.path}`);
+            this.ui.success(`  ✅ Removed ${hook.name} (${hook.type})`);
             removedCount++;
-          } catch (error) {
-            this.ui.error(
-              `  ❌ Failed to remove ${hook.name}: ${error instanceof Error ? error.message : 'Unknown error'}`
-            );
+          } else {
+            this.ui.warning(`  ⚠️  ${hook.name} not found`);
           }
-        } else {
-          this.ui.warning(`  ⚠️  ${hook.name} not found: ${hook.path} [${status}]`);
+        } catch (error) {
+          this.ui.error(
+            `  ❌ Failed to remove ${hook.name}: ${error instanceof Error ? error.message : 'Unknown error'}`
+          );
         }
       }
     }

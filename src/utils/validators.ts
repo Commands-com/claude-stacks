@@ -4,6 +4,7 @@ import type {
   RemoteStack,
   StackAgent,
   StackCommand,
+  StackHook,
   StackMcpServer,
   StackSettings,
 } from '../types/index.js';
@@ -104,6 +105,43 @@ function validateStackAgent(agent: unknown): StackAgent {
   };
 }
 
+function validateStackHook(hook: unknown): StackHook {
+  if (!hook || typeof hook !== 'object') {
+    throw new Error('Invalid stack hook: must be an object');
+  }
+
+  const h = hook as any;
+
+  // Validate hook type
+  const validHookTypes = [
+    'PreToolUse',
+    'PostToolUse',
+    'Notification',
+    'UserPromptSubmit',
+    'Stop',
+    'SubagentStop',
+    'SessionEnd',
+    'PreCompact',
+    'SessionStart',
+  ];
+
+  const { type } = h;
+  if (!type || !validHookTypes.includes(type)) {
+    throw new Error(`Invalid hook type: ${type}. Must be one of: ${validHookTypes.join(', ')}`);
+  }
+
+  return {
+    name: isValidString(h.name, 'hook name'),
+    type: type as StackHook['type'],
+    filePath: isValidString(h.filePath, 'hook filePath'),
+    content: isValidString(h.content, 'hook content'),
+    description: isOptionalString(h.description),
+    matcher: isOptionalString(h.matcher),
+    riskLevel: h.riskLevel,
+    scanResults: h.scanResults,
+  };
+}
+
 /**
  * Validates Stack Settings configuration
  */
@@ -174,6 +212,12 @@ export function validateRemoteStack(data: unknown): RemoteStack {
     agents = agts.map(validateStackAgent);
   }
 
+  let hooks: StackHook[] | undefined;
+  if (stack.hooks !== undefined) {
+    const hks = isValidArray(stack.hooks, 'hooks');
+    hooks = hks.map(validateStackHook);
+  }
+
   let settings: StackSettings | undefined;
   if (stack.settings !== undefined) {
     settings = validateStackSettings(stack.settings);
@@ -189,6 +233,7 @@ export function validateRemoteStack(data: unknown): RemoteStack {
     mcpServers,
     commands,
     agents,
+    hooks,
     settings,
   };
 }
