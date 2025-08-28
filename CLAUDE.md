@@ -126,6 +126,36 @@ The test suite has excellent coverage and stability:
   - **Utils**: auth, colors, dependencies, metadata, version handling
   - **UI**: display functions, menus, and user interactions
 
+## Documentation Access
+
+**Claude Documentation Fetching**: Use firecrawl-local MCP server to retrieve Claude Code documentation.
+
+**Usage Pattern**:
+
+```typescript
+// Always use markdown format only for better token efficiency
+mcp__firecrawl -
+  local__firecrawl_scrape({
+    url: 'https://docs.anthropic.com/en/docs/claude-code/[page]',
+    formats: ['markdown'],
+    onlyMainContent: true,
+  });
+```
+
+**Available Documentation Pages**:
+
+- `/hooks` - Hook system reference and examples
+- `/settings` - Configuration and settings
+- `/slash-commands` - Available slash commands
+- `/mcp` - Model Context Protocol integration
+- `/sub-agents` - Subagent system documentation
+
+**Best Practices**:
+
+- Always use `onlyMainContent: true` to reduce response size
+- Use only `["markdown"]` format for better token efficiency
+- Reference specific documentation sections when answering Claude Code questions
+
 ## Lint Failures Tracking
 
 **Lint Hook Configuration**: The project has a hook that captures all lint failures and logs them to `lint_failures.log` for debugging purposes.
