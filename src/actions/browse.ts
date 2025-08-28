@@ -652,6 +652,18 @@ async function handleSearchAction(state: BrowseState): Promise<void> {
 }
 
 async function handleLocalStacksAction(): Promise<void> {
+  // Check if there's already a 'list' context in the navigation stack
+  // If so, we should return to it instead of creating a new one
+  const currentContext = navigationService.getCurrentContext();
+
+  // Look for an existing 'list' context in the navigation stack
+  if (currentContext?.previousContext?.source === 'list') {
+    // Don't pop the context here - let the browseAction finally block handle it
+    // Just signal to exit the browse menu and return to local
+    throw new Error('RETURN_TO_LOCAL');
+  }
+
+  // If no existing 'list' context, create a new one (fallback behavior)
   const { listAction } = await import('./list.js');
   await listAction();
 }
@@ -696,8 +708,16 @@ async function handleMainAction(action: string, state: BrowseState): Promise<boo
       return true;
 
     case 'l':
-      await handleLocalStacksAction();
-      return true;
+      try {
+        await handleLocalStacksAction();
+        return true;
+      } catch (error) {
+        // Check if this is our special signal to return to local
+        if (error instanceof Error && error.message === 'RETURN_TO_LOCAL') {
+          return false; // Exit browse menu to return control to local
+        }
+        throw error; // Re-throw other errors
+      }
 
     case 'q':
     case '':
