@@ -137,6 +137,62 @@ describe('StackRegistryService', () => {
         })
       );
     });
+
+    it('should register a stack with permissions in settings', async () => {
+      mockFileService.exists.mockResolvedValue(false);
+
+      const stackEntry: Omit<StackRegistryEntry, 'installedAt'> = {
+        stackId: 'org/stack-with-permissions',
+        name: 'Stack with Permissions',
+        source: 'commands.com',
+        version: '1.0.0',
+        components: {
+          commands: [],
+          agents: [],
+          hooks: [],
+          mcpServers: [],
+          settings: [
+            {
+              type: 'global',
+              fields: ['permissions'],
+              permissions: {
+                allow: ['file:read', 'network:access'],
+                deny: ['file:write'],
+                ask: ['system:info'],
+              },
+            },
+          ],
+          claudeMd: [],
+        },
+      };
+
+      await registryService.registerStack(stackEntry);
+
+      expect(mockFileService.writeJsonFile).toHaveBeenCalledWith(
+        '/test/project/.claude/stacks-registry.json',
+        expect.objectContaining({
+          stacks: {
+            'org/stack-with-permissions': expect.objectContaining({
+              ...stackEntry,
+              installedAt: expect.any(String),
+              components: expect.objectContaining({
+                settings: [
+                  expect.objectContaining({
+                    type: 'global',
+                    fields: ['permissions'],
+                    permissions: {
+                      allow: ['file:read', 'network:access'],
+                      deny: ['file:write'],
+                      ask: ['system:info'],
+                    },
+                  }),
+                ],
+              }),
+            }),
+          },
+        })
+      );
+    });
   });
 
   describe('unregisterStack', () => {
@@ -219,6 +275,50 @@ describe('StackRegistryService', () => {
       const result = await registryService.getStackEntry('org/non-existent');
 
       expect(result).toBeNull();
+    });
+
+    it('should return stack entry with permissions when exists', async () => {
+      const stackEntry = {
+        stackId: 'org/stack-with-perms',
+        name: 'Test Stack with Permissions',
+        installedAt: '2023-01-01T00:00:00.000Z',
+        source: 'commands.com' as const,
+        components: {
+          commands: [],
+          agents: [],
+          mcpServers: [],
+          settings: [
+            {
+              type: 'global' as const,
+              fields: ['permissions'],
+              permissions: {
+                allow: ['file:read'],
+                deny: ['file:write'],
+                ask: ['network:access'],
+              },
+            },
+          ],
+          claudeMd: [],
+        },
+      };
+
+      const registry = {
+        version: '1.0.0',
+        lastUpdated: '2023-01-01T00:00:00.000Z',
+        stacks: { 'org/stack-with-perms': stackEntry },
+      };
+
+      mockFileService.exists.mockResolvedValue(true);
+      mockFileService.readJsonFile.mockResolvedValue(registry);
+
+      const result = await registryService.getStackEntry('org/stack-with-perms');
+
+      expect(result).toEqual(stackEntry);
+      expect(result?.components.settings[0].permissions).toEqual({
+        allow: ['file:read'],
+        deny: ['file:write'],
+        ask: ['network:access'],
+      });
     });
   });
 

@@ -1,5 +1,48 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2025-08-28T19:04:39.874Z",
-  "stacks": {}
+  "lastUpdated": "2025-08-28T19:21:17.669Z",
+  "stacks": {
+    "local/firecrawl-mcp-stack": {
+      "stackId": "local/firecrawl-mcp-stack",
+      "name": "firecrawl-mcp",
+      "source": "local-file",
+      "version": "1.0.0",
+      "components": {
+        "commands": [],
+        "agents": [],
+        "hooks": [],
+        "mcpServers": [
+          "firecrawl-local"
+        ],
+        "settings": [
+          {
+            "type": "local",
+            "fields": [
+              "permissions"
+            ],
+            "permissions": {
+              "allow": [
+                "WebSearch",
+                "WebFetch(domain:developers.google.com)",
+                "Bash(rm:*)",
+                "Bash(git init:*)",
+                "Bash(git remote add:*)",
+                "Bash(git commit:*)",
+                "Bash(git push:*)",
+                "WebFetch(domain:raw.githubusercontent.com)",
+                "Bash(export:*)",
+                "mcp__firecrawl-local__firecrawl_health",
+                "mcp__firecrawl-local__firecrawl_scrape",
+                "mcp__firecrawl-local__firecrawl_search"
+              ],
+              "deny": [],
+              "ask": []
+            }
+          }
+        ],
+        "claudeMd": []
+      },
+      "installedAt": "2025-08-28T19:21:17.669Z"
+    }
+  }
 }

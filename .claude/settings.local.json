@@ -47,7 +47,19 @@
       "mcp__serena__insert_before_symbol",
       "Bash(git add:*)",
       "Read(//Users/dtannen/.claude/**)",
-      "mcp__serena__find_referencing_symbols"
+      "mcp__serena__find_referencing_symbols",
+      "WebSearch",
+      "WebFetch(domain:developers.google.com)",
+      "Bash(rm:*)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(export:*)",
+      "mcp__firecrawl-local__firecrawl_health",
+      "mcp__firecrawl-local__firecrawl_scrape",
+      "mcp__firecrawl-local__firecrawl_search"
     ],
     "deny": [],
     "ask": []

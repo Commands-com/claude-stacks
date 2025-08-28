@@ -1199,5 +1199,189 @@ describe('StackOperationService', () => {
         expect(mockReadJson).toHaveBeenCalled();
       });
     });
+
+    describe('settings merge functionality', () => {
+      beforeEach(() => {
+        mockFileService.exists.mockResolvedValue(false);
+        mockFileService.readJsonFile.mockResolvedValue({});
+        mockFileService.writeJsonFile.mockResolvedValue(undefined);
+        mockFileService.ensureDir.mockResolvedValue(undefined);
+        mockPathExists.mockResolvedValue(true);
+        mockDependencies.checkMcpDependencies.mockResolvedValue([]);
+      });
+
+      it('should handle new fields in settings merge', async () => {
+        const stackWithNewField = {
+          ...mockStack,
+          mcpServers: [],
+          commands: [],
+          agents: [],
+          claudeMd: undefined,
+          settings: { newField: 'newValue' },
+        };
+        mockReadJson.mockResolvedValue(stackWithNewField);
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        expect(mockFileService.writeJsonFile).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({ newField: 'newValue' }),
+          expect.any(Object)
+        );
+        expect(mockUI.success).toHaveBeenCalledWith('✓ Merged local settings (added 1 new fields)');
+      });
+
+      it('should handle permissions field merge', async () => {
+        mockFileService.exists.mockResolvedValue(true);
+        mockFileService.readJsonFile.mockResolvedValue({
+          permissions: {
+            allow: ['existing:permission'],
+            deny: [],
+            ask: [],
+          },
+        });
+
+        const stackWithPermissions = {
+          ...mockStack,
+          mcpServers: [],
+          commands: [],
+          agents: [],
+          claudeMd: undefined,
+          settings: {
+            permissions: {
+              allow: ['new:permission'],
+              deny: ['denied:permission'],
+              ask: ['ask:permission'],
+            },
+          },
+        };
+        mockReadJson.mockResolvedValue(stackWithPermissions);
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        expect(mockFileService.writeJsonFile).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({
+            permissions: {
+              allow: ['existing:permission', 'new:permission'],
+              deny: ['denied:permission'],
+              ask: ['ask:permission'],
+            },
+          }),
+          expect.any(Object)
+        );
+      });
+
+      it('should handle nested object merge', async () => {
+        mockFileService.exists.mockResolvedValue(true);
+        mockFileService.readJsonFile.mockResolvedValue({
+          nested: {
+            existingKey: 'existingValue',
+          },
+        });
+
+        const stackWithNestedObject = {
+          ...mockStack,
+          mcpServers: [],
+          commands: [],
+          agents: [],
+          claudeMd: undefined,
+          settings: {
+            nested: {
+              newKey: 'newValue',
+            },
+          },
+        };
+        mockReadJson.mockResolvedValue(stackWithNestedObject);
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        expect(mockFileService.writeJsonFile).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({
+            nested: {
+              existingKey: 'existingValue',
+              newKey: 'newValue',
+            },
+          }),
+          expect.any(Object)
+        );
+        expect(mockUI.success).toHaveBeenCalledWith('✓ Merged local settings (added 1 new fields)');
+      });
+
+      it('should handle non-string items in permissions arrays', async () => {
+        mockFileService.exists.mockResolvedValue(true);
+        mockFileService.readJsonFile.mockResolvedValue({
+          permissions: {
+            allow: ['existing:permission'],
+          },
+        });
+
+        const stackWithMixedPermissions = {
+          ...mockStack,
+          mcpServers: [],
+          commands: [],
+          agents: [],
+          claudeMd: undefined,
+          settings: {
+            permissions: {
+              allow: ['string:permission', 123, null, 'another:permission'],
+              deny: [true, 'deny:permission'],
+              ask: [],
+            },
+          },
+        };
+        mockReadJson.mockResolvedValue(stackWithMixedPermissions);
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        // Should only include string permissions, filtering out non-strings
+        expect(mockFileService.writeJsonFile).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({
+            permissions: {
+              allow: ['existing:permission', 'string:permission', 'another:permission'],
+              deny: ['deny:permission'],
+            },
+          }),
+          expect.any(Object)
+        );
+      });
+
+      it('should skip existing field that is not an object', async () => {
+        mockFileService.exists.mockResolvedValue(true);
+        mockFileService.readJsonFile.mockResolvedValue({
+          stringField: 'existingStringValue',
+          numberField: 42,
+        });
+
+        const stackWithConflicts = {
+          ...mockStack,
+          mcpServers: [],
+          commands: [],
+          agents: [],
+          claudeMd: undefined,
+          settings: {
+            stringField: 'newStringValue',
+            numberField: 100,
+            newField: 'newValue',
+          },
+        };
+        mockReadJson.mockResolvedValue(stackWithConflicts);
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        expect(mockFileService.writeJsonFile).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({
+            stringField: 'existingStringValue', // Should preserve existing
+            numberField: 42, // Should preserve existing
+            newField: 'newValue', // Should add new
+          }),
+          expect.any(Object)
+        );
+        expect(mockUI.success).toHaveBeenCalledWith('✓ Merged local settings (added 1 new fields)');
+      });
+    });
   });
 });
