@@ -101,10 +101,7 @@ export class ListAction extends BaseAction {
 
     stacks.forEach((stack, index) => {
       const filename = path.basename(stack.filePath ?? '');
-      const components =
-        (stack.commands?.length ?? 0) +
-        (stack.agents?.length ?? 0) +
-        (stack.mcpServers?.length ?? 0);
+      const components = this.calculateComponentCount(stack);
       const version = stack.version ?? '1.0.0';
       const stats = `v${version}, ${components} items`;
       this.ui.log(
@@ -113,6 +110,15 @@ export class ListAction extends BaseAction {
     });
 
     return await this.handleUserSelection(stacks);
+  }
+
+  private calculateComponentCount(stack: DeveloperStack): number {
+    return (
+      (stack.commands?.length ?? 0) +
+      (stack.agents?.length ?? 0) +
+      (stack.mcpServers?.length ?? 0) +
+      (stack.hooks?.length ?? 0)
+    );
   }
 
   private async handleUserSelection(stacks: DeveloperStack[]): Promise<boolean> {

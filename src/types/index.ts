@@ -216,4 +216,5 @@ export interface RemoteStack {
   commandCount?: number;
   agentCount?: number;
   mcpServerCount?: number;
+  hookCount?: number;
 }

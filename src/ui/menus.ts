@@ -30,12 +30,14 @@ function displayLocalStackComponents(stack: DeveloperStack): void {
   const commandCount = getComponentCount(stack.commands);
   const agentCount = getComponentCount(stack.agents);
   const mcpCount = getComponentCount(stack.mcpServers);
-  const totalComponents = commandCount + agentCount + mcpCount;
+  const hookCount = getComponentCount(stack.hooks);
+  const totalComponents = commandCount + agentCount + mcpCount + hookCount;
 
   console.log(`${colors.info('Components:')} ${colors.componentCount(totalComponents)} items`);
   console.log(`   ${colors.bullet('•')} Commands: ${colors.componentCount(commandCount)}`);
   console.log(`   ${colors.bullet('•')} Agents: ${colors.componentCount(agentCount)}`);
   console.log(`   ${colors.bullet('•')} MCP Servers: ${colors.componentCount(mcpCount)}`);
+  console.log(`   ${colors.bullet('•')} Hooks: ${colors.componentCount(hookCount)}`);
 }
 
 function displayLocalStackMetadata(stack: DeveloperStack): void {

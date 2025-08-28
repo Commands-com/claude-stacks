@@ -61,6 +61,7 @@ function convertApiStackToRemoteStack(apiStack: ApiStackResponse): RemoteStack {
     commands: apiStack.commands,
     agents: apiStack.agents,
     mcpServers: apiStack.mcpServers,
+    hooks: apiStack.hooks,
     settings: apiStack.settings,
     metadata: apiStack.metadata,
     createdAt: apiStack.createdAt,
@@ -70,6 +71,7 @@ function convertApiStackToRemoteStack(apiStack: ApiStackResponse): RemoteStack {
     commandCount: apiStack.commandCount,
     agentCount: apiStack.agentCount,
     mcpServerCount: apiStack.mcpServerCount,
+    hookCount: apiStack.hookCount,
   };
 }
 
@@ -163,7 +165,10 @@ async function showStackList(
 
   stacks.forEach((stack: RemoteStack, index: number) => {
     const components =
-      (stack.commandCount ?? 0) + (stack.agentCount ?? 0) + (stack.mcpServerCount ?? 0);
+      (stack.commandCount ?? 0) +
+      (stack.agentCount ?? 0) +
+      (stack.mcpServerCount ?? 0) +
+      (stack.hookCount ?? 0);
     const version = stack.version ? `v${stack.version}, ` : '';
     const stats = `${version}${components} items, ${stack.installCount ?? 0} installs`;
     const ownershipIndicator = isMyStacks ? '★ ' : '';
@@ -215,11 +220,15 @@ function displayStackBasicInfo(stack: RemoteStack): void {
 
 function displayStackComponents(stack: RemoteStack): void {
   const totalComponents =
-    (stack.commandCount ?? 0) + (stack.agentCount ?? 0) + (stack.mcpServerCount ?? 0);
+    (stack.commandCount ?? 0) +
+    (stack.agentCount ?? 0) +
+    (stack.mcpServerCount ?? 0) +
+    (stack.hookCount ?? 0);
   console.log(`${ui.colorInfo('Components:')} ${ui.colorNumber(totalComponents)} items`);
   console.log(`   ${ui.colorMeta('•')} Commands: ${ui.colorNumber(stack.commandCount ?? 0)}`);
   console.log(`   ${ui.colorMeta('•')} Agents: ${ui.colorNumber(stack.agentCount ?? 0)}`);
   console.log(`   ${ui.colorMeta('•')} MCP Servers: ${ui.colorNumber(stack.mcpServerCount ?? 0)}`);
+  console.log(`   ${ui.colorMeta('•')} Hooks: ${ui.colorNumber(stack.hookCount ?? 0)}`);
 }
 
 function displayStackMetadata(stack: RemoteStack, isMyStack: boolean): void {

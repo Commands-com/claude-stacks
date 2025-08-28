@@ -1,6 +1,12 @@
 // API response type definitions for Claude Stacks
 
-import type { StackAgent, StackCommand, StackMcpServer, StackSettings } from './index.js';
+import type {
+  StackAgent,
+  StackCommand,
+  StackHook,
+  StackMcpServer,
+  StackSettings,
+} from './index.js';
 
 // Base API response structure
 export interface ApiResponse<T = unknown> {
@@ -36,6 +42,7 @@ export interface ApiStackResponse {
   commands?: StackCommand[];
   agents?: StackAgent[];
   mcpServers?: StackMcpServer[];
+  hooks?: StackHook[];
   settings?: StackSettings;
   metadata?: ApiStackMetadata;
   createdAt?: string;
@@ -45,6 +52,7 @@ export interface ApiStackResponse {
   commandCount?: number;
   agentCount?: number;
   mcpServerCount?: number;
+  hookCount?: number;
 }
 
 // Search response from browse API
@@ -88,6 +96,7 @@ export interface ApiStackStats {
   commandCount: number;
   agentCount: number;
   mcpServerCount: number;
+  hookCount: number;
 }
 
 // Type guards for runtime validation
