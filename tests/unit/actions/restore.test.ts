@@ -104,18 +104,28 @@ describe('restoreAction', () => {
     mockPathExists.mockResolvedValue(true);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     console.log = originalConsoleLog;
     console.error = originalConsoleError;
     process.exit = originalProcessExit;
+
+    // Wait for any pending promises to resolve
+    await new Promise(setImmediate);
+
     jest.clearAllMocks();
+    jest.restoreAllMocks();
+  });
+
+  afterAll(async () => {
+    // Final cleanup to ensure all handles are closed
+    await new Promise(setImmediate);
   });
 
   describe('basic functionality', () => {
     it('should restore configuration successfully', async () => {
       await restoreAction('/test/stack.json', {});
 
-      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', {});
+      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', {}, undefined);
       expect(mockProcessExit).not.toHaveBeenCalled();
     });
 
@@ -124,7 +134,7 @@ describe('restoreAction', () => {
 
       await restoreAction('/test/stack.json', options);
 
-      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', options);
+      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', options, undefined);
     });
 
     it('should handle restore with backup option', async () => {
@@ -132,7 +142,7 @@ describe('restoreAction', () => {
 
       await restoreAction('/test/stack.json', options);
 
-      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', options);
+      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', options, undefined);
     });
 
     it('should handle restore with globalOnly option', async () => {
@@ -230,7 +240,7 @@ describe('restoreAction', () => {
       // Since the restore action delegates to performRestore, we just verify it was called
       await restoreAction('/test/stack.json', {});
 
-      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', {});
+      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', {}, undefined);
     });
 
     it('should handle empty dependency list', async () => {
@@ -258,6 +268,40 @@ describe('restoreAction', () => {
     });
   });
 
+  describe('tracking options', () => {
+    it('should handle trackInstallation with source', async () => {
+      const options: RestoreOptions = {
+        trackInstallation: {
+          stackId: 'test-stack-id',
+          source: 'custom-source',
+        },
+      };
+
+      await restoreAction('/test/stack.json', options);
+
+      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', options, {
+        stackId: 'test-stack-id',
+        source: 'custom-source',
+      });
+    });
+
+    it('should handle trackInstallation without source (fallback)', async () => {
+      const options: RestoreOptions = {
+        trackInstallation: {
+          stackId: 'test-stack-id',
+          // no source provided
+        },
+      };
+
+      await restoreAction('/test/stack.json', options);
+
+      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', options, {
+        stackId: 'test-stack-id',
+        source: 'restore',
+      });
+    });
+  });
+
   describe('integration scenarios', () => {
     it('should handle complete restore workflow', async () => {
       const options: RestoreOptions = {
@@ -267,7 +311,7 @@ describe('restoreAction', () => {
 
       await restoreAction('/test/stack.json', options);
 
-      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', options);
+      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', options, undefined);
       expect(mockProcessExit).not.toHaveBeenCalled();
     });
 

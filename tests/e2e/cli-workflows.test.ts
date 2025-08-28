@@ -412,7 +412,14 @@ describe('CLI End-to-End Workflows', () => {
         stderr += data.toString();
       });
 
+      // Timeout handling
+      const timeoutHandle = setTimeout(() => {
+        child.kill();
+        reject(new Error(`Command timed out after ${timeout}ms`));
+      }, timeout);
+
       child.on('close', code => {
+        clearTimeout(timeoutHandle);
         resolve({
           stdout,
           stderr,
@@ -420,19 +427,16 @@ describe('CLI End-to-End Workflows', () => {
         });
       });
 
-      child.on('error', reject);
+      child.on('error', error => {
+        clearTimeout(timeoutHandle);
+        reject(error);
+      });
 
       // Send input to stdin if provided (for interactive commands)
       if (stdinInput && child.stdin) {
         child.stdin.write(stdinInput);
         child.stdin.end();
       }
-
-      // Timeout handling
-      setTimeout(() => {
-        child.kill();
-        reject(new Error(`Command timed out after ${timeout}ms`));
-      }, timeout);
     });
   }
 });

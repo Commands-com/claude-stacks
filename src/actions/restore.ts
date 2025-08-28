@@ -15,8 +15,16 @@ export class RestoreAction extends BaseAction {
     try {
       this.validateRequired(stackFilePath, 'stackFilePath');
 
+      // Prepare tracking information if requested
+      const trackInstallation = options.trackInstallation
+        ? {
+            stackId: options.trackInstallation.stackId,
+            source: options.trackInstallation.source ?? ('restore' as const),
+          }
+        : undefined;
+
       // Use the StackOperationService for the core logic
-      await this.stackOperations.performRestore(stackFilePath, options);
+      await this.stackOperations.performRestore(stackFilePath, options, trackInstallation);
     } catch (error) {
       this.handleError(error, 'Restore');
     }

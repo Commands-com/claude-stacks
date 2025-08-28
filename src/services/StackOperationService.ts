@@ -1,4 +1,5 @@
 import fs from 'fs-extra';
+import { type StackRegistryEntry, StackRegistryService } from './StackRegistryService.js';
 import * as os from 'os';
 import * as path from 'path';
 import { getStacksPath } from '../constants/paths.js';
@@ -26,11 +27,14 @@ import type { FileService } from './FileService.js';
  * @public
  */
 export class StackOperationService {
+  private readonly stackRegistry: StackRegistryService;
   constructor(
     private readonly ui: UIService, // eslint-disable-line no-unused-vars
     private readonly dependencies: DependencyService, // eslint-disable-line no-unused-vars
-    private readonly fileService: FileService // eslint-disable-line no-unused-vars
-  ) {}
+    private readonly fileService: FileService
+  ) {
+    this.stackRegistry = new StackRegistryService(fileService);
+  }
 
   /**
    * Resolve a stack file path, handling relative paths and filenames
@@ -78,7 +82,11 @@ export class StackOperationService {
   /**
    * Perform stack restoration from a stack file
    */
-  async performRestore(stackFilePath: string, options: RestoreOptions = {}): Promise<void> {
+  async performRestore(
+    stackFilePath: string,
+    options: RestoreOptions = {},
+    trackInstallation?: { stackId: string; source: 'commands.com' | 'local-file' | 'restore' }
+  ): Promise<void> {
     const resolvedPath = await this.resolveStackPath(stackFilePath);
     const stack = (await fs.readJson(resolvedPath)) as DeveloperStack;
 
@@ -90,6 +98,16 @@ export class StackOperationService {
 
     // Restore components based on options
     await this.restoreComponents(stack, options);
+
+    // Track installation if requested
+    if (trackInstallation) {
+      await this.trackStackInstallation(
+        trackInstallation.stackId,
+        stack,
+        trackInstallation.source,
+        options
+      );
+    }
 
     this.ui.success(`\n✅ Stack "${stack.name}" restored successfully!`);
 
@@ -116,6 +134,9 @@ export class StackOperationService {
       // Use restore logic for installation
       await this.performRestore(tempStackPath, options);
 
+      // Track the installation in registry
+      await this.trackStackInstallation(stackId, stack, 'commands.com', options);
+
       this.ui.success(`\n✅ Successfully installed "${stack.name}" from Commands.com!`);
       this.ui.meta(`   Stack ID: ${stackId}`);
       this.ui.meta(`   Author: ${remoteStack.author ?? 'Unknown'}`);
@@ -127,6 +148,153 @@ export class StackOperationService {
         // Ignore cleanup error - file may not exist
       }
     }
+  }
+
+  /**
+   * Track a stack installation in the registry
+   */
+  async trackStackInstallation(
+    stackId: string,
+    stack: DeveloperStack,
+    source: 'commands.com' | 'local-file' | 'restore',
+    options: RestoreOptions = {}
+  ): Promise<void> {
+    const components = await this.buildComponentsTracking(stack, options);
+
+    await this.stackRegistry.registerStack({
+      stackId,
+      name: stack.name,
+      source,
+      version: stack.version,
+      components,
+    });
+  }
+
+  /**
+   * Build the components tracking data structure
+   */
+  private async buildComponentsTracking(
+    stack: DeveloperStack,
+    options: RestoreOptions
+  ): Promise<StackRegistryEntry['components']> {
+    return {
+      commands: this.buildCommandsTracking(stack, options),
+      agents: this.buildAgentsTracking(stack, options),
+      mcpServers: this.buildMcpServersTracking(stack),
+      settings: this.buildSettingsTracking(stack, options),
+      claudeMd: this.buildClaudeMdTracking(stack, options),
+    };
+  }
+
+  private buildCommandsTracking(
+    stack: DeveloperStack,
+    options: RestoreOptions
+  ): { name: string; path: string; isGlobal: boolean }[] {
+    const commands: { name: string; path: string; isGlobal: boolean }[] = [];
+    if (!stack.commands) return commands;
+
+    for (const command of stack.commands) {
+      const isGlobal = !command.filePath?.startsWith('./.claude');
+
+      if (this.shouldIncludeComponent(isGlobal, options)) {
+        commands.push(this.createCommandEntry(command.name, isGlobal));
+      }
+    }
+
+    return commands;
+  }
+
+  private buildAgentsTracking(
+    stack: DeveloperStack,
+    options: RestoreOptions
+  ): { name: string; path: string; isGlobal: boolean }[] {
+    const agents: { name: string; path: string; isGlobal: boolean }[] = [];
+    if (!stack.agents) return agents;
+
+    for (const agent of stack.agents) {
+      const isGlobal = !agent.filePath?.startsWith('./.claude');
+
+      if (this.shouldIncludeComponent(isGlobal, options)) {
+        agents.push(this.createAgentEntry(agent.name, isGlobal));
+      }
+    }
+
+    return agents;
+  }
+
+  private buildMcpServersTracking(stack: DeveloperStack): string[] {
+    return stack.mcpServers?.map(server => server.name) ?? [];
+  }
+
+  private buildSettingsTracking(
+    stack: DeveloperStack,
+    options: RestoreOptions
+  ): { type: 'global' | 'local'; fields: string[] }[] {
+    if (!stack.settings || Object.keys(stack.settings).length === 0) {
+      return [];
+    }
+
+    const settingsType = options.globalOnly ? 'global' : 'local';
+    return [
+      {
+        type: settingsType,
+        fields: Object.keys(stack.settings),
+      },
+    ];
+  }
+
+  private buildClaudeMdTracking(
+    stack: DeveloperStack,
+    options: RestoreOptions
+  ): { type: 'global' | 'local'; path: string }[] {
+    const claudeMd: { type: 'global' | 'local'; path: string }[] = [];
+    if (!stack.claudeMd) return claudeMd;
+
+    if (stack.claudeMd.global && !options.localOnly) {
+      claudeMd.push({
+        type: 'global',
+        path: path.join(os.homedir(), '.claude', 'CLAUDE.md'),
+      });
+    }
+
+    if (stack.claudeMd.local && !options.globalOnly) {
+      claudeMd.push({
+        type: 'local',
+        path: path.join(process.cwd(), '.claude', 'CLAUDE.md'),
+      });
+    }
+
+    return claudeMd;
+  }
+
+  private shouldIncludeComponent(isGlobal: boolean, options: RestoreOptions): boolean {
+    return (!options.localOnly && isGlobal) || (!options.globalOnly && !isGlobal);
+  }
+
+  private createCommandEntry(
+    name: string,
+    isGlobal: boolean
+  ): { name: string; path: string; isGlobal: boolean } {
+    const cleanName = name.replace(/ \((local|global)\)/g, '');
+    const commandsDir = isGlobal
+      ? path.join(os.homedir(), '.claude', 'commands')
+      : path.join(process.cwd(), '.claude', 'commands');
+    const filePath = path.join(commandsDir, `${cleanName}.md`);
+
+    return { name: cleanName, path: filePath, isGlobal };
+  }
+
+  private createAgentEntry(
+    name: string,
+    isGlobal: boolean
+  ): { name: string; path: string; isGlobal: boolean } {
+    const cleanName = name.replace(/ \((local|global)\)/g, '');
+    const agentsDir = isGlobal
+      ? path.join(os.homedir(), '.claude', 'agents')
+      : path.join(process.cwd(), '.claude', 'agents');
+    const filePath = path.join(agentsDir, `${cleanName}.md`);
+
+    return { name: cleanName, path: filePath, isGlobal };
   }
 
   /**

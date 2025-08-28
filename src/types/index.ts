@@ -59,6 +59,9 @@ export interface DeveloperStack {
   filePath?: string; // Added for local stacks
 }
 
+// Re-export stack registry types
+export type { StackRegistryEntry, StackRegistry } from '../services/StackRegistryService.js';
+
 export interface StackCommand {
   name: string;
   filePath: string;
@@ -121,6 +124,10 @@ export interface RestoreOptions {
   overwrite?: boolean;
   globalOnly?: boolean;
   localOnly?: boolean;
+  trackInstallation?: {
+    stackId: string;
+    source?: 'local-file' | 'restore';
+  };
 }
 
 export interface PublishOptions {
@@ -138,6 +145,17 @@ export interface InstallOptions {
   overwrite?: boolean;
   globalOnly?: boolean;
   localOnly?: boolean;
+}
+
+export interface UninstallOptions {
+  commandsOnly?: boolean;
+  agentsOnly?: boolean;
+  mcpOnly?: boolean;
+  settingsOnly?: boolean;
+  force?: boolean;
+  global?: boolean;
+  local?: boolean;
+  dryRun?: boolean;
 }
 
 export interface CleanOptions {

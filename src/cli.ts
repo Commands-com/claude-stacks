@@ -19,6 +19,7 @@ import { listAction } from './actions/list.js';
 import { deleteAction } from './actions/delete.js';
 import { cleanAction } from './actions/clean.js';
 import { renameAction } from './actions/rename.js';
+import { uninstallAction } from './actions/uninstall.js';
 
 // Set up CLI structure
 program
@@ -99,6 +100,21 @@ program
   .argument('<new-title>', 'New title for the published stack')
   .description('Rename a published stack')
   .action(newTitle => renameAction(newTitle));
+
+// Uninstall command
+program
+  .command('uninstall')
+  .argument('[stack-id]', 'Stack ID or name to uninstall from this project')
+  .option('--commands-only', 'Remove only commands')
+  .option('--agents-only', 'Remove only agents')
+  .option('--mcp-only', 'Remove only MCP servers')
+  .option('--settings-only', 'Remove only settings')
+  .option('--force', 'Skip confirmation prompt')
+  .option('--global', 'Remove from global config only')
+  .option('--local', 'Remove from local config only')
+  .option('--dry-run', 'Show what would be removed without making changes')
+  .description('Uninstall a previously installed stack from your project')
+  .action((stackId, options) => uninstallAction(stackId, options));
 
 // Clean command
 program
