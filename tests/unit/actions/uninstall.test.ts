@@ -151,7 +151,9 @@ describe('UninstallAction', () => {
 
       expect(mockUI.info).toHaveBeenCalledWith('🗑️  Preparing to uninstall stack: Test Stack');
       expect(mockUI.meta).toHaveBeenCalledWith('   Source: commands.com');
-      expect(mockUI.meta).toHaveBeenCalledWith('   Installed: 12/31/2022');
+      expect(mockUI.meta).toHaveBeenCalledWith(
+        `   Installed: ${new Date(sampleStackEntry.installedAt).toLocaleDateString()}`
+      );
       expect(mockUI.readSingleChar).toHaveBeenCalledWith('\nProceed with uninstallation? (y/N): ');
       expect(mockStackRegistry.unregisterStack).toHaveBeenCalledWith('org/test-stack');
       expect(mockUI.success).toHaveBeenCalledWith(
