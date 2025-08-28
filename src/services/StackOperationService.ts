@@ -97,17 +97,19 @@ export class StackOperationService {
     // Check dependencies
     await this.checkDependencies(stack);
 
-    // Restore components based on options
-    await this.restoreComponents(stack, options);
+    // Restore components based on options and get tracking info
+    const { addedSettingsFields, addedPermissions } = await this.restoreComponents(stack, options);
 
     // Track installation if requested
     if (trackInstallation) {
-      await this.trackStackInstallation(
-        trackInstallation.stackId,
+      await this.trackStackInstallation({
+        stackId: trackInstallation.stackId,
         stack,
-        trackInstallation.source,
-        options
-      );
+        source: trackInstallation.source,
+        restoreOptions: options,
+        addedSettingsFields,
+        addedPermissions,
+      });
     }
 
     this.ui.success(`\n✅ Stack "${stack.name}" restored successfully!`);
@@ -132,11 +134,11 @@ export class StackOperationService {
     try {
       await fs.writeJson(tempStackPath, stack, { spaces: 2 });
 
-      // Use restore logic for installation
-      await this.performRestore(tempStackPath, options);
-
-      // Track the installation in registry
-      await this.trackStackInstallation(stackId, stack, 'commands.com', options);
+      // Use restore logic for installation with tracking
+      await this.performRestore(tempStackPath, options, {
+        stackId,
+        source: 'commands.com',
+      });
 
       this.ui.success(`\n✅ Successfully installed "${stack.name}" from Commands.com!`);
       this.ui.meta(`   Stack ID: ${stackId}`);
@@ -154,13 +156,29 @@ export class StackOperationService {
   /**
    * Track a stack installation in the registry
    */
-  async trackStackInstallation(
-    stackId: string,
-    stack: DeveloperStack,
-    source: 'commands.com' | 'local-file' | 'restore',
-    options: RestoreOptions = {}
-  ): Promise<void> {
-    const components = await this.buildComponentsTracking(stack, options);
+  async trackStackInstallation(options: {
+    stackId: string;
+    stack: DeveloperStack;
+    source: 'commands.com' | 'local-file' | 'restore';
+    restoreOptions?: RestoreOptions;
+    addedSettingsFields?: string[];
+    addedPermissions?: { allow: string[]; deny: string[]; ask: string[] };
+  }): Promise<void> {
+    const {
+      stackId,
+      stack,
+      source,
+      restoreOptions = {},
+      addedSettingsFields,
+      addedPermissions,
+    } = options;
+
+    const components = await this.buildComponentsTracking(
+      stack,
+      restoreOptions,
+      addedSettingsFields,
+      addedPermissions
+    );
 
     await this.stackRegistry.registerStack({
       stackId,
@@ -176,14 +194,16 @@ export class StackOperationService {
    */
   private async buildComponentsTracking(
     stack: DeveloperStack,
-    options: RestoreOptions
+    options: RestoreOptions,
+    addedSettingsFields?: string[],
+    addedPermissions?: { allow: string[]; deny: string[]; ask: string[] }
   ): Promise<StackRegistryEntry['components']> {
     return {
       commands: this.buildCommandsTracking(stack, options),
       agents: this.buildAgentsTracking(stack, options),
       hooks: this.buildHooksTracking(stack),
       mcpServers: this.buildMcpServersTracking(stack),
-      settings: this.buildSettingsTracking(stack, options),
+      settings: this.buildSettingsTracking(stack, options, addedSettingsFields, addedPermissions),
       claudeMd: this.buildClaudeMdTracking(stack, options),
     };
   }
@@ -244,19 +264,42 @@ export class StackOperationService {
 
   private buildSettingsTracking(
     stack: DeveloperStack,
-    options: RestoreOptions
-  ): { type: 'global' | 'local'; fields: string[] }[] {
-    if (!stack.settings || Object.keys(stack.settings).length === 0) {
+    options: RestoreOptions,
+    addedSettingsFields?: string[],
+    addedPermissions?: { allow: string[]; deny: string[]; ask: string[] }
+  ): {
+    type: 'global' | 'local';
+    fields: string[];
+    permissions?: { allow: string[]; deny: string[]; ask: string[] };
+  }[] {
+    // Use the actual added fields if provided, otherwise fall back to all stack fields
+    const fieldsToTrack = addedSettingsFields ?? Object.keys(stack.settings ?? {});
+
+    if (fieldsToTrack.length === 0) {
       return [];
     }
 
     const settingsType = options.globalOnly ? 'global' : 'local';
-    return [
-      {
-        type: settingsType,
-        fields: Object.keys(stack.settings),
-      },
-    ];
+    const trackingEntry: {
+      type: 'global' | 'local';
+      fields: string[];
+      permissions?: { allow: string[]; deny: string[]; ask: string[] };
+    } = {
+      type: settingsType,
+      fields: fieldsToTrack,
+    };
+
+    // If we have specific permissions that were added, track those
+    if (
+      addedPermissions &&
+      (addedPermissions.allow.length > 0 ||
+        addedPermissions.deny.length > 0 ||
+        addedPermissions.ask.length > 0)
+    ) {
+      trackingEntry.permissions = addedPermissions;
+    }
+
+    return [trackingEntry];
   }
 
   private buildClaudeMdTracking(
@@ -316,11 +359,18 @@ export class StackOperationService {
   /**
    * Restore stack components based on options
    */
-  private async restoreComponents(stack: DeveloperStack, options: RestoreOptions): Promise<void> {
+  private async restoreComponents(
+    stack: DeveloperStack,
+    options: RestoreOptions
+  ): Promise<{
+    addedSettingsFields: string[];
+    addedPermissions?: { allow: string[]; deny: string[]; ask: string[] };
+  }> {
     await this.restoreCommandComponents(stack, options);
     await this.restoreAgentComponents(stack, options);
     await this.restoreHookComponents(stack);
-    await this.restoreOtherComponents(stack, options);
+    const result = await this.restoreOtherComponents(stack, options);
+    return result;
   }
 
   private async restoreCommandComponents(
@@ -515,18 +565,31 @@ export class StackOperationService {
   private async restoreOtherComponents(
     stack: DeveloperStack,
     options: RestoreOptions
-  ): Promise<void> {
+  ): Promise<{
+    addedSettingsFields: string[];
+    addedPermissions?: { allow: string[]; deny: string[]; ask: string[] };
+  }> {
     if (stack.mcpServers && stack.mcpServers.length > 0) {
       await this.restoreMcpServers(stack.mcpServers, options);
     }
 
+    let addedSettingsFields: string[] = [];
+    let addedPermissions: { allow: string[]; deny: string[]; ask: string[] } | undefined;
+
     if (stack.settings && Object.keys(stack.settings).length > 0) {
-      await this.restoreSettings(stack.settings, options);
+      const { addedFields, addedPermissions: permissions } = await this.restoreSettings(
+        stack.settings,
+        options
+      );
+      addedSettingsFields = addedFields;
+      addedPermissions = permissions;
     }
 
     if (stack.claudeMd) {
       await this.restoreClaudeMdFiles(stack.claudeMd, options);
     }
+
+    return { addedSettingsFields, addedPermissions };
   }
 
   private async restoreGlobalCommands(
@@ -877,15 +940,21 @@ export class StackOperationService {
   private async restoreSettings(
     settings: StackSettings,
     options: RestoreOptions = {}
-  ): Promise<void> {
+  ): Promise<{
+    addedFields: string[];
+    addedPermissions?: { allow: string[]; deny: string[]; ask: string[] };
+  }> {
     try {
       const { targetPath, settingsType, allowedBase } = this.getSettingsPath(options);
       await this.fileService.ensureDir(path.dirname(targetPath));
 
       if (options.overwrite) {
         await this.replaceSettings(targetPath, settings, settingsType, allowedBase);
+        // When overwriting, consider all fields as "added"
+        return { addedFields: Object.keys(settings) };
       } else {
-        await this.mergeSettings(targetPath, settings, settingsType, allowedBase);
+        const result = await this.mergeSettings(targetPath, settings, settingsType, allowedBase);
+        return result;
       }
     } catch (error) {
       this.ui.error(
@@ -937,24 +1006,152 @@ export class StackOperationService {
     this.ui.success(`✓ Overwritten ${settingsType} settings (selective)`);
   }
 
+  private async loadExistingSettings(
+    targetPath: string,
+    settingsType: string
+  ): Promise<Record<string, unknown>> {
+    if (!(await this.fileService.exists(targetPath))) {
+      return {};
+    }
+
+    try {
+      return await this.fileService.readJsonFile(targetPath);
+    } catch {
+      this.ui.warning(`Warning: Could not read existing ${settingsType} settings`);
+      return {};
+    }
+  }
+
+  private mergeSettingsField(
+    key: string,
+    value: unknown,
+    existingSettings: Record<string, unknown>,
+    mergedSettings: Record<string, unknown>
+  ): {
+    fieldAdded: boolean;
+    addedPermissions?: { allow: string[]; deny: string[]; ask: string[] };
+  } {
+    if (!(key in existingSettings)) {
+      mergedSettings[key] = value;
+      return { fieldAdded: true };
+    }
+
+    if (key === 'permissions' && this.isObject(value) && this.isObject(existingSettings[key])) {
+      const result = this.mergePermissions(
+        existingSettings[key] as Record<string, unknown>,
+        value as Record<string, unknown>
+      );
+      mergedSettings[key] = result.merged;
+      return {
+        fieldAdded: result.hasNewItems,
+        addedPermissions: result.hasNewItems ? result.addedPermissions : undefined,
+      };
+    }
+
+    if (this.isObject(value) && this.isObject(existingSettings[key])) {
+      return this.mergeObjectField(key, value, existingSettings, mergedSettings);
+    }
+    return { fieldAdded: false };
+  }
+
+  private mergeObjectField(
+    key: string,
+    value: unknown,
+    existingSettings: Record<string, unknown>,
+    mergedSettings: Record<string, unknown>
+  ): { fieldAdded: boolean } {
+    const existingObj = existingSettings[key] as Record<string, unknown>;
+    const stackObj = value as Record<string, unknown>;
+
+    const mergedObj = { ...existingObj };
+    let hasNewSubFields = false;
+
+    for (const [subKey, subValue] of Object.entries(stackObj)) {
+      if (!(subKey in existingObj)) {
+        mergedObj[subKey] = subValue;
+        hasNewSubFields = true;
+      }
+    }
+
+    mergedSettings[key] = mergedObj;
+    return { fieldAdded: hasNewSubFields };
+  }
+
   private async mergeSettings(
     targetPath: string,
     settings: StackSettings,
     settingsType: string,
     allowedBase: string
-  ): Promise<void> {
-    let existingSettings = {};
-    if (await this.fileService.exists(targetPath)) {
-      try {
-        existingSettings = await this.fileService.readJsonFile(targetPath);
-      } catch {
-        this.ui.warning(`Warning: Could not read existing ${settingsType} settings`);
+  ): Promise<{
+    addedFields: string[];
+    addedPermissions?: { allow: string[]; deny: string[]; ask: string[] };
+  }> {
+    const existingSettings = await this.loadExistingSettings(targetPath, settingsType);
+    const addedFields: string[] = [];
+    let addedPermissions: { allow: string[]; deny: string[]; ask: string[] } | undefined;
+    const mergedSettings = { ...existingSettings };
+
+    for (const [key, value] of Object.entries(settings)) {
+      const result = this.mergeSettingsField(key, value, existingSettings, mergedSettings);
+
+      if (result.fieldAdded) {
+        addedFields.push(key);
+      }
+
+      if (result.addedPermissions) {
+        ({ addedPermissions } = { addedPermissions: result.addedPermissions });
+      }
+    }
+    await this.fileService.writeJsonFile(targetPath, mergedSettings, { allowedBase });
+    this.ui.success(`✓ Merged ${settingsType} settings (added ${addedFields.length} new fields)`);
+
+    return { addedFields, addedPermissions };
+  }
+
+  private mergePermissions(
+    existing: Record<string, unknown>,
+    stack: Record<string, unknown>
+  ): {
+    merged: Record<string, unknown>;
+    hasNewItems: boolean;
+    addedPermissions: { allow: string[]; deny: string[]; ask: string[] };
+  } {
+    const merged = { ...existing };
+    let hasNewItems = false;
+    const addedPermissions = { allow: [] as string[], deny: [] as string[], ask: [] as string[] };
+
+    for (const [category, stackItems] of Object.entries(stack)) {
+      if (Array.isArray(stackItems)) {
+        const existingItems = Array.isArray(existing[category])
+          ? (existing[category] as string[])
+          : [];
+
+        // Ensure all items are strings and filter for new ones
+        const stringStackItems = stackItems.filter(
+          (item): item is string => typeof item === 'string'
+        );
+        const newItems = stringStackItems.filter(item => !existingItems.includes(item));
+
+        if (newItems.length > 0) {
+          merged[category] = [...existingItems, ...newItems];
+          hasNewItems = true;
+
+          // Track the specific permissions added
+          if (category === 'allow' || category === 'deny' || category === 'ask') {
+            addedPermissions[category as keyof typeof addedPermissions] = newItems;
+          }
+        }
+      } else if (!(category in existing)) {
+        merged[category] = stackItems;
+        hasNewItems = true;
       }
     }
 
-    const mergedSettings = { ...existingSettings, ...settings };
-    await this.fileService.writeJsonFile(targetPath, mergedSettings, { allowedBase });
-    this.ui.success(`✓ Merged ${settingsType} settings`);
+    return { merged, hasNewItems, addedPermissions };
+  }
+
+  private isObject(value: unknown): value is Record<string, unknown> {
+    return value !== null && typeof value === 'object' && !Array.isArray(value);
   }
 
   private async restoreClaudeMdFiles(

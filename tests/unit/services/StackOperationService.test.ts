@@ -351,7 +351,7 @@ describe('StackOperationService', () => {
     it('should restore settings when present', async () => {
       await stackOperationService.performRestore('test-stack.json');
 
-      expect(mockUI.success).toHaveBeenCalledWith('✓ Merged local settings');
+      expect(mockUI.success).toHaveBeenCalledWith('✓ Merged local settings (added 2 new fields)');
     });
 
     it('should restore Claude.md files when present', async () => {
@@ -567,7 +567,7 @@ describe('StackOperationService', () => {
       expect(mockUI.success).toHaveBeenCalledWith('✓ Added global agent: global-agent');
       expect(mockUI.success).toHaveBeenCalledWith('✓ Added local agent: local-agent');
       expect(mockUI.success).toHaveBeenCalledWith('✓ Added MCP server: test-server');
-      expect(mockUI.success).toHaveBeenCalledWith('✓ Merged local settings');
+      expect(mockUI.success).toHaveBeenCalledWith('✓ Merged local settings (added 2 new fields)');
       expect(mockUI.success).toHaveBeenCalledWith('✓ Added global CLAUDE.md');
     });
   });
@@ -726,7 +726,7 @@ describe('StackOperationService', () => {
           expect.objectContaining({ theme: 'dark', editor: 'vscode' }),
           expect.objectContaining({ allowedBase: expect.any(String) })
         );
-        expect(mockUI.success).toHaveBeenCalledWith('✓ Merged local settings');
+        expect(mockUI.success).toHaveBeenCalledWith('✓ Merged local settings (added 2 new fields)');
       });
 
       it('should write global settings when globalOnly option is set', async () => {
@@ -740,7 +740,9 @@ describe('StackOperationService', () => {
           expect.objectContaining({ theme: 'dark' }),
           expect.objectContaining({ allowedBase: expect.any(String) })
         );
-        expect(mockUI.success).toHaveBeenCalledWith('✓ Merged global settings');
+        expect(mockUI.success).toHaveBeenCalledWith(
+          '✓ Merged global settings (added 1 new fields)'
+        );
       });
 
       it('should merge with existing settings', async () => {
@@ -760,6 +762,36 @@ describe('StackOperationService', () => {
           }),
           expect.objectContaining({ allowedBase: expect.any(String) })
         );
+      });
+
+      it('should preserve existing settings when keys conflict', async () => {
+        mockFileService.exists.mockResolvedValue(true);
+        mockFileService.readJsonFile.mockResolvedValue({
+          conflictKey: 'existingValue',
+          existingOnly: 'preserve',
+        });
+
+        const stack = {
+          ...mockStack,
+          settings: {
+            conflictKey: 'stackValue',
+            stackOnly: 'newValue',
+          },
+        };
+        mockReadJson.mockResolvedValue(stack);
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        expect(mockFileService.writeJsonFile).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({
+            conflictKey: 'existingValue', // Existing value should be preserved
+            existingOnly: 'preserve',
+            stackOnly: 'newValue',
+          }),
+          expect.objectContaining({ allowedBase: expect.any(String) })
+        );
+        expect(mockUI.success).toHaveBeenCalledWith('✓ Merged local settings (added 1 new fields)');
       });
 
       it('should replace settings when overwrite is true', async () => {

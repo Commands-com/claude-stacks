@@ -46,7 +46,8 @@
       "Bash(npx tsc:*)",
       "mcp__serena__insert_before_symbol",
       "Bash(git add:*)",
-      "Read(//Users/dtannen/.claude/**)"
+      "Read(//Users/dtannen/.claude/**)",
+      "mcp__serena__find_referencing_symbols"
     ],
     "deny": [],
     "ask": []

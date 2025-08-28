@@ -125,7 +125,14 @@ describe('restoreAction', () => {
     it('should restore configuration successfully', async () => {
       await restoreAction('/test/stack.json', {});
 
-      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', {}, undefined);
+      expect(mockPerformRestore).toHaveBeenCalledWith(
+        '/test/stack.json',
+        {},
+        {
+          stackId: 'local/stack',
+          source: 'local-file',
+        }
+      );
       expect(mockProcessExit).not.toHaveBeenCalled();
     });
 
@@ -134,7 +141,10 @@ describe('restoreAction', () => {
 
       await restoreAction('/test/stack.json', options);
 
-      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', options, undefined);
+      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', options, {
+        stackId: 'local/stack',
+        source: 'local-file',
+      });
     });
 
     it('should handle restore with backup option', async () => {
@@ -142,7 +152,10 @@ describe('restoreAction', () => {
 
       await restoreAction('/test/stack.json', options);
 
-      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', options, undefined);
+      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', options, {
+        stackId: 'local/stack',
+        source: 'local-file',
+      });
     });
 
     it('should handle restore with globalOnly option', async () => {
@@ -173,7 +186,7 @@ describe('restoreAction', () => {
     it('should handle restore errors gracefully', async () => {
       mockPerformRestore.mockRejectedValue(new Error('Restore failed'));
 
-      await expect(restoreAction({})).rejects.toThrow('Restore failed');
+      await expect(restoreAction('/test/stack.json', {})).rejects.toThrow('Restore failed');
     });
 
     it('should handle file system errors', async () => {
@@ -193,19 +206,19 @@ describe('restoreAction', () => {
     it('should handle permission errors', async () => {
       mockPerformRestore.mockRejectedValue(new Error('Permission denied'));
 
-      await expect(restoreAction({})).rejects.toThrow('Permission denied');
+      await expect(restoreAction('/test/stack.json', {})).rejects.toThrow('Permission denied');
     });
 
     it('should handle invalid configuration', async () => {
       mockPerformRestore.mockRejectedValue(new Error('Invalid configuration'));
 
-      await expect(restoreAction({})).rejects.toThrow('Invalid configuration');
+      await expect(restoreAction('/test/stack.json', {})).rejects.toThrow('Invalid configuration');
     });
 
     it('should handle non-Error exceptions', async () => {
       mockPerformRestore.mockRejectedValue('String error');
 
-      await expect(restoreAction({})).rejects.toThrow('String error');
+      await expect(restoreAction('/test/stack.json', {})).rejects.toThrow('String error');
     });
   });
 
@@ -240,7 +253,14 @@ describe('restoreAction', () => {
       // Since the restore action delegates to performRestore, we just verify it was called
       await restoreAction('/test/stack.json', {});
 
-      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', {}, undefined);
+      expect(mockPerformRestore).toHaveBeenCalledWith(
+        '/test/stack.json',
+        {},
+        {
+          stackId: 'local/stack',
+          source: 'local-file',
+        }
+      );
     });
 
     it('should handle empty dependency list', async () => {
@@ -297,8 +317,34 @@ describe('restoreAction', () => {
 
       expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', options, {
         stackId: 'test-stack-id',
-        source: 'restore',
+        source: 'local-file',
       });
+    });
+
+    it('should always track stack in registry when no trackInstallation provided', async () => {
+      await restoreAction('/test/my-awesome-stack.json', {});
+
+      expect(mockPerformRestore).toHaveBeenCalledWith(
+        '/test/my-awesome-stack.json',
+        {},
+        {
+          stackId: 'local/my-awesome-stack',
+          source: 'local-file',
+        }
+      );
+    });
+
+    it('should generate stackId from filename without path', async () => {
+      await restoreAction('simple-stack.json', {});
+
+      expect(mockPerformRestore).toHaveBeenCalledWith(
+        'simple-stack.json',
+        {},
+        {
+          stackId: 'local/simple-stack',
+          source: 'local-file',
+        }
+      );
     });
   });
 
@@ -311,15 +357,18 @@ describe('restoreAction', () => {
 
       await restoreAction('/test/stack.json', options);
 
-      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', options, undefined);
+      expect(mockPerformRestore).toHaveBeenCalledWith('/test/stack.json', options, {
+        stackId: 'local/stack',
+        source: 'local-file',
+      });
       expect(mockProcessExit).not.toHaveBeenCalled();
     });
 
     it('should handle rapid successive restores', async () => {
       const promises = [
-        restoreAction({ force: true }),
-        restoreAction({ backup: true }),
-        restoreAction({ globalOnly: true }),
+        restoreAction('/test/stack1.json', { force: true }),
+        restoreAction('/test/stack2.json', { backup: true }),
+        restoreAction('/test/stack3.json', { globalOnly: true }),
       ];
 
       await Promise.all(promises);

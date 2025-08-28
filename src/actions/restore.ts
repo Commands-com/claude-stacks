@@ -7,6 +7,8 @@ import { BaseAction } from './BaseAction.js';
  * @since 1.2.3
  * @public
  */
+import * as path from 'path';
+
 export class RestoreAction extends BaseAction {
   /**
    * Execute the restore action
@@ -15,13 +17,12 @@ export class RestoreAction extends BaseAction {
     try {
       this.validateRequired(stackFilePath, 'stackFilePath');
 
-      // Prepare tracking information if requested
-      const trackInstallation = options.trackInstallation
-        ? {
-            stackId: options.trackInstallation.stackId,
-            source: options.trackInstallation.source ?? ('restore' as const),
-          }
-        : undefined;
+      // Always generate tracking information for restore operations
+      const stackName = path.basename(stackFilePath, '.json');
+      const trackInstallation = {
+        stackId: options.trackInstallation?.stackId ?? `local/${stackName}`,
+        source: options.trackInstallation?.source ?? ('local-file' as const),
+      };
 
       // Use the StackOperationService for the core logic
       await this.stackOperations.performRestore(stackFilePath, options, trackInstallation);

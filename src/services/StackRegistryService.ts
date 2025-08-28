@@ -12,7 +12,11 @@ export interface StackRegistryEntry {
     agents: { name: string; path: string; isGlobal: boolean }[];
     hooks: { name: string; path: string; type: string }[];
     mcpServers: string[];
-    settings: { type: 'global' | 'local'; fields: string[] }[];
+    settings: {
+      type: 'global' | 'local';
+      fields: string[];
+      permissions?: { allow: string[]; deny: string[]; ask: string[] };
+    }[];
     claudeMd: { type: 'global' | 'local'; path: string }[];
   };
 }

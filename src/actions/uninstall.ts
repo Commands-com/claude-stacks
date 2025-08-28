@@ -738,6 +738,7 @@ export class UninstallAction extends BaseAction {
   private async removeSingleSetting(setting: {
     type: 'global' | 'local';
     fields: string[];
+    permissions?: { allow: string[]; deny: string[]; ask: string[] };
   }): Promise<boolean> {
     const settingsPath = this.getSettingsPath(setting.type);
 
@@ -747,15 +748,54 @@ export class UninstallAction extends BaseAction {
       string,
       unknown
     >;
-    const fieldsRemoved = this.removeSettingFields(settingsConfig, setting.fields);
 
-    if (fieldsRemoved > 0) {
+    let totalRemoved = 0;
+
+    // Handle specific permissions removal
+    if (setting.permissions) {
+      totalRemoved += this.removeSpecificPermissions(settingsConfig, setting.permissions);
+    } else {
+      // Fallback to old behavior - remove entire fields
+      totalRemoved += this.removeSettingFields(settingsConfig, setting.fields);
+    }
+
+    if (totalRemoved > 0) {
       await this.fileService.writeJsonFile(settingsPath, settingsConfig);
-      this.ui.success(`✓ Removed ${fieldsRemoved} ${setting.type} setting(s)`);
+      this.ui.success(`✓ Removed ${totalRemoved} ${setting.type} setting(s)`);
       return true;
     }
 
     return false;
+  }
+
+  private removeSpecificPermissions(
+    settingsConfig: Record<string, unknown>,
+    permissions: { allow: string[]; deny: string[]; ask: string[] }
+  ): number {
+    let removedCount = 0;
+
+    if (!settingsConfig.permissions || typeof settingsConfig.permissions !== 'object') {
+      return 0;
+    }
+
+    const currentPermissions = settingsConfig.permissions as Record<string, unknown>;
+
+    // Remove specific permissions from each category
+    for (const [category, permissionsToRemove] of Object.entries(permissions)) {
+      if (permissionsToRemove.length > 0 && Array.isArray(currentPermissions[category])) {
+        const currentList = currentPermissions[category] as string[];
+        const filteredList = currentList.filter(perm => !permissionsToRemove.includes(perm));
+
+        const removed = currentList.length - filteredList.length;
+        if (removed > 0) {
+          currentPermissions[category] = filteredList;
+          removedCount += removed;
+          console.log(`DEBUG - Removed ${removed} ${category} permissions:`, permissionsToRemove);
+        }
+      }
+    }
+
+    return removedCount;
   }
 
   private getSettingsPath(type: 'global' | 'local'): string {
