@@ -27,6 +27,8 @@ export interface PublishedStackMetadata {
   stack_id: string;
   /** Display name of the stack */
   stack_name: string;
+  /** Description of the stack */
+  description: string;
   /** Semantic version string of the last published version */
   last_published_version: string;
   /** ISO timestamp of when the stack was last published */

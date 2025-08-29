@@ -1014,6 +1014,20 @@ export interface ExportOptions {
    * excluding them for simpler stack distribution when automation isn't needed.
    */
   hooks?: boolean;
+
+  /**
+   * Whether to include components from installed stacks in the export
+   *
+   * @remarks
+   * By default (false), the export only includes locally-created components
+   * and excludes any commands, agents, hooks, or MCP servers that were
+   * installed from other stacks. This prevents unintended redistribution
+   * of other people's stacks and ensures clean base layer exports.
+   * Set to true to include all components regardless of origin.
+   *
+   * @default false
+   */
+  includeInstalled?: boolean;
 }
 
 /**

@@ -16,6 +16,9 @@ Use the @docs-architect agent to systematically improve JSDoc coverage across th
 
 ### Phase 1: Coverage Assessment & Tracking
 
+**IMPORTANT**
+check to see if `docs/JSDOC_COVERAGE.md` exists. If exists, skip initial analysis. 
+
 **Initial Analysis**:
 - Run `npm run jsdoc:summary` to get quick count of undocumented items
 - Run `npm run jsdoc:coverage` to generate detailed coverage warnings

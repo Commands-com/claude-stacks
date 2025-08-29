@@ -362,6 +362,7 @@ async function saveMetadataAndDisplayResult(params: SaveMetadataParams): Promise
   await metadata.savePublishedStackMetadata(currentDir, {
     stack_id: stackId,
     stack_name: stack.name,
+    description: stack.description,
     last_published_version: stack.version ?? '1.0.0',
     last_published_at: new Date().toISOString(),
   });

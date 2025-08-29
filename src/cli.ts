@@ -43,6 +43,10 @@ program
   .option('--include-global', 'Include global ~/.claude configurations (default: local only)')
   .option('--include-claude-md', 'Include CLAUDE.md files in the export')
   .option('--no-hooks', 'Exclude hooks from export')
+  .option(
+    '--include-installed',
+    'Include components from installed stacks (default: base layer only)'
+  )
   .description('Export your Claude Code environment to a shareable stack file')
   .action((filename, options) => exportAction(filename, options));
 

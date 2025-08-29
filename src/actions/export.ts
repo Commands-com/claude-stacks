@@ -13,6 +13,7 @@ import {
 } from '../constants/paths.js';
 import { HookScannerService } from '../services/HookScannerService.js';
 import { FileService } from '../services/FileService.js';
+import { type StackRegistry, StackRegistryService } from '../services/StackRegistryService.js';
 
 import type {
   DeveloperStack,
@@ -22,6 +23,7 @@ import type {
   StackHook,
   StackMcpServer,
 } from '../types/index.js';
+import type { PublishedStackMetadata } from '../utils/metadata.js';
 import { UIService } from '../services/UIService.js';
 import { MetadataService } from '../services/MetadataService.js';
 
@@ -380,6 +382,64 @@ async function getEntryType(fullPath: string): Promise<{ isDirectory: boolean; i
  * @since 1.0.0
  * @public
  */
+async function getStackDescription(
+  options: { description?: string },
+  publishedMeta: PublishedStackMetadata | null,
+  dirName: string
+): Promise<string> {
+  // Use explicit description first, then published, then default
+  let stackDescription =
+    options.description ?? publishedMeta?.description ?? `${dirName} configuration`;
+
+  // Try to read package.json for better description (only if no published description exists)
+  if (!options.description && !publishedMeta?.description) {
+    const packageJsonPath = path.join(process.cwd(), 'package.json');
+    if (await fs.pathExists(packageJsonPath)) {
+      try {
+        const packageJson = (await fs.readJson(packageJsonPath)) as { description?: string };
+        if (packageJson.description) {
+          stackDescription = packageJson.description;
+        }
+      } catch {
+        // Ignore package.json parsing errors
+      }
+    }
+  }
+
+  return stackDescription;
+}
+
+function getStackVersion(
+  options: { stackVersion?: string },
+  publishedMeta: PublishedStackMetadata | null
+): string {
+  const { stackVersion: optionsStackVersion } = options;
+
+  if (optionsStackVersion) {
+    if (!metadata.isValidVersion(optionsStackVersion)) {
+      throw new Error(`Invalid version format: ${optionsStackVersion}. Expected format: X.Y.Z`);
+    }
+    return optionsStackVersion;
+  }
+
+  if (publishedMeta) {
+    const suggestedVersion = metadata.generateSuggestedVersion(
+      publishedMeta.last_published_version
+    );
+    console.log(
+      ui.colorInfo(
+        `📌 Previously published as "${publishedMeta.stack_name}" (v${publishedMeta.last_published_version})`
+      )
+    );
+    console.log(
+      ui.colorMeta(`   Auto-suggesting version: ${suggestedVersion} (use --version to override)`)
+    );
+    return suggestedVersion;
+  }
+
+  return '1.0.0';
+}
+
 async function generateStackMetadata(options: {
   name?: string;
   description?: string;
@@ -388,44 +448,17 @@ async function generateStackMetadata(options: {
   const currentDir = process.cwd();
   const dirName = path.basename(currentDir);
 
-  // Auto-generate stack name and description from current directory
-  const stackName = options.name ?? dirName;
-  let stackDescription = options.description ?? `${dirName} configuration`;
-
-  // Try to read package.json for better description
-  const packageJsonPath = path.join(currentDir, 'package.json');
-  if (await fs.pathExists(packageJsonPath)) {
-    try {
-      const packageJson = (await fs.readJson(packageJsonPath)) as { description?: string };
-      if (packageJson.description && !options.description) {
-        stackDescription = packageJson.description;
-      }
-    } catch {
-      // Ignore package.json parsing errors
-    }
-  }
-
-  // Determine version from previous publication
+  // Get published metadata first to use for name/description continuity
   const publishedMeta = await metadata.getPublishedStackMetadata(currentDir);
-  let stackVersion = '1.0.0';
 
-  const { stackVersion: optionsStackVersion } = options;
-  if (optionsStackVersion) {
-    if (!metadata.isValidVersion(optionsStackVersion)) {
-      throw new Error(`Invalid version format: ${optionsStackVersion}. Expected format: X.Y.Z`);
-    }
-    stackVersion = optionsStackVersion;
-  } else if (publishedMeta) {
-    stackVersion = metadata.generateSuggestedVersion(publishedMeta.last_published_version);
-    console.log(
-      ui.colorInfo(
-        `📌 Previously published as "${publishedMeta.stack_name}" (v${publishedMeta.last_published_version})`
-      )
-    );
-    console.log(
-      ui.colorMeta(`   Auto-suggesting version: ${stackVersion} (use --version to override)`)
-    );
-  }
+  // Use published name if available and no explicit name provided
+  const stackName = options.name ?? publishedMeta?.stack_name ?? dirName;
+
+  // Get description using helper function
+  const stackDescription = await getStackDescription(options, publishedMeta, dirName);
+
+  // Get version using helper function
+  const stackVersion = getStackVersion(options, publishedMeta);
 
   return { name: stackName, description: stackDescription, version: stackVersion };
 }
@@ -433,8 +466,19 @@ async function generateStackMetadata(options: {
 /**
  * Scan and collect commands from global and local directories
  */
-async function collectCommands(includeGlobal: boolean): Promise<Map<string, StackCommand>> {
+async function collectCommands(
+  includeGlobal: boolean,
+  includeInstalled: boolean = true
+): Promise<Map<string, StackCommand>> {
   const commandsMap = new Map<string, StackCommand>();
+
+  // Get registry to filter out installed components if needed
+  let registry: StackRegistry | null = null;
+  if (!includeInstalled) {
+    const fileService = new FileService();
+    const registryService = new StackRegistryService(fileService);
+    registry = await registryService.getRegistry();
+  }
 
   if (includeGlobal) {
     const globalCommands = await scanDirectory(getGlobalCommandsDir(), (name, content) => ({
@@ -443,7 +487,11 @@ async function collectCommands(includeGlobal: boolean): Promise<Map<string, Stac
       content,
       description: extractDescriptionFromContent(content),
     }));
-    globalCommands.forEach((command, name) => commandsMap.set(name, command));
+    globalCommands.forEach((command, name) => {
+      if (includeInstalled || !registry || !isInstalledCommand(name, command.filePath, registry)) {
+        commandsMap.set(name, command);
+      }
+    });
   }
 
   const localCommands = await scanDirectory(getLocalCommandsDir(), (name, content) => ({
@@ -452,7 +500,11 @@ async function collectCommands(includeGlobal: boolean): Promise<Map<string, Stac
     content,
     description: extractDescriptionFromContent(content),
   }));
-  localCommands.forEach((command, name) => commandsMap.set(name, command));
+  localCommands.forEach((command, name) => {
+    if (includeInstalled || !registry || !isInstalledCommand(name, command.filePath, registry)) {
+      commandsMap.set(name, command);
+    }
+  });
 
   return commandsMap;
 }
@@ -460,8 +512,19 @@ async function collectCommands(includeGlobal: boolean): Promise<Map<string, Stac
 /**
  * Scan and collect agents from global and local directories
  */
-async function collectAgents(includeGlobal: boolean): Promise<Map<string, StackAgent>> {
+async function collectAgents(
+  includeGlobal: boolean,
+  includeInstalled: boolean = true
+): Promise<Map<string, StackAgent>> {
   const agentsMap = new Map<string, StackAgent>();
+
+  // Get registry to filter out installed components if needed
+  let registry: StackRegistry | null = null;
+  if (!includeInstalled) {
+    const fileService = new FileService();
+    const registryService = new StackRegistryService(fileService);
+    registry = await registryService.getRegistry();
+  }
 
   if (includeGlobal) {
     const globalAgents = await scanDirectory(getGlobalAgentsDir(), (name, content) => ({
@@ -470,7 +533,11 @@ async function collectAgents(includeGlobal: boolean): Promise<Map<string, StackA
       content,
       description: extractDescriptionFromContent(content),
     }));
-    globalAgents.forEach((agent, name) => agentsMap.set(name, agent));
+    globalAgents.forEach((agent, name) => {
+      if (includeInstalled || !registry || !isInstalledAgent(name, agent.filePath, registry)) {
+        agentsMap.set(name, agent);
+      }
+    });
   }
 
   const localAgents = await scanDirectory(getLocalAgentsDir(), (name, content) => ({
@@ -479,7 +546,11 @@ async function collectAgents(includeGlobal: boolean): Promise<Map<string, StackA
     content,
     description: extractDescriptionFromContent(content),
   }));
-  localAgents.forEach((agent, name) => agentsMap.set(name, agent));
+  localAgents.forEach((agent, name) => {
+    if (includeInstalled || !registry || !isInstalledAgent(name, agent.filePath, registry)) {
+      agentsMap.set(name, agent);
+    }
+  });
 
   return agentsMap;
 }
@@ -487,8 +558,62 @@ async function collectAgents(includeGlobal: boolean): Promise<Map<string, StackA
 /**
  * Read and merge settings files
  */
-async function collectSettings(includeGlobal: boolean): Promise<Record<string, unknown>> {
-  const settings: Record<string, unknown> = {};
+/**
+ * Gets the set of settings fields that were installed by stacks
+ */
+async function getInstalledSettingsFields(includeInstalled: boolean): Promise<Set<string>> {
+  const installedFields = new Set<string>();
+
+  if (includeInstalled) {
+    return installedFields; // Return empty set if including installed components
+  }
+
+  const fileService = new FileService();
+  const registryService = new StackRegistryService(fileService);
+  const registry = await registryService.getRegistry();
+
+  // Collect all field names from installed stacks
+  for (const stackEntry of Object.values(registry.stacks)) {
+    for (const settingsEntry of stackEntry.components.settings) {
+      for (const field of settingsEntry.fields) {
+        installedFields.add(field);
+      }
+    }
+  }
+
+  return installedFields;
+}
+
+/**
+ * Filters out settings fields that were installed by stacks
+ */
+function filterInstalledSettingsFields(
+  settings: Record<string, unknown>,
+  installedFields: Set<string>
+): Record<string, unknown> {
+  if (installedFields.size === 0) {
+    return settings; // No filtering needed
+  }
+
+  const filteredSettings: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(settings)) {
+    if (!installedFields.has(key)) {
+      filteredSettings[key] = value;
+    }
+  }
+
+  return filteredSettings;
+}
+
+async function collectSettings(
+  includeGlobal: boolean,
+  includeInstalled: boolean = true
+): Promise<Record<string, unknown>> {
+  let settings: Record<string, unknown> = {};
+
+  // Get the set of fields that were installed by stacks
+  const installedFields = await getInstalledSettingsFields(includeInstalled);
 
   if (includeGlobal) {
     const globalSettings = await readSettingsFile(getGlobalSettingsPath(), 'global settings.json');
@@ -505,6 +630,9 @@ async function collectSettings(includeGlobal: boolean): Promise<Record<string, u
   // Read override settings file (.claude/settings.local.json) - these take precedence
   const localSettings = await readSettingsFile(getLocalSettingsPath(), 'local settings.local.json');
   Object.assign(settings, localSettings);
+
+  // Filter out settings fields that were installed by stacks
+  settings = filterInstalledSettingsFields(settings, installedFields);
 
   return settings;
 }
@@ -718,6 +846,103 @@ function getRiskLevel(score: number): 'safe' | 'warning' | 'dangerous' {
 }
 
 /**
+ * Checks if a command was installed from a stack in the registry
+ *
+ * Compares the command name and file path against all installed stacks
+ * to determine if the command originated from a stack installation.
+ *
+ * @param name - The command name
+ * @param filePath - The command file path
+ * @param registry - The stack registry containing installed stack information
+ * @returns True if the command was installed from a stack, false if it's local
+ *
+ * @since 1.0.0
+ * @public
+ */
+function isInstalledCommand(name: string, filePath: string, registry: StackRegistry): boolean {
+  for (const stackEntry of Object.values(registry.stacks)) {
+    for (const command of stackEntry.components.commands) {
+      if (command.name === name && command.path === filePath) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Checks if an agent was installed from a stack in the registry
+ *
+ * Compares the agent name and file path against all installed stacks
+ * to determine if the agent originated from a stack installation.
+ *
+ * @param name - The agent name
+ * @param filePath - The agent file path
+ * @param registry - The stack registry containing installed stack information
+ * @returns True if the agent was installed from a stack, false if it's local
+ *
+ * @since 1.0.0
+ * @public
+ */
+function isInstalledAgent(name: string, filePath: string, registry: StackRegistry): boolean {
+  for (const stackEntry of Object.values(registry.stacks)) {
+    for (const agent of stackEntry.components.agents) {
+      if (agent.name === name && agent.path === filePath) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Checks if a hook was installed from a stack in the registry
+ *
+ * Compares the hook name and file path against all installed stacks
+ * to determine if the hook originated from a stack installation.
+ *
+ * @param name - The hook name
+ * @param filePath - The hook file path
+ * @param registry - The stack registry containing installed stack information
+ * @returns True if the hook was installed from a stack, false if it's local
+ *
+ * @since 1.0.0
+ * @public
+ */
+function isInstalledHook(name: string, filePath: string, registry: StackRegistry): boolean {
+  for (const stackEntry of Object.values(registry.stacks)) {
+    for (const hook of stackEntry.components.hooks) {
+      if (hook.name === name && hook.path === filePath) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Checks if an MCP server was installed from a stack in the registry
+ *
+ * Compares the MCP server name against all installed stacks
+ * to determine if the server originated from a stack installation.
+ *
+ * @param name - The MCP server name
+ * @param registry - The stack registry containing installed stack information
+ * @returns True if the MCP server was installed from a stack, false if it's local
+ *
+ * @since 1.0.0
+ * @public
+ */
+function isInstalledMcpServer(name: string, registry: StackRegistry): boolean {
+  for (const stackEntry of Object.values(registry.stacks)) {
+    if (stackEntry.components.mcpServers.includes(name)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
  * Collects and analyzes hook files from the local .claude/hooks directory
  *
  * Scans for JavaScript, TypeScript, and Python hook files, determines their
@@ -744,43 +969,115 @@ function getRiskLevel(score: number): 'safe' | 'warning' | 'dangerous' {
  * @since 1.0.0
  * @public
  */
-async function collectHooks(): Promise<StackHook[]> {
-  const fileService = new FileService();
-  const hookScanner = new HookScannerService();
+/**
+ * Processes a single hook file and creates a StackHook object
+ *
+ * @param file - The hook filename
+ * @param localHooksDir - The hooks directory path
+ * @param fileService - File service instance
+ * @param hookScanner - Hook scanner service instance
+ * @returns Promise resolving to a StackHook object
+ *
+ * @since 1.0.0
+ * @internal
+ */
+async function processHookFile(
+  file: string,
+  localHooksDir: string,
+  fileService: FileService,
+  hookScanner: HookScannerService
+): Promise<StackHook> {
+  const filePath = `${localHooksDir}/${file}`;
+  const content = await fileService.readTextFile(filePath);
+  const hookName = file.replace(/\.(js|ts|py)$/, '');
+
+  // Determine hook type from filename
+  const hookType = inferHookType(hookName);
+
+  // Scan for security issues
+  const scanResults = hookScanner.scanHook(content);
+  const riskLevel = getRiskLevel(scanResults.riskScore);
+
+  return {
+    name: hookName,
+    type: hookType,
+    filePath,
+    content,
+    riskLevel,
+    scanResults,
+  };
+}
+
+/**
+ * Gets the registry for filtering installed components
+ */
+async function getRegistryForFiltering(
+  includeInstalled: boolean,
+  fileService: FileService
+): Promise<StackRegistry | null> {
+  if (includeInstalled) {
+    return null;
+  }
+  const registryService = new StackRegistryService(fileService);
+  return registryService.getRegistry();
+}
+
+/**
+ * Processes hook files in the hooks directory
+ */
+async function processHookFiles(
+  hookFiles: string[],
+  options: {
+    localHooksDir: string;
+    registry: StackRegistry | null;
+    includeInstalled: boolean;
+    fileService: FileService;
+    hookScanner: HookScannerService;
+  }
+): Promise<StackHook[]> {
   const hooks: StackHook[] = [];
+  const { localHooksDir, registry, includeInstalled, fileService, hookScanner } = options;
 
-  // Check for hooks in local .claude/hooks directory
-  const localHooksDir = '.claude/hooks';
-  if (await fileService.exists(localHooksDir)) {
-    const hookFiles = await fileService.listFiles(localHooksDir);
-
-    for (const file of hookFiles) {
-      if (file.endsWith('.js') || file.endsWith('.ts') || file.endsWith('.py')) {
-        const filePath = `${localHooksDir}/${file}`;
-        // eslint-disable-next-line no-await-in-loop
-        const content = await fileService.readTextFile(filePath);
-        const hookName = file.replace(/\.(js|ts|py)$/, '');
-
-        // Determine hook type from filename
-        const hookType = inferHookType(hookName);
-
-        // Scan for security issues
-        const scanResults = hookScanner.scanHook(content);
-        const riskLevel = getRiskLevel(scanResults.riskScore);
-
-        hooks.push({
-          name: hookName,
-          type: hookType,
-          filePath,
-          content,
-          riskLevel,
-          scanResults,
-        });
-      }
+  for (const file of hookFiles) {
+    if (!file.endsWith('.js') && !file.endsWith('.ts') && !file.endsWith('.py')) {
+      continue;
     }
+
+    const filePath = `${localHooksDir}/${file}`;
+    const hookName = file.replace(/\.(js|ts|py)$/, '');
+
+    // Skip installed hooks if not including them
+    if (!includeInstalled && registry && isInstalledHook(hookName, filePath, registry)) {
+      continue;
+    }
+
+    // eslint-disable-next-line no-await-in-loop
+    const hook = await processHookFile(file, localHooksDir, fileService, hookScanner);
+    hooks.push(hook);
   }
 
   return hooks;
+}
+
+async function collectHooks(includeInstalled: boolean = true): Promise<StackHook[]> {
+  const fileService = new FileService();
+  const hookScanner = new HookScannerService();
+  const localHooksDir = '.claude/hooks';
+
+  if (!(await fileService.exists(localHooksDir))) {
+    return [];
+  }
+
+  const registry = await getRegistryForFiltering(includeInstalled, fileService);
+  const hookFiles = await fileService.listFiles(localHooksDir);
+
+  return processHookFiles(hookFiles, {
+    localHooksDir,
+    registry,
+    includeInstalled,
+    fileService,
+    hookScanner,
+  });
 }
 
 /**
@@ -916,7 +1213,7 @@ function convertMcpConfig(
  * @since 1.0.0
  * @public
  */
-async function collectMcpServers(): Promise<StackMcpServer[]> {
+async function collectMcpServers(includeInstalled: boolean = true): Promise<StackMcpServer[]> {
   const claudeJsonPath = CLAUDE_JSON_PATH;
   if (!(await fs.pathExists(claudeJsonPath))) {
     return [];
@@ -932,7 +1229,18 @@ async function collectMcpServers(): Promise<StackMcpServer[]> {
       return [];
     }
 
-    return convertMcpConfig(projectConfig.mcpServers);
+    const servers = convertMcpConfig(projectConfig.mcpServers);
+
+    // Filter out installed servers if not including them
+    if (!includeInstalled) {
+      const fileService = new FileService();
+      const registryService = new StackRegistryService(fileService);
+      const registry = await registryService.getRegistry();
+
+      return servers.filter(server => !isInstalledMcpServer(server.name, registry));
+    }
+
+    return servers;
   } catch {
     return [];
   }
@@ -1020,14 +1328,15 @@ async function createBaseStack(options: {
 async function populateStackComponents(
   stack: DeveloperStack,
   includeGlobal: boolean,
-  includeHooks: boolean = true
+  includeHooks: boolean = true,
+  includeInstalled: boolean = true
 ): Promise<void> {
   const [commandsMap, agentsMap, settings, mcpServers, hooks] = await Promise.all([
-    collectCommands(includeGlobal),
-    collectAgents(includeGlobal),
-    collectSettings(includeGlobal),
-    collectMcpServers(),
-    includeHooks ? collectHooks() : Promise.resolve([]),
+    collectCommands(includeGlobal, includeInstalled),
+    collectAgents(includeGlobal, includeInstalled),
+    collectSettings(includeGlobal, includeInstalled),
+    collectMcpServers(includeInstalled),
+    includeHooks ? collectHooks(includeInstalled) : Promise.resolve([]),
   ]);
 
   stack.commands = Array.from(commandsMap.values());
@@ -1074,13 +1383,19 @@ async function exportCurrentStack(options: {
   includeClaudeMd?: boolean;
   stackVersion?: string;
   hooks?: boolean;
+  includeInstalled?: boolean;
 }): Promise<DeveloperStack> {
   const currentDir = process.cwd();
   const { name, description, version } = await generateStackMetadata(options);
   const publishedMeta = await metadata.getPublishedStackMetadata(currentDir);
 
   const stack = await createBaseStack({ name, description, version, currentDir, publishedMeta });
-  await populateStackComponents(stack, options.includeGlobal ?? false, options.hooks ?? true);
+  await populateStackComponents(
+    stack,
+    options.includeGlobal ?? false,
+    options.hooks ?? true,
+    options.includeInstalled ?? false
+  );
 
   return stack;
 }
@@ -1124,6 +1439,7 @@ export async function exportAction(filename?: string, options: ExportOptions = {
       includeClaudeMd: options.includeClaudeMd ?? false,
       stackVersion: options.stackVersion,
       hooks: options.hooks ?? true,
+      includeInstalled: options.includeInstalled ?? false,
     });
 
     const outputFilename = resolveOutputFilename(filename);
