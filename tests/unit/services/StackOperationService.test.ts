@@ -1382,6 +1382,112 @@ describe('StackOperationService', () => {
         );
         expect(mockUI.success).toHaveBeenCalledWith('✓ Merged local settings (added 1 new fields)');
       });
+
+      it('should handle hooks field merging correctly', async () => {
+        mockFileService.exists.mockResolvedValue(true);
+        mockFileService.readJsonFile.mockResolvedValue({
+          hooks: {
+            'pre-commit': [{ command: 'existing-command' }],
+          },
+        });
+
+        const stackWithHooks = {
+          ...mockStack,
+          mcpServers: [],
+          commands: [],
+          agents: [],
+          claudeMd: undefined,
+          settings: {
+            hooks: {
+              'pre-commit': [{ command: 'new-command' }],
+              'pre-push': [{ command: 'push-command' }],
+            },
+          },
+        };
+        mockReadJson.mockResolvedValue(stackWithHooks);
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        expect(mockFileService.writeJsonFile).toHaveBeenCalledWith(
+          expect.any(String),
+          expect.objectContaining({
+            hooks: {
+              'pre-commit': [{ command: 'existing-command' }, { command: 'new-command' }],
+              'pre-push': [{ command: 'push-command' }],
+            },
+          }),
+          expect.any(Object)
+        );
+      });
+    });
+
+    describe('MCP server placeholder detection', () => {
+      beforeEach(() => {
+        mockFileService.exists.mockResolvedValue(false);
+        mockFileService.ensureDir.mockResolvedValue(undefined);
+        mockFileService.readJsonFile.mockResolvedValue({});
+        mockPathExists.mockResolvedValue(true);
+        mockDependencies.checkMcpDependencies.mockResolvedValue([]);
+      });
+
+      it('should detect and warn about placeholder paths', async () => {
+        const stackWithPlaceholders = {
+          ...mockStack,
+          commands: [],
+          agents: [],
+          settings: undefined,
+          claudeMd: undefined,
+          mcpServers: [
+            {
+              name: 'server-with-placeholders',
+              type: 'stdio',
+              command: '/path/to/your-server-executable',
+              args: ['/path/to/config.json'],
+              env: {
+                API_KEY: '/path/to/your-api-key',
+              },
+            },
+          ],
+        };
+        mockReadJson.mockResolvedValue(stackWithPlaceholders);
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        expect(mockUI.warning).toHaveBeenCalledWith(
+          '⚠️  MCP server "server-with-placeholders" contains placeholder values:'
+        );
+        expect(mockUI.meta).toHaveBeenCalledWith('   • command: /path/to/your-server-executable');
+        expect(mockUI.meta).toHaveBeenCalledWith('   • args[0]: /path/to/config.json');
+        expect(mockUI.meta).toHaveBeenCalledWith('   • env.API_KEY: /path/to/your-api-key');
+      });
+
+      it('should not warn when MCP server has valid paths', async () => {
+        const stackWithValidPaths = {
+          ...mockStack,
+          commands: [],
+          agents: [],
+          settings: undefined,
+          claudeMd: undefined,
+          mcpServers: [
+            {
+              name: 'valid-server',
+              type: 'stdio',
+              command: 'node',
+              args: ['server.js'],
+              env: {
+                NODE_ENV: 'production',
+              },
+            },
+          ],
+        };
+        mockReadJson.mockResolvedValue(stackWithValidPaths);
+
+        await stackOperationService.performRestore('test-stack.json');
+
+        expect(mockUI.warning).not.toHaveBeenCalledWith(
+          expect.stringContaining('contains placeholder values')
+        );
+      });
     });
   });
 });

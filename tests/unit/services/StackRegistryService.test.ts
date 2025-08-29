@@ -869,6 +869,121 @@ describe('StackRegistryService', () => {
     });
   });
 
+  describe('findStacksWithHook', () => {
+    it('should find stacks with specific hook', async () => {
+      const registry = {
+        version: '1.0.0',
+        lastUpdated: '2023-01-01T00:00:00.000Z',
+        stacks: {
+          'org/stack1': {
+            stackId: 'org/stack1',
+            name: 'Stack 1',
+            installedAt: '2023-01-01T00:00:00.000Z',
+            source: 'commands.com' as const,
+            version: '1.0.0',
+            components: {
+              commands: [],
+              agents: [],
+              hooks: [
+                { name: 'shared-hook', path: '/path/hook1', type: 'pre-commit' },
+                { name: 'unique-hook', path: '/path/hook2', type: 'pre-push' },
+              ],
+              mcpServers: [],
+              settings: [],
+              claudeMd: [],
+            },
+          },
+          'org/stack2': {
+            stackId: 'org/stack2',
+            name: 'Stack 2',
+            installedAt: '2023-01-01T00:00:00.000Z',
+            source: 'commands.com' as const,
+            version: '1.0.0',
+            components: {
+              commands: [],
+              agents: [],
+              hooks: [{ name: 'shared-hook', path: '/path/hook3', type: 'pre-commit' }],
+              mcpServers: [],
+              settings: [],
+              claudeMd: [],
+            },
+          },
+        },
+      };
+
+      mockFileService.exists.mockResolvedValue(true);
+      mockFileService.readJsonFile.mockResolvedValue(registry);
+
+      const result = await registryService.findStacksWithHook('shared-hook');
+
+      expect(result).toHaveLength(2);
+      expect(result[0].stackId).toBe('org/stack1');
+      expect(result[1].stackId).toBe('org/stack2');
+    });
+
+    it('should return empty array when no stacks have the hook', async () => {
+      const registry = {
+        version: '1.0.0',
+        lastUpdated: '2023-01-01T00:00:00.000Z',
+        stacks: {
+          'org/stack1': {
+            stackId: 'org/stack1',
+            name: 'Stack 1',
+            installedAt: '2023-01-01T00:00:00.000Z',
+            source: 'commands.com' as const,
+            version: '1.0.0',
+            components: {
+              commands: [],
+              agents: [],
+              hooks: [{ name: 'different-hook', path: '/path/hook', type: 'pre-commit' }],
+              mcpServers: [],
+              settings: [],
+              claudeMd: [],
+            },
+          },
+        },
+      };
+
+      mockFileService.exists.mockResolvedValue(true);
+      mockFileService.readJsonFile.mockResolvedValue(registry);
+
+      const result = await registryService.findStacksWithHook('nonexistent-hook');
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should handle stacks without hooks array', async () => {
+      const registry = {
+        version: '1.0.0',
+        lastUpdated: '2023-01-01T00:00:00.000Z',
+        stacks: {
+          'org/stack-no-hooks': {
+            stackId: 'org/stack-no-hooks',
+            name: 'Stack without hooks',
+            installedAt: '2023-01-01T00:00:00.000Z',
+            source: 'commands.com' as const,
+            version: '1.0.0',
+            components: {
+              commands: [],
+              agents: [],
+              // hooks array is missing
+              mcpServers: [],
+              settings: [],
+              claudeMd: [],
+            },
+          },
+        },
+      };
+
+      mockFileService.exists.mockResolvedValue(true);
+      mockFileService.readJsonFile.mockResolvedValue(registry);
+
+      const result = await registryService.findStacksWithHook('any-hook');
+
+      expect(result).toHaveLength(0);
+    });
+  });
+
   describe('error handling', () => {
     it('should handle corrupted registry file gracefully', async () => {
       mockFileService.exists.mockResolvedValue(true);
@@ -910,6 +1025,22 @@ describe('StackRegistryService', () => {
       });
 
       consoleSpy.mockRestore();
+    });
+
+    it('should not update stack when entry does not exist', async () => {
+      const registry = {
+        version: '1.0.0',
+        lastUpdated: '2023-01-01T00:00:00.000Z',
+        stacks: {},
+      };
+
+      mockFileService.exists.mockResolvedValue(true);
+      mockFileService.readJsonFile.mockResolvedValue(registry);
+
+      await registryService.updateStackEntry('org/nonexistent', { version: '2.0.0' });
+
+      // Should not call writeJsonFile since stack doesn't exist
+      expect(mockFileService.writeJsonFile).not.toHaveBeenCalled();
     });
   });
 });

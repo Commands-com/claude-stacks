@@ -228,6 +228,6 @@ export default [
 
   // Ignore patterns
   {
-    ignores: ['dist/**', 'node_modules/**', '*.d.ts', '.claude/**', 'coverage/**'],
+    ignores: ['dist/**', 'node_modules/**', '*.d.ts', '.claude/**', 'coverage/**', 'docs/jsdoc/**'],
   },
 ];

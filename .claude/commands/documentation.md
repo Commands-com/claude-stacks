@@ -17,10 +17,11 @@ Use the @docs-architect agent to systematically improve JSDoc coverage across th
 ### Phase 1: Coverage Assessment & Tracking
 
 **Initial Analysis**:
-- Scan all `.ts` files in `src/` directory
-- Identify functions, classes, interfaces, and types without JSDoc
+- Run `npm run jsdoc:summary` to get quick count of undocumented items
+- Run `npm run jsdoc:coverage` to generate detailed coverage warnings
+- Use the script output to identify specific files and functions without JSDoc
 - Categorize by priority: Critical (services/APIs) > Important (actions/controllers) > Supporting (utils/types)
-- Generate initial `docs/JSDOC_COVERAGE.md` tracking file
+- Generate initial `docs/JSDOC_COVERAGE.md` tracking file based on script output
 
 **Tracking File Structure** (`docs/JSDOC_COVERAGE.md`):
 ```markdown
@@ -45,9 +46,19 @@ Overall Coverage: X% (YYY/ZZZ items documented)
 - [ ] `src/utils/colors.ts` - 0/12 functions documented (0%)
 - [ ] `src/utils/validators.ts` - 0/6 functions documented (0%)
 
+## Coverage Scripts Output
+```bash
+# Quick summary from npm run jsdoc:summary
+Total undocumented items: 127
+Services: 45 undocumented
+Actions: 38 undocumented  
+Utils: 28 undocumented
+Types: 16 undocumented
+```
+
 ## Recent Progress
-- 2024-XX-XX: Added JSDoc to AuthService (8 methods)
-- 2024-XX-XX: Started StackService documentation (2/12 complete)
+- 2024-XX-XX: Added JSDoc to AuthService (8 methods) - `npm run jsdoc:coverage` shows no warnings
+- 2024-XX-XX: Started StackService documentation (2/12 complete) - reduced warnings from 12 to 10
 ```
 
 ### Phase 2: Systematic JSDoc Enhancement
@@ -117,10 +128,18 @@ Overall Coverage: X% (YYY/ZZZ items documented)
 
 ### Documentation Workflow
 
-1. **Update Tracking**: Always update `docs/JSDOC_COVERAGE.md` before and after work
-2. **File-by-File**: Complete one file at a time to maintain focus
-3. **Validation**: Test JSDoc generates correctly with `tsc` and documentation tools
-4. **Review**: Ensure consistency with existing documented code (like AuthService)
+**Coordinator Responsibilities**:
+1. **Run Coverage Analysis**: Execute `npm run jsdoc:summary` and `npm run jsdoc:coverage` to identify gaps
+2. **Prioritize Files**: Choose specific file(s) that need JSDoc improvement based on script output
+3. **Assign Work**: Provide specific file path(s) to @docs-architect agent for documentation
+4. **Validate Results**: Re-run `npm run jsdoc:coverage` after agent work to verify improvements
+5. **Update Tracking**: Maintain `docs/JSDOC_COVERAGE.md` with progress
+
+**Agent Workflow** (receives specific file assignment):
+1. **Read Target File(s)**: Analyze the assigned file(s) to understand existing documentation state
+2. **Generate JSDoc**: Add comprehensive JSDoc comments to all undocumented public methods/functions
+3. **Follow Standards**: Ensure consistency with existing patterns (like AuthService.ts)
+4. **Provide Complete Documentation**: Return fully documented file(s) ready for validation
 
 ### Coverage Milestones
 
