@@ -1,145 +1,1841 @@
-<!DOCTYPE html><html class="default" lang="en" data-base="../"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>ListAction | claude-stacks</title><meta name="description" content="Documentation for claude-stacks"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><script defer src="../assets/main.js"></script><script async src="../assets/icons.js" id="tsd-icons-script"></script><script async src="../assets/search.js" id="tsd-search-script"></script><script async src="../assets/navigation.js" id="tsd-nav-script"></script><script async src="../assets/hierarchy.js" id="tsd-hierarchy-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="../index.html" class="title">claude-stacks</a><div id="tsd-toolbar-links"></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><ul class="tsd-breadcrumb" aria-label="Breadcrumb"><li><a href="../modules/actions_list.html">actions/list</a></li><li><a href="" aria-current="page">ListAction</a></li></ul><h1>Class ListAction</h1></div><section class="tsd-panel tsd-comment"><div class="tsd-comment tsd-typography"><p>Action class for listing and managing local stacks</p>
-</div><div class="tsd-comment tsd-typography"><div class="tsd-tag-since"><h4 class="tsd-anchor-link" id="since">Since<a href="#since" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>1.2.3</p>
-</div></div></section><section class="tsd-panel tsd-hierarchy" data-refl="380"><h4>Hierarchy (<a href="../hierarchy.html#actions/list.ListAction">View Summary</a>)</h4><ul class="tsd-hierarchy"><li class="tsd-hierarchy-item"><a href="actions_BaseAction.BaseAction.html" class="tsd-signature-type tsd-kind-class">BaseAction</a><ul class="tsd-hierarchy"><li class="tsd-hierarchy-item"><span class="tsd-hierarchy-target">ListAction</span></li></ul></li></ul></section><aside class="tsd-sources"><ul><li>Defined in <a href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/list.ts#L17">src/actions/list.ts:17</a></li></ul></aside><section class="tsd-panel-group tsd-index-group"><section class="tsd-panel tsd-index-panel"><details class="tsd-index-content tsd-accordion" open><summary class="tsd-accordion-summary tsd-index-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h5 class="tsd-index-heading uppercase">Index</h5></summary><div class="tsd-accordion-details"><section class="tsd-index-section"><h3 class="tsd-index-heading">Constructors</h3><div class="tsd-index-list"><a href="#constructor" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Constructor"><use href="../assets/icons.svg#icon-512"></use></svg><span>constructor</span></a>
-</div></section><section class="tsd-index-section"><h3 class="tsd-index-heading">Properties</h3><div class="tsd-index-list"><a href="#api" class="tsd-index-link tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>api</span></a>
-<a href="#auth" class="tsd-index-link tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>auth</span></a>
-<a href="#configservice" class="tsd-index-link tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>config<wbr/>Service</span></a>
-<a href="#dependencies" class="tsd-index-link tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>dependencies</span></a>
-<a href="#fileservice" class="tsd-index-link tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>file<wbr/>Service</span></a>
-<a href="#metadata" class="tsd-index-link tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>metadata</span></a>
-<a href="#stackoperations" class="tsd-index-link tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>stack<wbr/>Operations</span></a>
-<a href="#stackservice" class="tsd-index-link tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>stack<wbr/>Service</span></a>
-<a href="#ui" class="tsd-index-link tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>ui</span></a>
-</div></section><section class="tsd-index-section"><h3 class="tsd-index-heading">Methods</h3><div class="tsd-index-list"><a href="#displayapienvironment" class="tsd-index-link tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>display<wbr/>Api<wbr/>Environment</span></a>
-<a href="#execute" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>execute</span></a>
-<a href="#getactionname" class="tsd-index-link tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>get<wbr/>Action<wbr/>Name</span></a>
-<a href="#handleerror" class="tsd-index-link tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>handle<wbr/>Error</span></a>
-<a href="#listlocalstacks" class="tsd-index-link"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>list<wbr/>Local<wbr/>Stacks</span></a>
-<a href="#logactionstart" class="tsd-index-link tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>log<wbr/>Action<wbr/>Start</span></a>
-<a href="#validaterequired" class="tsd-index-link tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>validate<wbr/>Required</span></a>
-</div></section></div></details></section></section><details class="tsd-panel-group tsd-member-group tsd-accordion" open><summary class="tsd-accordion-summary" data-key="section-Constructors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h2>Constructors</h2></summary><section><section class="tsd-panel tsd-member"><h3 class="tsd-anchor-link" id="constructor"><span>constructor</span><a href="#constructor" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><ul class="tsd-signatures"><li class="tsd-is-protected"><div class="tsd-signature tsd-anchor-link" id="constructorlistaction"><span class="tsd-signature-keyword">new</span> <span class="tsd-kind-constructor-signature">ListAction</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">services</span><span class="tsd-signature-symbol">?:</span> <a href="../interfaces/actions_BaseAction.ActionServices.html" class="tsd-signature-type tsd-kind-interface">ActionServices</a><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <a href="" class="tsd-signature-type tsd-kind-class">ListAction</a><a href="#constructorlistaction" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div><div class="tsd-description"><code class="tsd-tag">Protected</code><div class="tsd-comment tsd-typography"><p>Initialize a new BaseAction with optional service dependencies</p>
-</div><div class="tsd-parameters"><h4 class="tsd-parameters-title">Parameters</h4><ul class="tsd-parameter-list"><li><span><code class="tsd-tag">Optional</code><span class="tsd-kind-parameter">services</span>: <a href="../interfaces/actions_BaseAction.ActionServices.html" class="tsd-signature-type tsd-kind-interface">ActionServices</a></span><div class="tsd-comment tsd-typography"><p>Optional service dependencies to inject</p>
-</div><div class="tsd-comment tsd-typography"></div></li></ul></div><h4 class="tsd-returns-title">Returns <a href="" class="tsd-signature-type tsd-kind-class">ListAction</a></h4><div class="tsd-comment tsd-typography"><div class="tsd-tag-remarks"><h4 class="tsd-anchor-link" id="remarks">Remarks<a href="#remarks" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Constructs a new BaseAction instance using the dependency injection pattern.
-Services can be provided for testing scenarios, or default instances will
-be created for production use. The constructor follows a two-phase
-initialization pattern to handle service dependencies correctly.</p>
-<p>Initialization phases:</p>
-<ol>
-<li>Core services (UI, Auth, API, Metadata) - no dependencies</li>
-<li>Basic services (Dependencies, FileService, ConfigService) - no cross-dependencies</li>
-<li>Complex services (StackService, StackOperations) - depend on other services</li>
-</ol>
-</div><div class="tsd-tag-throws"><h4 class="tsd-anchor-link" id="throws">Throws<a href="#throws" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Error if service initialization fails</p>
-</div><div class="tsd-tag-example"><h4 class="tsd-anchor-link" id="example">Example<a href="#example" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="typescript"><span class="hl-4">// Production usage with default services</span><br/><span class="hl-3">class</span><span class="hl-1"> </span><span class="hl-8">MyAction</span><span class="hl-1"> </span><span class="hl-3">extends</span><span class="hl-1"> </span><span class="hl-8">BaseAction</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-3">constructor</span><span class="hl-1">() {</span><br/><span class="hl-1">    </span><span class="hl-3">super</span><span class="hl-1">(); </span><span class="hl-4">// Uses default service instances</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">}</span><br/><br/><span class="hl-4">// Testing usage with mocked services</span><br/><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-10">mockServices</span><span class="hl-1">: </span><span class="hl-8">ActionServices</span><span class="hl-1"> = {</span><br/><span class="hl-1">  </span><span class="hl-9">ui:</span><span class="hl-1"> </span><span class="hl-9">mockUIService</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-9">fileService:</span><span class="hl-1"> </span><span class="hl-9">mockFileService</span><br/><span class="hl-1">};</span><br/><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-10">action</span><span class="hl-1"> = </span><span class="hl-3">new</span><span class="hl-1"> </span><span class="hl-0">MyAction</span><span class="hl-1">(</span><span class="hl-9">mockServices</span><span class="hl-1">);</span>
+<!doctype html>
+<html class="default" lang="en" data-base="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="IE=edge" />
+    <title>ListAction | claude-stacks</title>
+    <meta name="description" content="Documentation for claude-stacks" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="../assets/style.css" />
+    <link rel="stylesheet" href="../assets/highlight.css" />
+    <script defer src="../assets/main.js"></script>
+    <script async src="../assets/icons.js" id="tsd-icons-script"></script>
+    <script async src="../assets/search.js" id="tsd-search-script"></script>
+    <script async src="../assets/navigation.js" id="tsd-nav-script"></script>
+    <script async src="../assets/hierarchy.js" id="tsd-hierarchy-script"></script>
+  </head>
+  <body>
+    <script>
+      document.documentElement.dataset.theme = localStorage.getItem('tsd-theme') || 'os';
+      document.body.style.display = 'none';
+      setTimeout(
+        () => (window.app ? app.showPage() : document.body.style.removeProperty('display')),
+        500
+      );
+    </script>
+    <header class="tsd-page-toolbar">
+      <div class="tsd-toolbar-contents container">
+        <a href="../index.html" class="title">claude-stacks</a>
+        <div id="tsd-toolbar-links"></div>
+        <button id="tsd-search-trigger" class="tsd-widget" aria-label="Search">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <use href="../assets/icons.svg#icon-search"></use>
+          </svg>
+        </button>
+        <dialog id="tsd-search" aria-label="Search">
+          <input
+            role="combobox"
+            id="tsd-search-input"
+            aria-controls="tsd-search-results"
+            aria-autocomplete="list"
+            aria-expanded="true"
+            autocapitalize="off"
+            autocomplete="off"
+            placeholder="Search the docs"
+            maxlength="100"
+          />
+          <ul role="listbox" id="tsd-search-results"></ul>
+          <div id="tsd-search-status" aria-live="polite" aria-atomic="true">
+            <div>Preparing search index...</div>
+          </div>
+        </dialog>
+        <a
+          href="#"
+          class="tsd-widget menu"
+          id="tsd-toolbar-menu-trigger"
+          data-toggle="menu"
+          aria-label="Menu"
+          ><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <use href="../assets/icons.svg#icon-menu"></use></svg
+        ></a>
+      </div>
+    </header>
+    <div class="container container-main">
+      <div class="col-content">
+        <div class="tsd-page-title">
+          <ul class="tsd-breadcrumb" aria-label="Breadcrumb">
+            <li><a href="../modules/actions_list.html">actions/list</a></li>
+            <li><a href="" aria-current="page">ListAction</a></li>
+          </ul>
+          <h1>Class ListAction</h1>
+        </div>
+        <section class="tsd-panel tsd-comment">
+          <div class="tsd-comment tsd-typography">
+            <p>Action class for listing and managing local stacks</p>
+          </div>
+          <div class="tsd-comment tsd-typography">
+            <div class="tsd-tag-since">
+              <h4 class="tsd-anchor-link" id="since">
+                Since<a href="#since" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use></svg
+                ></a>
+              </h4>
+              <p>1.2.3</p>
+            </div>
+          </div>
+        </section>
+        <section class="tsd-panel tsd-hierarchy" data-refl="380">
+          <h4>Hierarchy (<a href="../hierarchy.html#actions/list.ListAction">View Summary</a>)</h4>
+          <ul class="tsd-hierarchy">
+            <li class="tsd-hierarchy-item">
+              <a href="actions_BaseAction.BaseAction.html" class="tsd-signature-type tsd-kind-class"
+                >BaseAction</a
+              >
+              <ul class="tsd-hierarchy">
+                <li class="tsd-hierarchy-item">
+                  <span class="tsd-hierarchy-target">ListAction</span>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </section>
+        <aside class="tsd-sources">
+          <ul>
+            <li>
+              Defined in
+              <a
+                href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/list.ts#L17"
+                >src/actions/list.ts:17</a
+              >
+            </li>
+          </ul>
+        </aside>
+        <section class="tsd-panel-group tsd-index-group">
+          <section class="tsd-panel tsd-index-panel">
+            <details class="tsd-index-content tsd-accordion" open>
+              <summary class="tsd-accordion-summary tsd-index-summary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <use href="../assets/icons.svg#icon-chevronDown"></use>
+                </svg>
+                <h5 class="tsd-index-heading uppercase">Index</h5>
+              </summary>
+              <div class="tsd-accordion-details">
+                <section class="tsd-index-section">
+                  <h3 class="tsd-index-heading">Constructors</h3>
+                  <div class="tsd-index-list">
+                    <a href="#constructor" class="tsd-index-link"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Constructor">
+                        <use href="../assets/icons.svg#icon-512"></use></svg
+                      ><span>constructor</span></a
+                    >
+                  </div>
+                </section>
+                <section class="tsd-index-section">
+                  <h3 class="tsd-index-heading">Properties</h3>
+                  <div class="tsd-index-list">
+                    <a href="#api" class="tsd-index-link tsd-is-protected tsd-is-inherited"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                        <use href="../assets/icons.svg#icon-1024"></use></svg
+                      ><span>api</span></a
+                    >
+                    <a href="#auth" class="tsd-index-link tsd-is-protected tsd-is-inherited"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                        <use href="../assets/icons.svg#icon-1024"></use></svg
+                      ><span>auth</span></a
+                    >
+                    <a
+                      href="#configservice"
+                      class="tsd-index-link tsd-is-protected tsd-is-inherited"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                        <use href="../assets/icons.svg#icon-1024"></use></svg
+                      ><span>config<wbr />Service</span></a
+                    >
+                    <a href="#dependencies" class="tsd-index-link tsd-is-protected tsd-is-inherited"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                        <use href="../assets/icons.svg#icon-1024"></use></svg
+                      ><span>dependencies</span></a
+                    >
+                    <a href="#fileservice" class="tsd-index-link tsd-is-protected tsd-is-inherited"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                        <use href="../assets/icons.svg#icon-1024"></use></svg
+                      ><span>file<wbr />Service</span></a
+                    >
+                    <a href="#metadata" class="tsd-index-link tsd-is-protected tsd-is-inherited"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                        <use href="../assets/icons.svg#icon-1024"></use></svg
+                      ><span>metadata</span></a
+                    >
+                    <a
+                      href="#stackoperations"
+                      class="tsd-index-link tsd-is-protected tsd-is-inherited"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                        <use href="../assets/icons.svg#icon-1024"></use></svg
+                      ><span>stack<wbr />Operations</span></a
+                    >
+                    <a href="#stackservice" class="tsd-index-link tsd-is-protected tsd-is-inherited"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                        <use href="../assets/icons.svg#icon-1024"></use></svg
+                      ><span>stack<wbr />Service</span></a
+                    >
+                    <a href="#ui" class="tsd-index-link tsd-is-protected tsd-is-inherited"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                        <use href="../assets/icons.svg#icon-1024"></use></svg
+                      ><span>ui</span></a
+                    >
+                  </div>
+                </section>
+                <section class="tsd-index-section">
+                  <h3 class="tsd-index-heading">Methods</h3>
+                  <div class="tsd-index-list">
+                    <a
+                      href="#displayapienvironment"
+                      class="tsd-index-link tsd-is-protected tsd-is-inherited"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method">
+                        <use href="../assets/icons.svg#icon-2048"></use></svg
+                      ><span>display<wbr />Api<wbr />Environment</span></a
+                    >
+                    <a href="#execute" class="tsd-index-link"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method">
+                        <use href="../assets/icons.svg#icon-2048"></use></svg
+                      ><span>execute</span></a
+                    >
+                    <a
+                      href="#getactionname"
+                      class="tsd-index-link tsd-is-protected tsd-is-inherited"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method">
+                        <use href="../assets/icons.svg#icon-2048"></use></svg
+                      ><span>get<wbr />Action<wbr />Name</span></a
+                    >
+                    <a href="#handleerror" class="tsd-index-link tsd-is-protected tsd-is-inherited"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method">
+                        <use href="../assets/icons.svg#icon-2048"></use></svg
+                      ><span>handle<wbr />Error</span></a
+                    >
+                    <a href="#listlocalstacks" class="tsd-index-link"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method">
+                        <use href="../assets/icons.svg#icon-2048"></use></svg
+                      ><span>list<wbr />Local<wbr />Stacks</span></a
+                    >
+                    <a
+                      href="#logactionstart"
+                      class="tsd-index-link tsd-is-protected tsd-is-inherited"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method">
+                        <use href="../assets/icons.svg#icon-2048"></use></svg
+                      ><span>log<wbr />Action<wbr />Start</span></a
+                    >
+                    <a
+                      href="#validaterequired"
+                      class="tsd-index-link tsd-is-protected tsd-is-inherited"
+                      ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method">
+                        <use href="../assets/icons.svg#icon-2048"></use></svg
+                      ><span>validate<wbr />Required</span></a
+                    >
+                  </div>
+                </section>
+              </div>
+            </details>
+          </section>
+        </section>
+        <details class="tsd-panel-group tsd-member-group tsd-accordion" open>
+          <summary class="tsd-accordion-summary" data-key="section-Constructors">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <use href="../assets/icons.svg#icon-chevronDown"></use>
+            </svg>
+            <h2>Constructors</h2>
+          </summary>
+          <section>
+            <section class="tsd-panel tsd-member">
+              <h3 class="tsd-anchor-link" id="constructor">
+                <span>constructor</span
+                ><a href="#constructor" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use></svg
+                ></a>
+              </h3>
+              <ul class="tsd-signatures">
+                <li class="tsd-is-protected">
+                  <div class="tsd-signature tsd-anchor-link" id="constructorlistaction">
+                    <span class="tsd-signature-keyword">new</span>
+                    <span class="tsd-kind-constructor-signature">ListAction</span
+                    ><span class="tsd-signature-symbol">(</span
+                    ><span class="tsd-kind-parameter">services</span
+                    ><span class="tsd-signature-symbol">?:</span>
+                    <a
+                      href="../interfaces/actions_BaseAction.ActionServices.html"
+                      class="tsd-signature-type tsd-kind-interface"
+                      >ActionServices</a
+                    ><span class="tsd-signature-symbol">)</span
+                    ><span class="tsd-signature-symbol">:</span>
+                    <a href="" class="tsd-signature-type tsd-kind-class">ListAction</a
+                    ><a href="#constructorlistaction" aria-label="Permalink" class="tsd-anchor-icon"
+                      ><svg viewBox="0 0 24 24" aria-hidden="true">
+                        <use href="../assets/icons.svg#icon-anchor"></use></svg
+                    ></a>
+                  </div>
+                  <div class="tsd-description">
+                    <code class="tsd-tag">Protected</code>
+                    <div class="tsd-comment tsd-typography">
+                      <p>Initialize a new BaseAction with optional service dependencies</p>
+                    </div>
+                    <div class="tsd-parameters">
+                      <h4 class="tsd-parameters-title">Parameters</h4>
+                      <ul class="tsd-parameter-list">
+                        <li>
+                          <span
+                            ><code class="tsd-tag">Optional</code
+                            ><span class="tsd-kind-parameter">services</span>:
+                            <a
+                              href="../interfaces/actions_BaseAction.ActionServices.html"
+                              class="tsd-signature-type tsd-kind-interface"
+                              >ActionServices</a
+                            ></span
+                          >
+                          <div class="tsd-comment tsd-typography">
+                            <p>Optional service dependencies to inject</p>
+                          </div>
+                          <div class="tsd-comment tsd-typography"></div>
+                        </li>
+                      </ul>
+                    </div>
+                    <h4 class="tsd-returns-title">
+                      Returns <a href="" class="tsd-signature-type tsd-kind-class">ListAction</a>
+                    </h4>
+                    <div class="tsd-comment tsd-typography">
+                      <div class="tsd-tag-remarks">
+                        <h4 class="tsd-anchor-link" id="remarks">
+                          Remarks<a href="#remarks" aria-label="Permalink" class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <p>
+                          Constructs a new BaseAction instance using the dependency injection
+                          pattern. Services can be provided for testing scenarios, or default
+                          instances will be created for production use. The constructor follows a
+                          two-phase initialization pattern to handle service dependencies correctly.
+                        </p>
+                        <p>Initialization phases:</p>
+                        <ol>
+                          <li>Core services (UI, Auth, API, Metadata) - no dependencies</li>
+                          <li>
+                            Basic services (Dependencies, FileService, ConfigService) - no
+                            cross-dependencies
+                          </li>
+                          <li>
+                            Complex services (StackService, StackOperations) - depend on other
+                            services
+                          </li>
+                        </ol>
+                      </div>
+                      <div class="tsd-tag-throws">
+                        <h4 class="tsd-anchor-link" id="throws">
+                          Throws<a href="#throws" aria-label="Permalink" class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <p>Error if service initialization fails</p>
+                      </div>
+                      <div class="tsd-tag-example">
+                        <h4 class="tsd-anchor-link" id="example">
+                          Example<a href="#example" aria-label="Permalink" class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <pre><code class="typescript"><span class="hl-4">// Production usage with default services</span><br/><span class="hl-3">class</span><span class="hl-1"> </span><span class="hl-8">MyAction</span><span class="hl-1"> </span><span class="hl-3">extends</span><span class="hl-1"> </span><span class="hl-8">BaseAction</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-3">constructor</span><span class="hl-1">() {</span><br/><span class="hl-1">    </span><span class="hl-3">super</span><span class="hl-1">(); </span><span class="hl-4">// Uses default service instances</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">}</span><br/><br/><span class="hl-4">// Testing usage with mocked services</span><br/><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-10">mockServices</span><span class="hl-1">: </span><span class="hl-8">ActionServices</span><span class="hl-1"> = {</span><br/><span class="hl-1">  </span><span class="hl-9">ui:</span><span class="hl-1"> </span><span class="hl-9">mockUIService</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-9">fileService:</span><span class="hl-1"> </span><span class="hl-9">mockFileService</span><br/><span class="hl-1">};</span><br/><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-10">action</span><span class="hl-1"> = </span><span class="hl-3">new</span><span class="hl-1"> </span><span class="hl-0">MyAction</span><span class="hl-1">(</span><span class="hl-9">mockServices</span><span class="hl-1">);</span>
 </code><button type="button">Copy</button></pre>
-
-</div><div class="tsd-tag-since"><h4 class="tsd-anchor-link" id="since-1">Since<a href="#since-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>1.2.3</p>
-</div></div><aside class="tsd-sources"><p>Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a href="actions_BaseAction.BaseAction.html#constructor">constructor</a></p><ul><li>Defined in <a href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L328">src/actions/BaseAction.ts:328</a></li></ul></aside></div></li></ul></section></section></details><details class="tsd-panel-group tsd-member-group tsd-accordion" open><summary class="tsd-accordion-summary" data-key="section-Properties"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h2>Properties</h2></summary><section><section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited"><h3 class="tsd-anchor-link" id="api"><code class="tsd-tag">Protected</code><span>api</span><a href="#api" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><div class="tsd-signature"><span class="tsd-kind-property">api</span><span class="tsd-signature-symbol">:</span> <a href="services_ApiService.ApiService.html" class="tsd-signature-type tsd-kind-class">ApiService</a></div><div class="tsd-comment tsd-typography"><p>API service for HTTP requests to <a href="http://Commands.com">Commands.com</a> backend</p>
-</div><div class="tsd-comment tsd-typography"><div class="tsd-tag-remarks"><h4 class="tsd-anchor-link" id="remarks-1">Remarks<a href="#remarks-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Inherited from ActionServices interface. Manages all HTTP communication
-with the <a href="http://Commands.com">Commands.com</a> API, including environment detection (local vs
-production) and request configuration.</p>
-</div></div><aside class="tsd-sources"><p>Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a href="actions_BaseAction.BaseAction.html#api">api</a></p><ul><li>Defined in <a href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L217">src/actions/BaseAction.ts:217</a></li></ul></aside></section><section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited"><h3 class="tsd-anchor-link" id="auth"><code class="tsd-tag">Protected</code><span>auth</span><a href="#auth" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><div class="tsd-signature"><span class="tsd-kind-property">auth</span><span class="tsd-signature-symbol">:</span> <a href="services_AuthService.AuthService.html" class="tsd-signature-type tsd-kind-class">AuthService</a></div><div class="tsd-comment tsd-typography"><p>Authentication service for managing user credentials and tokens</p>
-</div><div class="tsd-comment tsd-typography"><div class="tsd-tag-remarks"><h4 class="tsd-anchor-link" id="remarks-2">Remarks<a href="#remarks-2" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Inherited from ActionServices interface. Handles user authentication,
-token storage, and authentication state. Required for operations that
-interact with the <a href="http://Commands.com">Commands.com</a> API.</p>
-</div></div><aside class="tsd-sources"><p>Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a href="actions_BaseAction.BaseAction.html#auth">auth</a></p><ul><li>Defined in <a href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L205">src/actions/BaseAction.ts:205</a></li></ul></aside></section><section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited"><h3 class="tsd-anchor-link" id="configservice"><code class="tsd-tag">Protected</code><span>config<wbr/>Service</span><a href="#configservice" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><div class="tsd-signature"><span class="tsd-kind-property">configService</span><span class="tsd-signature-symbol">:</span> <a href="services_ConfigService.ConfigService.html" class="tsd-signature-type tsd-kind-class">ConfigService</a></div><div class="tsd-comment tsd-typography"><p>Configuration service for managing Claude desktop configuration</p>
-</div><div class="tsd-comment tsd-typography"><div class="tsd-tag-remarks"><h4 class="tsd-anchor-link" id="remarks-3">Remarks<a href="#remarks-3" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Inherited from ActionServices interface. Handles reading and writing
-the claude_desktop_config.json file, managing MCP server configurations,
-and configuration validation.</p>
-</div></div><aside class="tsd-sources"><p>Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a href="actions_BaseAction.BaseAction.html#configservice">configService</a></p><ul><li>Defined in <a href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L265">src/actions/BaseAction.ts:265</a></li></ul></aside></section><section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited"><h3 class="tsd-anchor-link" id="dependencies"><code class="tsd-tag">Protected</code><span>dependencies</span><a href="#dependencies" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><div class="tsd-signature"><span class="tsd-kind-property">dependencies</span><span class="tsd-signature-symbol">:</span> <a href="services_DependencyService.DependencyService.html" class="tsd-signature-type tsd-kind-class">DependencyService</a></div><div class="tsd-comment tsd-typography"><p>Dependency service for managing package dependencies</p>
-</div><div class="tsd-comment tsd-typography"><div class="tsd-tag-remarks"><h4 class="tsd-anchor-link" id="remarks-4">Remarks<a href="#remarks-4" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Inherited from ActionServices interface. Handles installation, validation,
-and management of package dependencies for stacks, including npm, pip,
-and other package managers.</p>
-</div></div><aside class="tsd-sources"><p>Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a href="actions_BaseAction.BaseAction.html#dependencies">dependencies</a></p><ul><li>Defined in <a href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L241">src/actions/BaseAction.ts:241</a></li></ul></aside></section><section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited"><h3 class="tsd-anchor-link" id="fileservice"><code class="tsd-tag">Protected</code><span>file<wbr/>Service</span><a href="#fileservice" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><div class="tsd-signature"><span class="tsd-kind-property">fileService</span><span class="tsd-signature-symbol">:</span> <a href="services_FileService.FileService.html" class="tsd-signature-type tsd-kind-class">FileService</a></div><div class="tsd-comment tsd-typography"><p>File service for file system operations</p>
-</div><div class="tsd-comment tsd-typography"><div class="tsd-tag-remarks"><h4 class="tsd-anchor-link" id="remarks-5">Remarks<a href="#remarks-5" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Inherited from ActionServices interface. Provides file and directory
-operations including reading, writing, copying, and managing the Claude
-configuration directory structure.</p>
-</div></div><aside class="tsd-sources"><p>Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a href="actions_BaseAction.BaseAction.html#fileservice">fileService</a></p><ul><li>Defined in <a href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L253">src/actions/BaseAction.ts:253</a></li></ul></aside></section><section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited"><h3 class="tsd-anchor-link" id="metadata"><code class="tsd-tag">Protected</code><span>metadata</span><a href="#metadata" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><div class="tsd-signature"><span class="tsd-kind-property">metadata</span><span class="tsd-signature-symbol">:</span> <a href="services_MetadataService.MetadataService.html" class="tsd-signature-type tsd-kind-class">MetadataService</a></div><div class="tsd-comment tsd-typography"><p>Metadata service for handling stack metadata operations</p>
-</div><div class="tsd-comment tsd-typography"><div class="tsd-tag-remarks"><h4 class="tsd-anchor-link" id="remarks-6">Remarks<a href="#remarks-6" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Inherited from ActionServices interface. Handles reading, writing, and
-validation of stack metadata files, including claude_desktop_config.json
-and stack configuration.</p>
-</div></div><aside class="tsd-sources"><p>Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a href="actions_BaseAction.BaseAction.html#metadata">metadata</a></p><ul><li>Defined in <a href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L229">src/actions/BaseAction.ts:229</a></li></ul></aside></section><section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited"><h3 class="tsd-anchor-link" id="stackoperations"><code class="tsd-tag">Protected</code><span>stack<wbr/>Operations</span><a href="#stackoperations" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><div class="tsd-signature"><span class="tsd-kind-property">stackOperations</span><span class="tsd-signature-symbol">:</span> <a href="services_StackOperationService.StackOperationService.html" class="tsd-signature-type tsd-kind-class">StackOperationService</a></div><div class="tsd-comment tsd-typography"><p>Stack operations service for complex stack manipulations</p>
-</div><div class="tsd-comment tsd-typography"><div class="tsd-tag-remarks"><h4 class="tsd-anchor-link" id="remarks-7">Remarks<a href="#remarks-7" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Inherited from ActionServices interface. Handles complex stack operations
-like merging configurations, managing dependencies, and orchestrating
-multi-step stack operations. Depends on ui, dependencies, and fileService.</p>
-</div></div><aside class="tsd-sources"><p>Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a href="actions_BaseAction.BaseAction.html#stackoperations">stackOperations</a></p><ul><li>Defined in <a href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L289">src/actions/BaseAction.ts:289</a></li></ul></aside></section><section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited"><h3 class="tsd-anchor-link" id="stackservice"><code class="tsd-tag">Protected</code><span>stack<wbr/>Service</span><a href="#stackservice" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><div class="tsd-signature"><span class="tsd-kind-property">stackService</span><span class="tsd-signature-symbol">:</span> <a href="services_StackService.StackService.html" class="tsd-signature-type tsd-kind-class">StackService</a></div><div class="tsd-comment tsd-typography"><p>Stack service for stack lifecycle management</p>
-</div><div class="tsd-comment tsd-typography"><div class="tsd-tag-remarks"><h4 class="tsd-anchor-link" id="remarks-8">Remarks<a href="#remarks-8" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Inherited from ActionServices interface. High-level service for managing
-stack operations including installation, uninstallation, validation, and
-local stack management. Depends on fileService and configService.</p>
-</div></div><aside class="tsd-sources"><p>Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a href="actions_BaseAction.BaseAction.html#stackservice">stackService</a></p><ul><li>Defined in <a href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L277">src/actions/BaseAction.ts:277</a></li></ul></aside></section><section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited"><h3 class="tsd-anchor-link" id="ui"><code class="tsd-tag">Protected</code><span>ui</span><a href="#ui" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><div class="tsd-signature"><span class="tsd-kind-property">ui</span><span class="tsd-signature-symbol">:</span> <a href="services_UIService.UIService.html" class="tsd-signature-type tsd-kind-class">UIService</a></div><div class="tsd-comment tsd-typography"><p>User interface service for console output and user interaction</p>
-</div><div class="tsd-comment tsd-typography"><div class="tsd-tag-remarks"><h4 class="tsd-anchor-link" id="remarks-9">Remarks<a href="#remarks-9" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Inherited from ActionServices interface. Handles all console output
-including colored text, progress indicators, user prompts, and error
-messages. All user-facing operations should use this service.</p>
-</div></div><aside class="tsd-sources"><p>Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a href="actions_BaseAction.BaseAction.html#ui">ui</a></p><ul><li>Defined in <a href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L193">src/actions/BaseAction.ts:193</a></li></ul></aside></section></section></details><details class="tsd-panel-group tsd-member-group tsd-accordion" open><summary class="tsd-accordion-summary" data-key="section-Methods"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h2>Methods</h2></summary><section><section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited"><h3 class="tsd-anchor-link" id="displayapienvironment"><code class="tsd-tag">Protected</code><span>display<wbr/>Api<wbr/>Environment</span><a href="#displayapienvironment" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><ul class="tsd-signatures tsd-is-protected tsd-is-inherited"><li class="tsd-is-protected tsd-is-inherited"><div class="tsd-signature tsd-anchor-link" id="displayapienvironment-1"><span class="tsd-kind-call-signature">displayApiEnvironment</span><span class="tsd-signature-symbol">()</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span><a href="#displayapienvironment-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div><div class="tsd-description"><code class="tsd-tag">Protected</code><div class="tsd-comment tsd-typography"><p>Display API environment information when in local development mode</p>
-</div><h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><div class="tsd-comment tsd-typography"><div class="tsd-tag-remarks"><h4 class="tsd-anchor-link" id="remarks-10">Remarks<a href="#remarks-10" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Checks if the API service is configured for local development and displays
-the local backend URL to the user. Useful for debugging and development
-scenarios where developers need to know which backend is being used.</p>
-</div><div class="tsd-tag-example"><h4 class="tsd-anchor-link" id="example-1">Example<a href="#example-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="typescript"><span class="hl-9">async</span><span class="hl-1"> </span><span class="hl-0">execute</span><span class="hl-1">(</span><span class="hl-9">stackId</span><span class="hl-1">: </span><span class="hl-9">string</span><span class="hl-1">): </span><span class="hl-8">Promise</span><span class="hl-1">&lt;</span><span class="hl-3">void</span><span class="hl-1">&gt; {</span><br/><span class="hl-1">  this.displayApiEnvironment(); </span><span class="hl-4">// Shows &quot;Using local backend: http://localhost:3000&quot;</span><br/><br/><span class="hl-1">  </span><span class="hl-4">// Continue with action logic...</span><br/><span class="hl-1">}</span>
+                      </div>
+                      <div class="tsd-tag-since">
+                        <h4 class="tsd-anchor-link" id="since-1">
+                          Since<a href="#since-1" aria-label="Permalink" class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <p>1.2.3</p>
+                      </div>
+                    </div>
+                    <aside class="tsd-sources">
+                      <p>
+                        Inherited from
+                        <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a
+                          href="actions_BaseAction.BaseAction.html#constructor"
+                          >constructor</a
+                        >
+                      </p>
+                      <ul>
+                        <li>
+                          Defined in
+                          <a
+                            href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L328"
+                            >src/actions/BaseAction.ts:328</a
+                          >
+                        </li>
+                      </ul>
+                    </aside>
+                  </div>
+                </li>
+              </ul>
+            </section>
+          </section>
+        </details>
+        <details class="tsd-panel-group tsd-member-group tsd-accordion" open>
+          <summary class="tsd-accordion-summary" data-key="section-Properties">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <use href="../assets/icons.svg#icon-chevronDown"></use>
+            </svg>
+            <h2>Properties</h2>
+          </summary>
+          <section>
+            <section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited">
+              <h3 class="tsd-anchor-link" id="api">
+                <code class="tsd-tag">Protected</code><span>api</span
+                ><a href="#api" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use></svg
+                ></a>
+              </h3>
+              <div class="tsd-signature">
+                <span class="tsd-kind-property">api</span
+                ><span class="tsd-signature-symbol">:</span>
+                <a
+                  href="services_ApiService.ApiService.html"
+                  class="tsd-signature-type tsd-kind-class"
+                  >ApiService</a
+                >
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <p>
+                  API service for HTTP requests to
+                  <a href="http://Commands.com">Commands.com</a> backend
+                </p>
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <div class="tsd-tag-remarks">
+                  <h4 class="tsd-anchor-link" id="remarks-1">
+                    Remarks<a href="#remarks-1" aria-label="Permalink" class="tsd-anchor-icon"
+                      ><svg viewBox="0 0 24 24" aria-hidden="true">
+                        <use href="../assets/icons.svg#icon-anchor"></use></svg
+                    ></a>
+                  </h4>
+                  <p>
+                    Inherited from ActionServices interface. Manages all HTTP communication with the
+                    <a href="http://Commands.com">Commands.com</a> API, including environment
+                    detection (local vs production) and request configuration.
+                  </p>
+                </div>
+              </div>
+              <aside class="tsd-sources">
+                <p>
+                  Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a
+                    href="actions_BaseAction.BaseAction.html#api"
+                    >api</a
+                  >
+                </p>
+                <ul>
+                  <li>
+                    Defined in
+                    <a
+                      href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L217"
+                      >src/actions/BaseAction.ts:217</a
+                    >
+                  </li>
+                </ul>
+              </aside>
+            </section>
+            <section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited">
+              <h3 class="tsd-anchor-link" id="auth">
+                <code class="tsd-tag">Protected</code><span>auth</span
+                ><a href="#auth" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use></svg
+                ></a>
+              </h3>
+              <div class="tsd-signature">
+                <span class="tsd-kind-property">auth</span
+                ><span class="tsd-signature-symbol">:</span>
+                <a
+                  href="services_AuthService.AuthService.html"
+                  class="tsd-signature-type tsd-kind-class"
+                  >AuthService</a
+                >
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <p>Authentication service for managing user credentials and tokens</p>
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <div class="tsd-tag-remarks">
+                  <h4 class="tsd-anchor-link" id="remarks-2">
+                    Remarks<a href="#remarks-2" aria-label="Permalink" class="tsd-anchor-icon"
+                      ><svg viewBox="0 0 24 24" aria-hidden="true">
+                        <use href="../assets/icons.svg#icon-anchor"></use></svg
+                    ></a>
+                  </h4>
+                  <p>
+                    Inherited from ActionServices interface. Handles user authentication, token
+                    storage, and authentication state. Required for operations that interact with
+                    the <a href="http://Commands.com">Commands.com</a> API.
+                  </p>
+                </div>
+              </div>
+              <aside class="tsd-sources">
+                <p>
+                  Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a
+                    href="actions_BaseAction.BaseAction.html#auth"
+                    >auth</a
+                  >
+                </p>
+                <ul>
+                  <li>
+                    Defined in
+                    <a
+                      href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L205"
+                      >src/actions/BaseAction.ts:205</a
+                    >
+                  </li>
+                </ul>
+              </aside>
+            </section>
+            <section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited">
+              <h3 class="tsd-anchor-link" id="configservice">
+                <code class="tsd-tag">Protected</code><span>config<wbr />Service</span
+                ><a href="#configservice" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use></svg
+                ></a>
+              </h3>
+              <div class="tsd-signature">
+                <span class="tsd-kind-property">configService</span
+                ><span class="tsd-signature-symbol">:</span>
+                <a
+                  href="services_ConfigService.ConfigService.html"
+                  class="tsd-signature-type tsd-kind-class"
+                  >ConfigService</a
+                >
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <p>Configuration service for managing Claude desktop configuration</p>
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <div class="tsd-tag-remarks">
+                  <h4 class="tsd-anchor-link" id="remarks-3">
+                    Remarks<a href="#remarks-3" aria-label="Permalink" class="tsd-anchor-icon"
+                      ><svg viewBox="0 0 24 24" aria-hidden="true">
+                        <use href="../assets/icons.svg#icon-anchor"></use></svg
+                    ></a>
+                  </h4>
+                  <p>
+                    Inherited from ActionServices interface. Handles reading and writing the
+                    claude_desktop_config.json file, managing MCP server configurations, and
+                    configuration validation.
+                  </p>
+                </div>
+              </div>
+              <aside class="tsd-sources">
+                <p>
+                  Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a
+                    href="actions_BaseAction.BaseAction.html#configservice"
+                    >configService</a
+                  >
+                </p>
+                <ul>
+                  <li>
+                    Defined in
+                    <a
+                      href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L265"
+                      >src/actions/BaseAction.ts:265</a
+                    >
+                  </li>
+                </ul>
+              </aside>
+            </section>
+            <section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited">
+              <h3 class="tsd-anchor-link" id="dependencies">
+                <code class="tsd-tag">Protected</code><span>dependencies</span
+                ><a href="#dependencies" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use></svg
+                ></a>
+              </h3>
+              <div class="tsd-signature">
+                <span class="tsd-kind-property">dependencies</span
+                ><span class="tsd-signature-symbol">:</span>
+                <a
+                  href="services_DependencyService.DependencyService.html"
+                  class="tsd-signature-type tsd-kind-class"
+                  >DependencyService</a
+                >
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <p>Dependency service for managing package dependencies</p>
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <div class="tsd-tag-remarks">
+                  <h4 class="tsd-anchor-link" id="remarks-4">
+                    Remarks<a href="#remarks-4" aria-label="Permalink" class="tsd-anchor-icon"
+                      ><svg viewBox="0 0 24 24" aria-hidden="true">
+                        <use href="../assets/icons.svg#icon-anchor"></use></svg
+                    ></a>
+                  </h4>
+                  <p>
+                    Inherited from ActionServices interface. Handles installation, validation, and
+                    management of package dependencies for stacks, including npm, pip, and other
+                    package managers.
+                  </p>
+                </div>
+              </div>
+              <aside class="tsd-sources">
+                <p>
+                  Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a
+                    href="actions_BaseAction.BaseAction.html#dependencies"
+                    >dependencies</a
+                  >
+                </p>
+                <ul>
+                  <li>
+                    Defined in
+                    <a
+                      href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L241"
+                      >src/actions/BaseAction.ts:241</a
+                    >
+                  </li>
+                </ul>
+              </aside>
+            </section>
+            <section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited">
+              <h3 class="tsd-anchor-link" id="fileservice">
+                <code class="tsd-tag">Protected</code><span>file<wbr />Service</span
+                ><a href="#fileservice" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use></svg
+                ></a>
+              </h3>
+              <div class="tsd-signature">
+                <span class="tsd-kind-property">fileService</span
+                ><span class="tsd-signature-symbol">:</span>
+                <a
+                  href="services_FileService.FileService.html"
+                  class="tsd-signature-type tsd-kind-class"
+                  >FileService</a
+                >
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <p>File service for file system operations</p>
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <div class="tsd-tag-remarks">
+                  <h4 class="tsd-anchor-link" id="remarks-5">
+                    Remarks<a href="#remarks-5" aria-label="Permalink" class="tsd-anchor-icon"
+                      ><svg viewBox="0 0 24 24" aria-hidden="true">
+                        <use href="../assets/icons.svg#icon-anchor"></use></svg
+                    ></a>
+                  </h4>
+                  <p>
+                    Inherited from ActionServices interface. Provides file and directory operations
+                    including reading, writing, copying, and managing the Claude configuration
+                    directory structure.
+                  </p>
+                </div>
+              </div>
+              <aside class="tsd-sources">
+                <p>
+                  Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a
+                    href="actions_BaseAction.BaseAction.html#fileservice"
+                    >fileService</a
+                  >
+                </p>
+                <ul>
+                  <li>
+                    Defined in
+                    <a
+                      href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L253"
+                      >src/actions/BaseAction.ts:253</a
+                    >
+                  </li>
+                </ul>
+              </aside>
+            </section>
+            <section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited">
+              <h3 class="tsd-anchor-link" id="metadata">
+                <code class="tsd-tag">Protected</code><span>metadata</span
+                ><a href="#metadata" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use></svg
+                ></a>
+              </h3>
+              <div class="tsd-signature">
+                <span class="tsd-kind-property">metadata</span
+                ><span class="tsd-signature-symbol">:</span>
+                <a
+                  href="services_MetadataService.MetadataService.html"
+                  class="tsd-signature-type tsd-kind-class"
+                  >MetadataService</a
+                >
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <p>Metadata service for handling stack metadata operations</p>
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <div class="tsd-tag-remarks">
+                  <h4 class="tsd-anchor-link" id="remarks-6">
+                    Remarks<a href="#remarks-6" aria-label="Permalink" class="tsd-anchor-icon"
+                      ><svg viewBox="0 0 24 24" aria-hidden="true">
+                        <use href="../assets/icons.svg#icon-anchor"></use></svg
+                    ></a>
+                  </h4>
+                  <p>
+                    Inherited from ActionServices interface. Handles reading, writing, and
+                    validation of stack metadata files, including claude_desktop_config.json and
+                    stack configuration.
+                  </p>
+                </div>
+              </div>
+              <aside class="tsd-sources">
+                <p>
+                  Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a
+                    href="actions_BaseAction.BaseAction.html#metadata"
+                    >metadata</a
+                  >
+                </p>
+                <ul>
+                  <li>
+                    Defined in
+                    <a
+                      href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L229"
+                      >src/actions/BaseAction.ts:229</a
+                    >
+                  </li>
+                </ul>
+              </aside>
+            </section>
+            <section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited">
+              <h3 class="tsd-anchor-link" id="stackoperations">
+                <code class="tsd-tag">Protected</code><span>stack<wbr />Operations</span
+                ><a href="#stackoperations" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use></svg
+                ></a>
+              </h3>
+              <div class="tsd-signature">
+                <span class="tsd-kind-property">stackOperations</span
+                ><span class="tsd-signature-symbol">:</span>
+                <a
+                  href="services_StackOperationService.StackOperationService.html"
+                  class="tsd-signature-type tsd-kind-class"
+                  >StackOperationService</a
+                >
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <p>Stack operations service for complex stack manipulations</p>
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <div class="tsd-tag-remarks">
+                  <h4 class="tsd-anchor-link" id="remarks-7">
+                    Remarks<a href="#remarks-7" aria-label="Permalink" class="tsd-anchor-icon"
+                      ><svg viewBox="0 0 24 24" aria-hidden="true">
+                        <use href="../assets/icons.svg#icon-anchor"></use></svg
+                    ></a>
+                  </h4>
+                  <p>
+                    Inherited from ActionServices interface. Handles complex stack operations like
+                    merging configurations, managing dependencies, and orchestrating multi-step
+                    stack operations. Depends on ui, dependencies, and fileService.
+                  </p>
+                </div>
+              </div>
+              <aside class="tsd-sources">
+                <p>
+                  Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a
+                    href="actions_BaseAction.BaseAction.html#stackoperations"
+                    >stackOperations</a
+                  >
+                </p>
+                <ul>
+                  <li>
+                    Defined in
+                    <a
+                      href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L289"
+                      >src/actions/BaseAction.ts:289</a
+                    >
+                  </li>
+                </ul>
+              </aside>
+            </section>
+            <section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited">
+              <h3 class="tsd-anchor-link" id="stackservice">
+                <code class="tsd-tag">Protected</code><span>stack<wbr />Service</span
+                ><a href="#stackservice" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use></svg
+                ></a>
+              </h3>
+              <div class="tsd-signature">
+                <span class="tsd-kind-property">stackService</span
+                ><span class="tsd-signature-symbol">:</span>
+                <a
+                  href="services_StackService.StackService.html"
+                  class="tsd-signature-type tsd-kind-class"
+                  >StackService</a
+                >
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <p>Stack service for stack lifecycle management</p>
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <div class="tsd-tag-remarks">
+                  <h4 class="tsd-anchor-link" id="remarks-8">
+                    Remarks<a href="#remarks-8" aria-label="Permalink" class="tsd-anchor-icon"
+                      ><svg viewBox="0 0 24 24" aria-hidden="true">
+                        <use href="../assets/icons.svg#icon-anchor"></use></svg
+                    ></a>
+                  </h4>
+                  <p>
+                    Inherited from ActionServices interface. High-level service for managing stack
+                    operations including installation, uninstallation, validation, and local stack
+                    management. Depends on fileService and configService.
+                  </p>
+                </div>
+              </div>
+              <aside class="tsd-sources">
+                <p>
+                  Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a
+                    href="actions_BaseAction.BaseAction.html#stackservice"
+                    >stackService</a
+                  >
+                </p>
+                <ul>
+                  <li>
+                    Defined in
+                    <a
+                      href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L277"
+                      >src/actions/BaseAction.ts:277</a
+                    >
+                  </li>
+                </ul>
+              </aside>
+            </section>
+            <section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited">
+              <h3 class="tsd-anchor-link" id="ui">
+                <code class="tsd-tag">Protected</code><span>ui</span
+                ><a href="#ui" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use></svg
+                ></a>
+              </h3>
+              <div class="tsd-signature">
+                <span class="tsd-kind-property">ui</span
+                ><span class="tsd-signature-symbol">:</span>
+                <a
+                  href="services_UIService.UIService.html"
+                  class="tsd-signature-type tsd-kind-class"
+                  >UIService</a
+                >
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <p>User interface service for console output and user interaction</p>
+              </div>
+              <div class="tsd-comment tsd-typography">
+                <div class="tsd-tag-remarks">
+                  <h4 class="tsd-anchor-link" id="remarks-9">
+                    Remarks<a href="#remarks-9" aria-label="Permalink" class="tsd-anchor-icon"
+                      ><svg viewBox="0 0 24 24" aria-hidden="true">
+                        <use href="../assets/icons.svg#icon-anchor"></use></svg
+                    ></a>
+                  </h4>
+                  <p>
+                    Inherited from ActionServices interface. Handles all console output including
+                    colored text, progress indicators, user prompts, and error messages. All
+                    user-facing operations should use this service.
+                  </p>
+                </div>
+              </div>
+              <aside class="tsd-sources">
+                <p>
+                  Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a
+                    href="actions_BaseAction.BaseAction.html#ui"
+                    >ui</a
+                  >
+                </p>
+                <ul>
+                  <li>
+                    Defined in
+                    <a
+                      href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L193"
+                      >src/actions/BaseAction.ts:193</a
+                    >
+                  </li>
+                </ul>
+              </aside>
+            </section>
+          </section>
+        </details>
+        <details class="tsd-panel-group tsd-member-group tsd-accordion" open>
+          <summary class="tsd-accordion-summary" data-key="section-Methods">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <use href="../assets/icons.svg#icon-chevronDown"></use>
+            </svg>
+            <h2>Methods</h2>
+          </summary>
+          <section>
+            <section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited">
+              <h3 class="tsd-anchor-link" id="displayapienvironment">
+                <code class="tsd-tag">Protected</code
+                ><span>display<wbr />Api<wbr />Environment</span
+                ><a href="#displayapienvironment" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use></svg
+                ></a>
+              </h3>
+              <ul class="tsd-signatures tsd-is-protected tsd-is-inherited">
+                <li class="tsd-is-protected tsd-is-inherited">
+                  <div class="tsd-signature tsd-anchor-link" id="displayapienvironment-1">
+                    <span class="tsd-kind-call-signature">displayApiEnvironment</span
+                    ><span class="tsd-signature-symbol">()</span
+                    ><span class="tsd-signature-symbol">:</span>
+                    <span class="tsd-signature-type">void</span
+                    ><a
+                      href="#displayapienvironment-1"
+                      aria-label="Permalink"
+                      class="tsd-anchor-icon"
+                      ><svg viewBox="0 0 24 24" aria-hidden="true">
+                        <use href="../assets/icons.svg#icon-anchor"></use></svg
+                    ></a>
+                  </div>
+                  <div class="tsd-description">
+                    <code class="tsd-tag">Protected</code>
+                    <div class="tsd-comment tsd-typography">
+                      <p>Display API environment information when in local development mode</p>
+                    </div>
+                    <h4 class="tsd-returns-title">
+                      Returns <span class="tsd-signature-type">void</span>
+                    </h4>
+                    <div class="tsd-comment tsd-typography">
+                      <div class="tsd-tag-remarks">
+                        <h4 class="tsd-anchor-link" id="remarks-10">
+                          Remarks<a
+                            href="#remarks-10"
+                            aria-label="Permalink"
+                            class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <p>
+                          Checks if the API service is configured for local development and displays
+                          the local backend URL to the user. Useful for debugging and development
+                          scenarios where developers need to know which backend is being used.
+                        </p>
+                      </div>
+                      <div class="tsd-tag-example">
+                        <h4 class="tsd-anchor-link" id="example-1">
+                          Example<a href="#example-1" aria-label="Permalink" class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <pre><code class="typescript"><span class="hl-9">async</span><span class="hl-1"> </span><span class="hl-0">execute</span><span class="hl-1">(</span><span class="hl-9">stackId</span><span class="hl-1">: </span><span class="hl-9">string</span><span class="hl-1">): </span><span class="hl-8">Promise</span><span class="hl-1">&lt;</span><span class="hl-3">void</span><span class="hl-1">&gt; {</span><br/><span class="hl-1">  this.displayApiEnvironment(); </span><span class="hl-4">// Shows &quot;Using local backend: http://localhost:3000&quot;</span><br/><br/><span class="hl-1">  </span><span class="hl-4">// Continue with action logic...</span><br/><span class="hl-1">}</span>
 </code><button type="button">Copy</button></pre>
-
-</div><div class="tsd-tag-since"><h4 class="tsd-anchor-link" id="since-2">Since<a href="#since-2" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>1.2.3</p>
-</div></div><aside class="tsd-sources"><p>Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a href="actions_BaseAction.BaseAction.html#displayapienvironment">displayApiEnvironment</a></p><ul><li>Defined in <a href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L616">src/actions/BaseAction.ts:616</a></li></ul></aside></div></li></ul></section><section class="tsd-panel tsd-member"><h3 class="tsd-anchor-link" id="execute"><span>execute</span><a href="#execute" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><ul class="tsd-signatures"><li class=""><div class="tsd-signature tsd-anchor-link" id="execute-1"><span class="tsd-kind-call-signature">execute</span><span class="tsd-signature-symbol">()</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span><a href="#execute-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div><div class="tsd-description"><div class="tsd-comment tsd-typography"><p>Execute the list action</p>
-</div><h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">void</span><span class="tsd-signature-symbol">&gt;</span></h4><div class="tsd-comment tsd-typography"></div><aside class="tsd-sources"><p>Overrides <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a href="actions_BaseAction.BaseAction.html#execute">execute</a></p><ul><li>Defined in <a href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/list.ts#L21">src/actions/list.ts:21</a></li></ul></aside></div></li></ul></section><section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited"><h3 class="tsd-anchor-link" id="getactionname"><code class="tsd-tag">Protected</code><span>get<wbr/>Action<wbr/>Name</span><a href="#getactionname" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><ul class="tsd-signatures tsd-is-protected tsd-is-inherited"><li class="tsd-is-protected tsd-is-inherited"><div class="tsd-signature tsd-anchor-link" id="getactionname-1"><span class="tsd-kind-call-signature">getActionName</span><span class="tsd-signature-symbol">()</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><a href="#getactionname-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div><div class="tsd-description"><code class="tsd-tag">Protected</code><div class="tsd-comment tsd-typography"><p>Get the action name for logging and debugging</p>
-</div><h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span></h4><p>The lowercase action name without 'Action' suffix</p>
-<div class="tsd-comment tsd-typography"><div class="tsd-tag-remarks"><h4 class="tsd-anchor-link" id="remarks-11">Remarks<a href="#remarks-11" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Derives the action name from the class constructor name by removing the
-'Action' suffix and converting to lowercase. Used for consistent logging
-and debugging output across all actions.</p>
-</div><div class="tsd-tag-example"><h4 class="tsd-anchor-link" id="example-2">Example<a href="#example-2" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="typescript"><span class="hl-4">// For class &#39;InstallAction&#39;, returns &#39;install&#39;</span><br/><span class="hl-4">// For class &#39;PublishAction&#39;, returns &#39;publish&#39;</span><br/><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-10">actionName</span><span class="hl-1"> = </span><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-0">getActionName</span><span class="hl-1">();</span>
+                      </div>
+                      <div class="tsd-tag-since">
+                        <h4 class="tsd-anchor-link" id="since-2">
+                          Since<a href="#since-2" aria-label="Permalink" class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <p>1.2.3</p>
+                      </div>
+                    </div>
+                    <aside class="tsd-sources">
+                      <p>
+                        Inherited from
+                        <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a
+                          href="actions_BaseAction.BaseAction.html#displayapienvironment"
+                          >displayApiEnvironment</a
+                        >
+                      </p>
+                      <ul>
+                        <li>
+                          Defined in
+                          <a
+                            href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L616"
+                            >src/actions/BaseAction.ts:616</a
+                          >
+                        </li>
+                      </ul>
+                    </aside>
+                  </div>
+                </li>
+              </ul>
+            </section>
+            <section class="tsd-panel tsd-member">
+              <h3 class="tsd-anchor-link" id="execute">
+                <span>execute</span
+                ><a href="#execute" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use></svg
+                ></a>
+              </h3>
+              <ul class="tsd-signatures">
+                <li class="">
+                  <div class="tsd-signature tsd-anchor-link" id="execute-1">
+                    <span class="tsd-kind-call-signature">execute</span
+                    ><span class="tsd-signature-symbol">()</span
+                    ><span class="tsd-signature-symbol">:</span>
+                    <span class="tsd-signature-type">Promise</span
+                    ><span class="tsd-signature-symbol">&lt;</span
+                    ><span class="tsd-signature-type">void</span
+                    ><span class="tsd-signature-symbol">&gt;</span
+                    ><a href="#execute-1" aria-label="Permalink" class="tsd-anchor-icon"
+                      ><svg viewBox="0 0 24 24" aria-hidden="true">
+                        <use href="../assets/icons.svg#icon-anchor"></use></svg
+                    ></a>
+                  </div>
+                  <div class="tsd-description">
+                    <div class="tsd-comment tsd-typography"><p>Execute the list action</p></div>
+                    <h4 class="tsd-returns-title">
+                      Returns <span class="tsd-signature-type">Promise</span
+                      ><span class="tsd-signature-symbol">&lt;</span
+                      ><span class="tsd-signature-type">void</span
+                      ><span class="tsd-signature-symbol">&gt;</span>
+                    </h4>
+                    <div class="tsd-comment tsd-typography"></div>
+                    <aside class="tsd-sources">
+                      <p>
+                        Overrides <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a
+                          href="actions_BaseAction.BaseAction.html#execute"
+                          >execute</a
+                        >
+                      </p>
+                      <ul>
+                        <li>
+                          Defined in
+                          <a
+                            href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/list.ts#L21"
+                            >src/actions/list.ts:21</a
+                          >
+                        </li>
+                      </ul>
+                    </aside>
+                  </div>
+                </li>
+              </ul>
+            </section>
+            <section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited">
+              <h3 class="tsd-anchor-link" id="getactionname">
+                <code class="tsd-tag">Protected</code><span>get<wbr />Action<wbr />Name</span
+                ><a href="#getactionname" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use></svg
+                ></a>
+              </h3>
+              <ul class="tsd-signatures tsd-is-protected tsd-is-inherited">
+                <li class="tsd-is-protected tsd-is-inherited">
+                  <div class="tsd-signature tsd-anchor-link" id="getactionname-1">
+                    <span class="tsd-kind-call-signature">getActionName</span
+                    ><span class="tsd-signature-symbol">()</span
+                    ><span class="tsd-signature-symbol">:</span>
+                    <span class="tsd-signature-type">string</span
+                    ><a href="#getactionname-1" aria-label="Permalink" class="tsd-anchor-icon"
+                      ><svg viewBox="0 0 24 24" aria-hidden="true">
+                        <use href="../assets/icons.svg#icon-anchor"></use></svg
+                    ></a>
+                  </div>
+                  <div class="tsd-description">
+                    <code class="tsd-tag">Protected</code>
+                    <div class="tsd-comment tsd-typography">
+                      <p>Get the action name for logging and debugging</p>
+                    </div>
+                    <h4 class="tsd-returns-title">
+                      Returns <span class="tsd-signature-type">string</span>
+                    </h4>
+                    <p>The lowercase action name without 'Action' suffix</p>
+                    <div class="tsd-comment tsd-typography">
+                      <div class="tsd-tag-remarks">
+                        <h4 class="tsd-anchor-link" id="remarks-11">
+                          Remarks<a
+                            href="#remarks-11"
+                            aria-label="Permalink"
+                            class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <p>
+                          Derives the action name from the class constructor name by removing the
+                          'Action' suffix and converting to lowercase. Used for consistent logging
+                          and debugging output across all actions.
+                        </p>
+                      </div>
+                      <div class="tsd-tag-example">
+                        <h4 class="tsd-anchor-link" id="example-2">
+                          Example<a href="#example-2" aria-label="Permalink" class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <pre><code class="typescript"><span class="hl-4">// For class &#39;InstallAction&#39;, returns &#39;install&#39;</span><br/><span class="hl-4">// For class &#39;PublishAction&#39;, returns &#39;publish&#39;</span><br/><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-10">actionName</span><span class="hl-1"> = </span><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-0">getActionName</span><span class="hl-1">();</span>
 </code><button type="button">Copy</button></pre>
-
-</div><div class="tsd-tag-since"><h4 class="tsd-anchor-link" id="since-3">Since<a href="#since-3" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>1.2.3</p>
-</div></div><aside class="tsd-sources"><p>Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a href="actions_BaseAction.BaseAction.html#getactionname">getActionName</a></p><ul><li>Defined in <a href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L533">src/actions/BaseAction.ts:533</a></li></ul></aside></div></li></ul></section><section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited"><h3 class="tsd-anchor-link" id="handleerror"><code class="tsd-tag">Protected</code><span>handle<wbr/>Error</span><a href="#handleerror" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><ul class="tsd-signatures tsd-is-protected tsd-is-inherited"><li class="tsd-is-protected tsd-is-inherited"><div class="tsd-signature tsd-anchor-link" id="handleerror-1"><span class="tsd-kind-call-signature">handleError</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">error</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">,</span> <span class="tsd-kind-parameter">prefix</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">never</span><a href="#handleerror-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div><div class="tsd-description"><code class="tsd-tag">Protected</code><div class="tsd-comment tsd-typography"><p>Handle errors in a consistent way across all actions</p>
-</div><div class="tsd-parameters"><h4 class="tsd-parameters-title">Parameters</h4><ul class="tsd-parameter-list"><li><span><span class="tsd-kind-parameter">error</span>: <span class="tsd-signature-type">unknown</span></span><div class="tsd-comment tsd-typography"><p>The error to handle (any type)</p>
-</div><div class="tsd-comment tsd-typography"></div></li><li><span><span class="tsd-kind-parameter">prefix</span>: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = &#39;Operation&#39;</span></span><div class="tsd-comment tsd-typography"><p>Optional prefix for error message display</p>
-</div><div class="tsd-comment tsd-typography"></div></li></ul></div><h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">never</span></h4><p>Never returns in production (calls process.exit)</p>
-<div class="tsd-comment tsd-typography"><div class="tsd-tag-remarks"><h4 class="tsd-anchor-link" id="remarks-12">Remarks<a href="#remarks-12" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Provides standardized error handling for all CLI actions. In test
-environments, throws the error to allow test frameworks to catch it.
-In production environments, logs the error using the UI service and
-exits the process with error code 1.</p>
-</div><div class="tsd-tag-throws"><h4 class="tsd-anchor-link" id="throws-1">Throws<a href="#throws-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Error in test environment (NODE_ENV === 'test')</p>
-</div><div class="tsd-tag-example"><h4 class="tsd-anchor-link" id="example-3">Example<a href="#example-3" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="typescript"><span class="hl-7">try</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-9">stackService</span><span class="hl-1">.</span><span class="hl-0">installStack</span><span class="hl-1">(</span><span class="hl-9">stack</span><span class="hl-1">);</span><br/><span class="hl-1">} </span><span class="hl-7">catch</span><span class="hl-1"> (</span><span class="hl-9">error</span><span class="hl-1">) {</span><br/><span class="hl-1">  </span><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-0">handleError</span><span class="hl-1">(</span><span class="hl-9">error</span><span class="hl-1">, </span><span class="hl-2">&#39;Stack installation&#39;</span><span class="hl-1">);</span><br/><span class="hl-1">}</span>
+                      </div>
+                      <div class="tsd-tag-since">
+                        <h4 class="tsd-anchor-link" id="since-3">
+                          Since<a href="#since-3" aria-label="Permalink" class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <p>1.2.3</p>
+                      </div>
+                    </div>
+                    <aside class="tsd-sources">
+                      <p>
+                        Inherited from
+                        <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a
+                          href="actions_BaseAction.BaseAction.html#getactionname"
+                          >getActionName</a
+                        >
+                      </p>
+                      <ul>
+                        <li>
+                          Defined in
+                          <a
+                            href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L533"
+                            >src/actions/BaseAction.ts:533</a
+                          >
+                        </li>
+                      </ul>
+                    </aside>
+                  </div>
+                </li>
+              </ul>
+            </section>
+            <section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited">
+              <h3 class="tsd-anchor-link" id="handleerror">
+                <code class="tsd-tag">Protected</code><span>handle<wbr />Error</span
+                ><a href="#handleerror" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use></svg
+                ></a>
+              </h3>
+              <ul class="tsd-signatures tsd-is-protected tsd-is-inherited">
+                <li class="tsd-is-protected tsd-is-inherited">
+                  <div class="tsd-signature tsd-anchor-link" id="handleerror-1">
+                    <span class="tsd-kind-call-signature">handleError</span
+                    ><span class="tsd-signature-symbol">(</span
+                    ><span class="tsd-kind-parameter">error</span
+                    ><span class="tsd-signature-symbol">:</span>
+                    <span class="tsd-signature-type">unknown</span
+                    ><span class="tsd-signature-symbol">,</span>
+                    <span class="tsd-kind-parameter">prefix</span
+                    ><span class="tsd-signature-symbol">?:</span>
+                    <span class="tsd-signature-type">string</span
+                    ><span class="tsd-signature-symbol">)</span
+                    ><span class="tsd-signature-symbol">:</span>
+                    <span class="tsd-signature-type">never</span
+                    ><a href="#handleerror-1" aria-label="Permalink" class="tsd-anchor-icon"
+                      ><svg viewBox="0 0 24 24" aria-hidden="true">
+                        <use href="../assets/icons.svg#icon-anchor"></use></svg
+                    ></a>
+                  </div>
+                  <div class="tsd-description">
+                    <code class="tsd-tag">Protected</code>
+                    <div class="tsd-comment tsd-typography">
+                      <p>Handle errors in a consistent way across all actions</p>
+                    </div>
+                    <div class="tsd-parameters">
+                      <h4 class="tsd-parameters-title">Parameters</h4>
+                      <ul class="tsd-parameter-list">
+                        <li>
+                          <span
+                            ><span class="tsd-kind-parameter">error</span>:
+                            <span class="tsd-signature-type">unknown</span></span
+                          >
+                          <div class="tsd-comment tsd-typography">
+                            <p>The error to handle (any type)</p>
+                          </div>
+                          <div class="tsd-comment tsd-typography"></div>
+                        </li>
+                        <li>
+                          <span
+                            ><span class="tsd-kind-parameter">prefix</span>:
+                            <span class="tsd-signature-type">string</span
+                            ><span class="tsd-signature-symbol"> = &#39;Operation&#39;</span></span
+                          >
+                          <div class="tsd-comment tsd-typography">
+                            <p>Optional prefix for error message display</p>
+                          </div>
+                          <div class="tsd-comment tsd-typography"></div>
+                        </li>
+                      </ul>
+                    </div>
+                    <h4 class="tsd-returns-title">
+                      Returns <span class="tsd-signature-type">never</span>
+                    </h4>
+                    <p>Never returns in production (calls process.exit)</p>
+                    <div class="tsd-comment tsd-typography">
+                      <div class="tsd-tag-remarks">
+                        <h4 class="tsd-anchor-link" id="remarks-12">
+                          Remarks<a
+                            href="#remarks-12"
+                            aria-label="Permalink"
+                            class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <p>
+                          Provides standardized error handling for all CLI actions. In test
+                          environments, throws the error to allow test frameworks to catch it. In
+                          production environments, logs the error using the UI service and exits the
+                          process with error code 1.
+                        </p>
+                      </div>
+                      <div class="tsd-tag-throws">
+                        <h4 class="tsd-anchor-link" id="throws-1">
+                          Throws<a href="#throws-1" aria-label="Permalink" class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <p>Error in test environment (NODE_ENV === 'test')</p>
+                      </div>
+                      <div class="tsd-tag-example">
+                        <h4 class="tsd-anchor-link" id="example-3">
+                          Example<a href="#example-3" aria-label="Permalink" class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <pre><code class="typescript"><span class="hl-7">try</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-9">stackService</span><span class="hl-1">.</span><span class="hl-0">installStack</span><span class="hl-1">(</span><span class="hl-9">stack</span><span class="hl-1">);</span><br/><span class="hl-1">} </span><span class="hl-7">catch</span><span class="hl-1"> (</span><span class="hl-9">error</span><span class="hl-1">) {</span><br/><span class="hl-1">  </span><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-0">handleError</span><span class="hl-1">(</span><span class="hl-9">error</span><span class="hl-1">, </span><span class="hl-2">&#39;Stack installation&#39;</span><span class="hl-1">);</span><br/><span class="hl-1">}</span>
 </code><button type="button">Copy</button></pre>
-
-</div><div class="tsd-tag-since"><h4 class="tsd-anchor-link" id="since-4">Since<a href="#since-4" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>1.2.3</p>
-</div></div><aside class="tsd-sources"><p>Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a href="actions_BaseAction.BaseAction.html#handleerror">handleError</a></p><ul><li>Defined in <a href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L466">src/actions/BaseAction.ts:466</a></li></ul></aside></div></li></ul></section><section class="tsd-panel tsd-member"><h3 class="tsd-anchor-link" id="listlocalstacks"><span>list<wbr/>Local<wbr/>Stacks</span><a href="#listlocalstacks" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><ul class="tsd-signatures"><li class=""><div class="tsd-signature tsd-anchor-link" id="listlocalstacks-1"><span class="tsd-kind-call-signature">listLocalStacks</span><span class="tsd-signature-symbol">()</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/types.DeveloperStack.html" class="tsd-signature-type tsd-kind-interface">DeveloperStack</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span><a href="#listlocalstacks-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div><div class="tsd-description"><div class="tsd-comment tsd-typography"><p>Scans and loads all local development stacks from the filesystem</p>
-<p>Reads stack definition files from the user's ~/.claude/stacks directory,
-validates them as DeveloperStack objects, and returns them sorted by
-creation date. Gracefully handles missing directories and corrupted files.</p>
-</div><h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="../interfaces/types.DeveloperStack.html" class="tsd-signature-type tsd-kind-interface">DeveloperStack</a><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></h4><p>Promise resolving to array of DeveloperStack objects sorted by creation date (newest first)</p>
-<div class="tsd-comment tsd-typography"><div class="tsd-tag-throws"><h4 class="tsd-anchor-link" id="throws-2">Throws<a href="#throws-2" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>When filesystem access fails or JSON parsing encounters critical errors</p>
-</div><div class="tsd-tag-example"><h4 class="tsd-anchor-link" id="example-4">Example<a href="#example-4" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="typescript"><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-10">listAction</span><span class="hl-1"> = </span><span class="hl-3">new</span><span class="hl-1"> </span><span class="hl-0">ListAction</span><span class="hl-1">();</span><br/><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-10">stacks</span><span class="hl-1"> = </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-9">listAction</span><span class="hl-1">.</span><span class="hl-0">listLocalStacks</span><span class="hl-1">();</span><br/><br/><span class="hl-4">// Process each stack</span><br/><span class="hl-7">for</span><span class="hl-1"> (</span><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-10">stack</span><span class="hl-1"> </span><span class="hl-3">of</span><span class="hl-1"> </span><span class="hl-9">stacks</span><span class="hl-1">) {</span><br/><span class="hl-1">  </span><span class="hl-9">console</span><span class="hl-1">.</span><span class="hl-0">log</span><span class="hl-1">(</span><span class="hl-2">`Stack: </span><span class="hl-3">${</span><span class="hl-9">stack</span><span class="hl-12">.</span><span class="hl-9">name</span><span class="hl-3">}</span><span class="hl-2"> (</span><span class="hl-3">${</span><span class="hl-9">stack</span><span class="hl-12">.</span><span class="hl-9">commands</span><span class="hl-12">?.</span><span class="hl-9">length</span><span class="hl-3">}</span><span class="hl-2"> commands)`</span><span class="hl-1">);</span><br/><span class="hl-1">}</span>
+                      </div>
+                      <div class="tsd-tag-since">
+                        <h4 class="tsd-anchor-link" id="since-4">
+                          Since<a href="#since-4" aria-label="Permalink" class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <p>1.2.3</p>
+                      </div>
+                    </div>
+                    <aside class="tsd-sources">
+                      <p>
+                        Inherited from
+                        <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a
+                          href="actions_BaseAction.BaseAction.html#handleerror"
+                          >handleError</a
+                        >
+                      </p>
+                      <ul>
+                        <li>
+                          Defined in
+                          <a
+                            href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L466"
+                            >src/actions/BaseAction.ts:466</a
+                          >
+                        </li>
+                      </ul>
+                    </aside>
+                  </div>
+                </li>
+              </ul>
+            </section>
+            <section class="tsd-panel tsd-member">
+              <h3 class="tsd-anchor-link" id="listlocalstacks">
+                <span>list<wbr />Local<wbr />Stacks</span
+                ><a href="#listlocalstacks" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use></svg
+                ></a>
+              </h3>
+              <ul class="tsd-signatures">
+                <li class="">
+                  <div class="tsd-signature tsd-anchor-link" id="listlocalstacks-1">
+                    <span class="tsd-kind-call-signature">listLocalStacks</span
+                    ><span class="tsd-signature-symbol">()</span
+                    ><span class="tsd-signature-symbol">:</span>
+                    <span class="tsd-signature-type">Promise</span
+                    ><span class="tsd-signature-symbol">&lt;</span
+                    ><a
+                      href="../interfaces/types.DeveloperStack.html"
+                      class="tsd-signature-type tsd-kind-interface"
+                      >DeveloperStack</a
+                    ><span class="tsd-signature-symbol">[]</span
+                    ><span class="tsd-signature-symbol">&gt;</span
+                    ><a href="#listlocalstacks-1" aria-label="Permalink" class="tsd-anchor-icon"
+                      ><svg viewBox="0 0 24 24" aria-hidden="true">
+                        <use href="../assets/icons.svg#icon-anchor"></use></svg
+                    ></a>
+                  </div>
+                  <div class="tsd-description">
+                    <div class="tsd-comment tsd-typography">
+                      <p>Scans and loads all local development stacks from the filesystem</p>
+                      <p>
+                        Reads stack definition files from the user's ~/.claude/stacks directory,
+                        validates them as DeveloperStack objects, and returns them sorted by
+                        creation date. Gracefully handles missing directories and corrupted files.
+                      </p>
+                    </div>
+                    <h4 class="tsd-returns-title">
+                      Returns <span class="tsd-signature-type">Promise</span
+                      ><span class="tsd-signature-symbol">&lt;</span
+                      ><a
+                        href="../interfaces/types.DeveloperStack.html"
+                        class="tsd-signature-type tsd-kind-interface"
+                        >DeveloperStack</a
+                      ><span class="tsd-signature-symbol">[]</span
+                      ><span class="tsd-signature-symbol">&gt;</span>
+                    </h4>
+                    <p>
+                      Promise resolving to array of DeveloperStack objects sorted by creation date
+                      (newest first)
+                    </p>
+                    <div class="tsd-comment tsd-typography">
+                      <div class="tsd-tag-throws">
+                        <h4 class="tsd-anchor-link" id="throws-2">
+                          Throws<a href="#throws-2" aria-label="Permalink" class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <p>
+                          When filesystem access fails or JSON parsing encounters critical errors
+                        </p>
+                      </div>
+                      <div class="tsd-tag-example">
+                        <h4 class="tsd-anchor-link" id="example-4">
+                          Example<a href="#example-4" aria-label="Permalink" class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <pre><code class="typescript"><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-10">listAction</span><span class="hl-1"> = </span><span class="hl-3">new</span><span class="hl-1"> </span><span class="hl-0">ListAction</span><span class="hl-1">();</span><br/><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-10">stacks</span><span class="hl-1"> = </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-9">listAction</span><span class="hl-1">.</span><span class="hl-0">listLocalStacks</span><span class="hl-1">();</span><br/><br/><span class="hl-4">// Process each stack</span><br/><span class="hl-7">for</span><span class="hl-1"> (</span><span class="hl-3">const</span><span class="hl-1"> </span><span class="hl-10">stack</span><span class="hl-1"> </span><span class="hl-3">of</span><span class="hl-1"> </span><span class="hl-9">stacks</span><span class="hl-1">) {</span><br/><span class="hl-1">  </span><span class="hl-9">console</span><span class="hl-1">.</span><span class="hl-0">log</span><span class="hl-1">(</span><span class="hl-2">`Stack: </span><span class="hl-3">${</span><span class="hl-9">stack</span><span class="hl-12">.</span><span class="hl-9">name</span><span class="hl-3">}</span><span class="hl-2"> (</span><span class="hl-3">${</span><span class="hl-9">stack</span><span class="hl-12">.</span><span class="hl-9">commands</span><span class="hl-12">?.</span><span class="hl-9">length</span><span class="hl-3">}</span><span class="hl-2"> commands)`</span><span class="hl-1">);</span><br/><span class="hl-1">}</span>
 </code><button type="button">Copy</button></pre>
-
-</div><div class="tsd-tag-remarks"><h4 class="tsd-anchor-link" id="remarks-13">Remarks<a href="#remarks-13" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>This method performs several important operations:</p>
-<ul>
-<li>Checks for existence of stacks directory (~/.claude/stacks)</li>
-<li>Filters for .json files only to avoid processing other file types</li>
-<li>Reads all stack files in parallel for optimal performance</li>
-<li>Adds filePath property to each stack for file operations</li>
-<li>Skips corrupted or invalid stack files without throwing errors</li>
-<li>Sorts results by metadata.created_at timestamp (newest first)</li>
-</ul>
-<p>The method is designed to be resilient and won't fail due to individual
-corrupted stack files, making it suitable for user-facing operations.</p>
-</div><div class="tsd-tag-since"><h4 class="tsd-anchor-link" id="since-5">Since<a href="#since-5" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>1.2.3</p>
-</div></div><aside class="tsd-sources"><ul><li>Defined in <a href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/list.ts#L93">src/actions/list.ts:93</a></li></ul></aside></div></li></ul></section><section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited"><h3 class="tsd-anchor-link" id="logactionstart"><code class="tsd-tag">Protected</code><span>log<wbr/>Action<wbr/>Start</span><a href="#logactionstart" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><ul class="tsd-signatures tsd-is-protected tsd-is-inherited"><li class="tsd-is-protected tsd-is-inherited"><div class="tsd-signature tsd-anchor-link" id="logactionstart-1"><span class="tsd-kind-call-signature">logActionStart</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">description</span><span class="tsd-signature-symbol">?:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span><a href="#logactionstart-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div><div class="tsd-description"><code class="tsd-tag">Protected</code><div class="tsd-comment tsd-typography"><p>Log the start of an action with optional custom description</p>
-</div><div class="tsd-parameters"><h4 class="tsd-parameters-title">Parameters</h4><ul class="tsd-parameter-list"><li><span><code class="tsd-tag">Optional</code><span class="tsd-kind-parameter">description</span>: <span class="tsd-signature-type">string</span></span><div class="tsd-comment tsd-typography"><p>Optional custom description for the action start</p>
-</div><div class="tsd-comment tsd-typography"></div></li></ul></div><h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><div class="tsd-comment tsd-typography"><div class="tsd-tag-remarks"><h4 class="tsd-anchor-link" id="remarks-14">Remarks<a href="#remarks-14" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Provides consistent action start logging across all CLI actions. Uses the
-derived action name if no custom description is provided. Helps with
-debugging and provides user feedback about action progress.</p>
-</div><div class="tsd-tag-example"><h4 class="tsd-anchor-link" id="example-5">Example<a href="#example-5" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="typescript"><span class="hl-4">// Using default description</span><br/><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-0">logActionStart</span><span class="hl-1">(); </span><span class="hl-4">// &quot;Starting install action&quot;</span><br/><br/><span class="hl-4">// Using custom description</span><br/><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-0">logActionStart</span><span class="hl-1">(</span><span class="hl-2">&#39;Installing stack from registry&#39;</span><span class="hl-1">);</span>
+                      </div>
+                      <div class="tsd-tag-remarks">
+                        <h4 class="tsd-anchor-link" id="remarks-13">
+                          Remarks<a
+                            href="#remarks-13"
+                            aria-label="Permalink"
+                            class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <p>This method performs several important operations:</p>
+                        <ul>
+                          <li>Checks for existence of stacks directory (~/.claude/stacks)</li>
+                          <li>Filters for .json files only to avoid processing other file types</li>
+                          <li>Reads all stack files in parallel for optimal performance</li>
+                          <li>Adds filePath property to each stack for file operations</li>
+                          <li>Skips corrupted or invalid stack files without throwing errors</li>
+                          <li>Sorts results by metadata.created_at timestamp (newest first)</li>
+                        </ul>
+                        <p>
+                          The method is designed to be resilient and won't fail due to individual
+                          corrupted stack files, making it suitable for user-facing operations.
+                        </p>
+                      </div>
+                      <div class="tsd-tag-since">
+                        <h4 class="tsd-anchor-link" id="since-5">
+                          Since<a href="#since-5" aria-label="Permalink" class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <p>1.2.3</p>
+                      </div>
+                    </div>
+                    <aside class="tsd-sources">
+                      <ul>
+                        <li>
+                          Defined in
+                          <a
+                            href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/list.ts#L93"
+                            >src/actions/list.ts:93</a
+                          >
+                        </li>
+                      </ul>
+                    </aside>
+                  </div>
+                </li>
+              </ul>
+            </section>
+            <section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited">
+              <h3 class="tsd-anchor-link" id="logactionstart">
+                <code class="tsd-tag">Protected</code><span>log<wbr />Action<wbr />Start</span
+                ><a href="#logactionstart" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use></svg
+                ></a>
+              </h3>
+              <ul class="tsd-signatures tsd-is-protected tsd-is-inherited">
+                <li class="tsd-is-protected tsd-is-inherited">
+                  <div class="tsd-signature tsd-anchor-link" id="logactionstart-1">
+                    <span class="tsd-kind-call-signature">logActionStart</span
+                    ><span class="tsd-signature-symbol">(</span
+                    ><span class="tsd-kind-parameter">description</span
+                    ><span class="tsd-signature-symbol">?:</span>
+                    <span class="tsd-signature-type">string</span
+                    ><span class="tsd-signature-symbol">)</span
+                    ><span class="tsd-signature-symbol">:</span>
+                    <span class="tsd-signature-type">void</span
+                    ><a href="#logactionstart-1" aria-label="Permalink" class="tsd-anchor-icon"
+                      ><svg viewBox="0 0 24 24" aria-hidden="true">
+                        <use href="../assets/icons.svg#icon-anchor"></use></svg
+                    ></a>
+                  </div>
+                  <div class="tsd-description">
+                    <code class="tsd-tag">Protected</code>
+                    <div class="tsd-comment tsd-typography">
+                      <p>Log the start of an action with optional custom description</p>
+                    </div>
+                    <div class="tsd-parameters">
+                      <h4 class="tsd-parameters-title">Parameters</h4>
+                      <ul class="tsd-parameter-list">
+                        <li>
+                          <span
+                            ><code class="tsd-tag">Optional</code
+                            ><span class="tsd-kind-parameter">description</span>:
+                            <span class="tsd-signature-type">string</span></span
+                          >
+                          <div class="tsd-comment tsd-typography">
+                            <p>Optional custom description for the action start</p>
+                          </div>
+                          <div class="tsd-comment tsd-typography"></div>
+                        </li>
+                      </ul>
+                    </div>
+                    <h4 class="tsd-returns-title">
+                      Returns <span class="tsd-signature-type">void</span>
+                    </h4>
+                    <div class="tsd-comment tsd-typography">
+                      <div class="tsd-tag-remarks">
+                        <h4 class="tsd-anchor-link" id="remarks-14">
+                          Remarks<a
+                            href="#remarks-14"
+                            aria-label="Permalink"
+                            class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <p>
+                          Provides consistent action start logging across all CLI actions. Uses the
+                          derived action name if no custom description is provided. Helps with
+                          debugging and provides user feedback about action progress.
+                        </p>
+                      </div>
+                      <div class="tsd-tag-example">
+                        <h4 class="tsd-anchor-link" id="example-5">
+                          Example<a href="#example-5" aria-label="Permalink" class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <pre><code class="typescript"><span class="hl-4">// Using default description</span><br/><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-0">logActionStart</span><span class="hl-1">(); </span><span class="hl-4">// &quot;Starting install action&quot;</span><br/><br/><span class="hl-4">// Using custom description</span><br/><span class="hl-3">this</span><span class="hl-1">.</span><span class="hl-0">logActionStart</span><span class="hl-1">(</span><span class="hl-2">&#39;Installing stack from registry&#39;</span><span class="hl-1">);</span>
 </code><button type="button">Copy</button></pre>
-
-</div><div class="tsd-tag-since"><h4 class="tsd-anchor-link" id="since-6">Since<a href="#since-6" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>1.2.3</p>
-</div></div><aside class="tsd-sources"><p>Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a href="actions_BaseAction.BaseAction.html#logactionstart">logActionStart</a></p><ul><li>Defined in <a href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L559">src/actions/BaseAction.ts:559</a></li></ul></aside></div></li></ul></section><section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited"><h3 class="tsd-anchor-link" id="validaterequired"><code class="tsd-tag">Protected</code><span>validate<wbr/>Required</span><a href="#validaterequired" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3><ul class="tsd-signatures tsd-is-protected tsd-is-inherited"><li class="tsd-is-protected tsd-is-inherited"><div class="tsd-signature tsd-anchor-link" id="validaterequired-1"><span class="tsd-kind-call-signature">validateRequired</span><span class="tsd-signature-symbol">(</span><span class="tsd-kind-parameter">value</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">unknown</span><span class="tsd-signature-symbol">,</span> <span class="tsd-kind-parameter">paramName</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">void</span><a href="#validaterequired-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></div><div class="tsd-description"><code class="tsd-tag">Protected</code><div class="tsd-comment tsd-typography"><p>Validate that required parameters are provided and non-empty</p>
-</div><div class="tsd-parameters"><h4 class="tsd-parameters-title">Parameters</h4><ul class="tsd-parameter-list"><li><span><span class="tsd-kind-parameter">value</span>: <span class="tsd-signature-type">unknown</span></span><div class="tsd-comment tsd-typography"><p>The value to validate</p>
-</div><div class="tsd-comment tsd-typography"></div></li><li><span><span class="tsd-kind-parameter">paramName</span>: <span class="tsd-signature-type">string</span></span><div class="tsd-comment tsd-typography"><p>The parameter name for error messages</p>
-</div><div class="tsd-comment tsd-typography"></div></li></ul></div><h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4><div class="tsd-comment tsd-typography"><div class="tsd-tag-remarks"><h4 class="tsd-anchor-link" id="remarks-15">Remarks<a href="#remarks-15" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Performs validation for required parameters, checking for undefined, null,
-or empty string values. Throws a descriptive error if validation fails,
-which can be caught and handled by the action's error handling logic.</p>
-</div><div class="tsd-tag-throws"><h4 class="tsd-anchor-link" id="throws-3">Throws<a href="#throws-3" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>Error if the value is undefined, null, or empty string</p>
-</div><div class="tsd-tag-example"><h4 class="tsd-anchor-link" id="example-6">Example<a href="#example-6" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><pre><code class="typescript"><span class="hl-9">async</span><span class="hl-1"> </span><span class="hl-0">execute</span><span class="hl-1">(</span><span class="hl-9">stackId</span><span class="hl-1">: </span><span class="hl-9">string</span><span class="hl-1">, </span><span class="hl-9">version</span><span class="hl-1">?: </span><span class="hl-9">string</span><span class="hl-1">): </span><span class="hl-8">Promise</span><span class="hl-1">&lt;</span><span class="hl-3">void</span><span class="hl-1">&gt; {</span><br/><span class="hl-1">  this.validateRequired(</span><span class="hl-9">stackId</span><span class="hl-1">, </span><span class="hl-2">&#39;stackId&#39;</span><span class="hl-9">);</span><br/><span class="hl-9">  </span><span class="hl-4">// version is optional, so not validated</span><br/><br/><span class="hl-9">  </span><span class="hl-4">// Continue with action logic...</span><br/><span class="hl-9">}</span>
+                      </div>
+                      <div class="tsd-tag-since">
+                        <h4 class="tsd-anchor-link" id="since-6">
+                          Since<a href="#since-6" aria-label="Permalink" class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <p>1.2.3</p>
+                      </div>
+                    </div>
+                    <aside class="tsd-sources">
+                      <p>
+                        Inherited from
+                        <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a
+                          href="actions_BaseAction.BaseAction.html#logactionstart"
+                          >logActionStart</a
+                        >
+                      </p>
+                      <ul>
+                        <li>
+                          Defined in
+                          <a
+                            href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L559"
+                            >src/actions/BaseAction.ts:559</a
+                          >
+                        </li>
+                      </ul>
+                    </aside>
+                  </div>
+                </li>
+              </ul>
+            </section>
+            <section class="tsd-panel tsd-member tsd-is-protected tsd-is-inherited">
+              <h3 class="tsd-anchor-link" id="validaterequired">
+                <code class="tsd-tag">Protected</code><span>validate<wbr />Required</span
+                ><a href="#validaterequired" aria-label="Permalink" class="tsd-anchor-icon"
+                  ><svg viewBox="0 0 24 24" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-anchor"></use></svg
+                ></a>
+              </h3>
+              <ul class="tsd-signatures tsd-is-protected tsd-is-inherited">
+                <li class="tsd-is-protected tsd-is-inherited">
+                  <div class="tsd-signature tsd-anchor-link" id="validaterequired-1">
+                    <span class="tsd-kind-call-signature">validateRequired</span
+                    ><span class="tsd-signature-symbol">(</span
+                    ><span class="tsd-kind-parameter">value</span
+                    ><span class="tsd-signature-symbol">:</span>
+                    <span class="tsd-signature-type">unknown</span
+                    ><span class="tsd-signature-symbol">,</span>
+                    <span class="tsd-kind-parameter">paramName</span
+                    ><span class="tsd-signature-symbol">:</span>
+                    <span class="tsd-signature-type">string</span
+                    ><span class="tsd-signature-symbol">)</span
+                    ><span class="tsd-signature-symbol">:</span>
+                    <span class="tsd-signature-type">void</span
+                    ><a href="#validaterequired-1" aria-label="Permalink" class="tsd-anchor-icon"
+                      ><svg viewBox="0 0 24 24" aria-hidden="true">
+                        <use href="../assets/icons.svg#icon-anchor"></use></svg
+                    ></a>
+                  </div>
+                  <div class="tsd-description">
+                    <code class="tsd-tag">Protected</code>
+                    <div class="tsd-comment tsd-typography">
+                      <p>Validate that required parameters are provided and non-empty</p>
+                    </div>
+                    <div class="tsd-parameters">
+                      <h4 class="tsd-parameters-title">Parameters</h4>
+                      <ul class="tsd-parameter-list">
+                        <li>
+                          <span
+                            ><span class="tsd-kind-parameter">value</span>:
+                            <span class="tsd-signature-type">unknown</span></span
+                          >
+                          <div class="tsd-comment tsd-typography"><p>The value to validate</p></div>
+                          <div class="tsd-comment tsd-typography"></div>
+                        </li>
+                        <li>
+                          <span
+                            ><span class="tsd-kind-parameter">paramName</span>:
+                            <span class="tsd-signature-type">string</span></span
+                          >
+                          <div class="tsd-comment tsd-typography">
+                            <p>The parameter name for error messages</p>
+                          </div>
+                          <div class="tsd-comment tsd-typography"></div>
+                        </li>
+                      </ul>
+                    </div>
+                    <h4 class="tsd-returns-title">
+                      Returns <span class="tsd-signature-type">void</span>
+                    </h4>
+                    <div class="tsd-comment tsd-typography">
+                      <div class="tsd-tag-remarks">
+                        <h4 class="tsd-anchor-link" id="remarks-15">
+                          Remarks<a
+                            href="#remarks-15"
+                            aria-label="Permalink"
+                            class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <p>
+                          Performs validation for required parameters, checking for undefined, null,
+                          or empty string values. Throws a descriptive error if validation fails,
+                          which can be caught and handled by the action's error handling logic.
+                        </p>
+                      </div>
+                      <div class="tsd-tag-throws">
+                        <h4 class="tsd-anchor-link" id="throws-3">
+                          Throws<a href="#throws-3" aria-label="Permalink" class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <p>Error if the value is undefined, null, or empty string</p>
+                      </div>
+                      <div class="tsd-tag-example">
+                        <h4 class="tsd-anchor-link" id="example-6">
+                          Example<a href="#example-6" aria-label="Permalink" class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <pre><code class="typescript"><span class="hl-9">async</span><span class="hl-1"> </span><span class="hl-0">execute</span><span class="hl-1">(</span><span class="hl-9">stackId</span><span class="hl-1">: </span><span class="hl-9">string</span><span class="hl-1">, </span><span class="hl-9">version</span><span class="hl-1">?: </span><span class="hl-9">string</span><span class="hl-1">): </span><span class="hl-8">Promise</span><span class="hl-1">&lt;</span><span class="hl-3">void</span><span class="hl-1">&gt; {</span><br/><span class="hl-1">  this.validateRequired(</span><span class="hl-9">stackId</span><span class="hl-1">, </span><span class="hl-2">&#39;stackId&#39;</span><span class="hl-9">);</span><br/><span class="hl-9">  </span><span class="hl-4">// version is optional, so not validated</span><br/><br/><span class="hl-9">  </span><span class="hl-4">// Continue with action logic...</span><br/><span class="hl-9">}</span>
 </code><button type="button">Copy</button></pre>
-
-</div><div class="tsd-tag-since"><h4 class="tsd-anchor-link" id="since-7">Since<a href="#since-7" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4><p>1.2.3</p>
-</div></div><aside class="tsd-sources"><p>Inherited from <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a href="actions_BaseAction.BaseAction.html#validaterequired">validateRequired</a></p><ul><li>Defined in <a href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L590">src/actions/BaseAction.ts:590</a></li></ul></aside></div></li></ul></section></section></details></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><details open class="tsd-accordion tsd-page-navigation-section"><summary class="tsd-accordion-summary" data-key="section-Constructors"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>Constructors</summary><div><a href="#constructor"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Constructor"><use href="../assets/icons.svg#icon-512"></use></svg><span>constructor</span></a></div></details><details open class="tsd-accordion tsd-page-navigation-section"><summary class="tsd-accordion-summary" data-key="section-Properties"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>Properties</summary><div><a href="#api" class="tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>api</span></a><a href="#auth" class="tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>auth</span></a><a href="#configservice" class="tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>config<wbr/>Service</span></a><a href="#dependencies" class="tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>dependencies</span></a><a href="#fileservice" class="tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>file<wbr/>Service</span></a><a href="#metadata" class="tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>metadata</span></a><a href="#stackoperations" class="tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>stack<wbr/>Operations</span></a><a href="#stackservice" class="tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>stack<wbr/>Service</span></a><a href="#ui" class="tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property"><use href="../assets/icons.svg#icon-1024"></use></svg><span>ui</span></a></div></details><details open class="tsd-accordion tsd-page-navigation-section"><summary class="tsd-accordion-summary" data-key="section-Methods"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg>Methods</summary><div><a href="#displayapienvironment" class="tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>display<wbr/>Api<wbr/>Environment</span></a><a href="#execute"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>execute</span></a><a href="#getactionname" class="tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>get<wbr/>Action<wbr/>Name</span></a><a href="#handleerror" class="tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>handle<wbr/>Error</span></a><a href="#listlocalstacks"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>list<wbr/>Local<wbr/>Stacks</span></a><a href="#logactionstart" class="tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>log<wbr/>Action<wbr/>Start</span></a><a href="#validaterequired" class="tsd-is-protected tsd-is-inherited"><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method"><use href="../assets/icons.svg#icon-2048"></use></svg><span>validate<wbr/>Required</span></a></div></details></div></details></div><div class="site-menu"><nav class="tsd-navigation"><a href="../modules.html">claude-stacks</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>
+                      </div>
+                      <div class="tsd-tag-since">
+                        <h4 class="tsd-anchor-link" id="since-7">
+                          Since<a href="#since-7" aria-label="Permalink" class="tsd-anchor-icon"
+                            ><svg viewBox="0 0 24 24" aria-hidden="true">
+                              <use href="../assets/icons.svg#icon-anchor"></use></svg
+                          ></a>
+                        </h4>
+                        <p>1.2.3</p>
+                      </div>
+                    </div>
+                    <aside class="tsd-sources">
+                      <p>
+                        Inherited from
+                        <a href="actions_BaseAction.BaseAction.html">BaseAction</a>.<a
+                          href="actions_BaseAction.BaseAction.html#validaterequired"
+                          >validateRequired</a
+                        >
+                      </p>
+                      <ul>
+                        <li>
+                          Defined in
+                          <a
+                            href="https://github.com/Commands-com/claude-stacks/blob/b1a3c3047c4eab83c5459ab193b3eaffa060c66b/src/actions/BaseAction.ts#L590"
+                            >src/actions/BaseAction.ts:590</a
+                          >
+                        </li>
+                      </ul>
+                    </aside>
+                  </div>
+                </li>
+              </ul>
+            </section>
+          </section>
+        </details>
+      </div>
+      <div class="col-sidebar">
+        <div class="page-menu">
+          <div class="tsd-navigation settings">
+            <details class="tsd-accordion">
+              <summary class="tsd-accordion-summary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <use href="../assets/icons.svg#icon-chevronDown"></use>
+                </svg>
+                <h3>Settings</h3>
+              </summary>
+              <div class="tsd-accordion-details">
+                <div class="tsd-filter-visibility">
+                  <span class="settings-label">Member Visibility</span>
+                  <ul id="tsd-filter-options">
+                    <li class="tsd-filter-item">
+                      <label class="tsd-filter-input"
+                        ><input type="checkbox" id="tsd-filter-protected" name="protected" /><svg
+                          width="32"
+                          height="32"
+                          viewBox="0 0 32 32"
+                          aria-hidden="true"
+                        >
+                          <rect
+                            class="tsd-checkbox-background"
+                            width="30"
+                            height="30"
+                            x="1"
+                            y="1"
+                            rx="6"
+                            fill="none"
+                          ></rect>
+                          <path
+                            class="tsd-checkbox-checkmark"
+                            d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25"
+                            stroke="none"
+                            stroke-width="3.5"
+                            stroke-linejoin="round"
+                            fill="none"
+                          ></path></svg
+                        ><span>Protected</span></label
+                      >
+                    </li>
+                    <li class="tsd-filter-item">
+                      <label class="tsd-filter-input"
+                        ><input
+                          type="checkbox"
+                          id="tsd-filter-inherited"
+                          name="inherited"
+                          checked
+                        /><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
+                          <rect
+                            class="tsd-checkbox-background"
+                            width="30"
+                            height="30"
+                            x="1"
+                            y="1"
+                            rx="6"
+                            fill="none"
+                          ></rect>
+                          <path
+                            class="tsd-checkbox-checkmark"
+                            d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25"
+                            stroke="none"
+                            stroke-width="3.5"
+                            stroke-linejoin="round"
+                            fill="none"
+                          ></path></svg
+                        ><span>Inherited</span></label
+                      >
+                    </li>
+                    <li class="tsd-filter-item">
+                      <label class="tsd-filter-input"
+                        ><input type="checkbox" id="tsd-filter-external" name="external" /><svg
+                          width="32"
+                          height="32"
+                          viewBox="0 0 32 32"
+                          aria-hidden="true"
+                        >
+                          <rect
+                            class="tsd-checkbox-background"
+                            width="30"
+                            height="30"
+                            x="1"
+                            y="1"
+                            rx="6"
+                            fill="none"
+                          ></rect>
+                          <path
+                            class="tsd-checkbox-checkmark"
+                            d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25"
+                            stroke="none"
+                            stroke-width="3.5"
+                            stroke-linejoin="round"
+                            fill="none"
+                          ></path></svg
+                        ><span>External</span></label
+                      >
+                    </li>
+                  </ul>
+                </div>
+                <div class="tsd-theme-toggle">
+                  <label class="settings-label" for="tsd-theme">Theme</label
+                  ><select id="tsd-theme">
+                    <option value="os">OS</option>
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                  </select>
+                </div>
+              </div>
+            </details>
+          </div>
+          <details open class="tsd-accordion tsd-page-navigation">
+            <summary class="tsd-accordion-summary">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <use href="../assets/icons.svg#icon-chevronDown"></use>
+              </svg>
+              <h3>On This Page</h3>
+            </summary>
+            <div class="tsd-accordion-details">
+              <details open class="tsd-accordion tsd-page-navigation-section">
+                <summary class="tsd-accordion-summary" data-key="section-Constructors">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-chevronDown"></use></svg
+                  >Constructors
+                </summary>
+                <div>
+                  <a href="#constructor"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Constructor">
+                      <use href="../assets/icons.svg#icon-512"></use></svg
+                    ><span>constructor</span></a
+                  >
+                </div>
+              </details>
+              <details open class="tsd-accordion tsd-page-navigation-section">
+                <summary class="tsd-accordion-summary" data-key="section-Properties">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-chevronDown"></use></svg
+                  >Properties
+                </summary>
+                <div>
+                  <a href="#api" class="tsd-is-protected tsd-is-inherited"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                      <use href="../assets/icons.svg#icon-1024"></use></svg
+                    ><span>api</span></a
+                  ><a href="#auth" class="tsd-is-protected tsd-is-inherited"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                      <use href="../assets/icons.svg#icon-1024"></use></svg
+                    ><span>auth</span></a
+                  ><a href="#configservice" class="tsd-is-protected tsd-is-inherited"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                      <use href="../assets/icons.svg#icon-1024"></use></svg
+                    ><span>config<wbr />Service</span></a
+                  ><a href="#dependencies" class="tsd-is-protected tsd-is-inherited"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                      <use href="../assets/icons.svg#icon-1024"></use></svg
+                    ><span>dependencies</span></a
+                  ><a href="#fileservice" class="tsd-is-protected tsd-is-inherited"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                      <use href="../assets/icons.svg#icon-1024"></use></svg
+                    ><span>file<wbr />Service</span></a
+                  ><a href="#metadata" class="tsd-is-protected tsd-is-inherited"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                      <use href="../assets/icons.svg#icon-1024"></use></svg
+                    ><span>metadata</span></a
+                  ><a href="#stackoperations" class="tsd-is-protected tsd-is-inherited"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                      <use href="../assets/icons.svg#icon-1024"></use></svg
+                    ><span>stack<wbr />Operations</span></a
+                  ><a href="#stackservice" class="tsd-is-protected tsd-is-inherited"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                      <use href="../assets/icons.svg#icon-1024"></use></svg
+                    ><span>stack<wbr />Service</span></a
+                  ><a href="#ui" class="tsd-is-protected tsd-is-inherited"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Property">
+                      <use href="../assets/icons.svg#icon-1024"></use></svg
+                    ><span>ui</span></a
+                  >
+                </div>
+              </details>
+              <details open class="tsd-accordion tsd-page-navigation-section">
+                <summary class="tsd-accordion-summary" data-key="section-Methods">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <use href="../assets/icons.svg#icon-chevronDown"></use></svg
+                  >Methods
+                </summary>
+                <div>
+                  <a href="#displayapienvironment" class="tsd-is-protected tsd-is-inherited"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method">
+                      <use href="../assets/icons.svg#icon-2048"></use></svg
+                    ><span>display<wbr />Api<wbr />Environment</span></a
+                  ><a href="#execute"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method">
+                      <use href="../assets/icons.svg#icon-2048"></use></svg
+                    ><span>execute</span></a
+                  ><a href="#getactionname" class="tsd-is-protected tsd-is-inherited"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method">
+                      <use href="../assets/icons.svg#icon-2048"></use></svg
+                    ><span>get<wbr />Action<wbr />Name</span></a
+                  ><a href="#handleerror" class="tsd-is-protected tsd-is-inherited"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method">
+                      <use href="../assets/icons.svg#icon-2048"></use></svg
+                    ><span>handle<wbr />Error</span></a
+                  ><a href="#listlocalstacks"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method">
+                      <use href="../assets/icons.svg#icon-2048"></use></svg
+                    ><span>list<wbr />Local<wbr />Stacks</span></a
+                  ><a href="#logactionstart" class="tsd-is-protected tsd-is-inherited"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method">
+                      <use href="../assets/icons.svg#icon-2048"></use></svg
+                    ><span>log<wbr />Action<wbr />Start</span></a
+                  ><a href="#validaterequired" class="tsd-is-protected tsd-is-inherited"
+                    ><svg class="tsd-kind-icon" viewBox="0 0 24 24" aria-label="Method">
+                      <use href="../assets/icons.svg#icon-2048"></use></svg
+                    ><span>validate<wbr />Required</span></a
+                  >
+                </div>
+              </details>
+            </div>
+          </details>
+        </div>
+        <div class="site-menu">
+          <nav class="tsd-navigation">
+            <a href="../modules.html">claude-stacks</a>
+            <ul class="tsd-small-nested-navigation" id="tsd-nav-container">
+              <li>Loading...</li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+    <footer>
+      <p class="tsd-generator">
+        Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a>
+      </p>
+    </footer>
+    <div class="overlay"></div>
+  </body>
+</html>
