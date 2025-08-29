@@ -3,6 +3,12 @@ import * as os from 'os';
 
 /**
  * Central configuration for all file paths used by Claude Stacks CLI
+ *
+ * This is the root directory where Claude Code stores all its configuration,
+ * stacks, and user data. Located at ~/.claude on all platforms.
+ *
+ * @since 1.0.0
+ * @public
  */
 export const CLAUDE_CONFIG_PATH = path.join(os.homedir(), '.claude');
 
@@ -20,12 +26,71 @@ function getStacksPath(): string {
 
 // Export function for dynamic resolution and static constant
 export { getStacksPath };
+
+/**
+ * Path to the stacks directory where all installed stacks are stored
+ *
+ * This directory contains subdirectories for each installed stack,
+ * with each stack's files and metadata organized within its own folder.
+ * Supports test environment override via CLAUDE_STACKS_TEST_STACKS_PATH.
+ *
+ * @example /Users/username/.claude/stacks
+ * @since 1.0.0
+ * @public
+ */
 export const STACKS_PATH = getStacksPath();
+
+/**
+ * Path to the main Claude Code configuration file
+ *
+ * This JSON file stores global CLI configuration settings including
+ * user preferences, default behaviors, and application state.
+ *
+ * @example /Users/username/.claude/config.json
+ * @since 1.0.0
+ * @public
+ */
 export const CONFIG_FILE = path.join(CLAUDE_CONFIG_PATH, 'config.json');
 
 // Additional frequently used paths
+
+/**
+ * Path to the legacy Claude configuration file in user's home directory
+ *
+ * This file maintains compatibility with existing Claude installations
+ * and may contain global Claude settings that predate Claude Code.
+ * Located directly in the home directory rather than the .claude subdirectory.
+ *
+ * @example /Users/username/.claude.json
+ * @since 1.0.0
+ * @public
+ */
 export const CLAUDE_JSON_PATH = path.join(os.homedir(), '.claude.json');
+
+/**
+ * Path to the authentication token storage file
+ *
+ * This JSON file securely stores authentication tokens for Commands.com API access.
+ * Contains encrypted or hashed credentials used for publishing and managing stacks.
+ * Should be kept private and never committed to version control.
+ *
+ * @example /Users/username/.claude/.claude-stacks-auth.json
+ * @since 1.0.0
+ * @public
+ */
 export const AUTH_TOKEN_PATH = path.join(CLAUDE_CONFIG_PATH, '.claude-stacks-auth.json');
+
+/**
+ * Path to the CLI metadata and cache file
+ *
+ * This JSON file stores runtime metadata, cache data, and temporary state
+ * used by the CLI for performance optimization and session management.
+ * May include cached stack information, API responses, and usage statistics.
+ *
+ * @example /Users/username/.claude/.claude-stacks-meta.json
+ * @since 1.0.0
+ * @public
+ */
 export const METADATA_FILE_PATH = path.join(CLAUDE_CONFIG_PATH, '.claude-stacks-meta.json');
 
 /**
@@ -127,6 +192,28 @@ export function getLocalCommandsDir(projectPath?: string): string {
   return path.join(getLocalClaudeDir(projectPath), 'commands');
 }
 
+/**
+ * Get the path to local project hooks directory
+ *
+ * Hooks are custom scripts that can be executed at various points in the
+ * Claude Code lifecycle (before/after installation, on stack activation, etc.).
+ * Local hooks are project-specific and take precedence over global hooks.
+ *
+ * @param projectPath - Optional project path (defaults to current working directory)
+ * @returns Full path to the local hooks directory
+ *
+ * @example
+ * ```typescript
+ * const hooksDir = getLocalHooksDir();
+ * // Returns: /current/project/.claude/hooks
+ *
+ * const customHooks = getLocalHooksDir('/path/to/project');
+ * // Returns: /path/to/project/.claude/hooks
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 export function getLocalHooksDir(projectPath?: string): string {
   return path.join(getLocalClaudeDir(projectPath), 'hooks');
 }
@@ -243,6 +330,25 @@ export function getGlobalCommandsDir(): string {
   return path.join(CLAUDE_CONFIG_PATH, 'commands');
 }
 
+/**
+ * Get the path to global hooks directory
+ *
+ * Global hooks are system-wide scripts that apply to all Claude Code operations
+ * regardless of the current project. These hooks provide consistent behavior
+ * across all stacks and projects, and serve as fallbacks when local hooks
+ * are not available.
+ *
+ * @returns Full path to the global hooks directory
+ *
+ * @example
+ * ```typescript
+ * const globalHooks = getGlobalHooksDir();
+ * // Returns: /Users/username/.claude/hooks
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 export function getGlobalHooksDir(): string {
   return path.join(CLAUDE_CONFIG_PATH, 'hooks');
 }

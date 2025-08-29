@@ -29,10 +29,55 @@ import { MetadataService } from '../services/MetadataService.js';
 const ui = new UIService();
 const metadata = new MetadataService();
 
+/**
+ * Truncates a description string to 80 characters or less
+ *
+ * Ensures descriptions remain readable in UI displays by limiting length
+ * and adding ellipsis for truncated content.
+ *
+ * @param description - The description string to potentially truncate
+ * @returns The original string if ≤80 chars, otherwise truncated with "..." suffix
+ *
+ * @example
+ * ```typescript
+ * const short = truncateDescription("Brief desc");
+ * // Returns: "Brief desc"
+ *
+ * const long = truncateDescription("This is a very long description that exceeds eighty characters and needs truncation");
+ * // Returns: "This is a very long description that exceeds eighty characters and ne..."
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 function truncateDescription(description: string): string {
   return description.length > 80 ? `${description.substring(0, 77)}...` : description;
 }
 
+/**
+ * Extracts description from YAML frontmatter in markdown content
+ *
+ * Parses YAML frontmatter blocks (delimited by ---) to find and extract
+ * the description field value, automatically truncating if needed.
+ *
+ * @param content - The markdown content that may contain YAML frontmatter
+ * @returns The extracted and truncated description, or null if no frontmatter/description found
+ *
+ * @example
+ * ```typescript
+ * const markdown = `---
+ * description: "This is a command description"
+ * author: "Claude"
+ * ---
+ * # Command Content`;
+ *
+ * const desc = extractFromYamlFrontmatter(markdown);
+ * // Returns: "This is a command description"
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 function extractFromYamlFrontmatter(content: string): string | null {
   if (!content.startsWith('---')) {
     return null;
@@ -53,6 +98,28 @@ function extractFromYamlFrontmatter(content: string): string | null {
   return null;
 }
 
+/**
+ * Extracts description from the first meaningful content line
+ *
+ * Scans through content line by line to find the first non-empty line
+ * that isn't a comment, heading, or frontmatter delimiter.
+ *
+ * @param content - The content to scan for meaningful text
+ * @returns The first meaningful line truncated to appropriate length, or default message
+ *
+ * @example
+ * ```typescript
+ * const content = `# Title
+ * <!-- Comment -->
+ * This is the first meaningful line of content.`;
+ *
+ * const desc = extractFromFirstMeaningfulLine(content);
+ * // Returns: "This is the first meaningful line of content."
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 function extractFromFirstMeaningfulLine(content: string): string {
   const lines = content.split('\n');
   for (const line of lines) {
@@ -82,7 +149,37 @@ function extractDescriptionFromContent(content: string): string {
 }
 
 /**
- * Generic directory scanner for .md files
+ * Recursively scans a directory for markdown files and creates typed items
+ *
+ * Performs deep directory traversal to find all .md files, reading their content
+ * and converting them to typed objects using the provided factory function.
+ * Supports nested directory structures with relative path tracking.
+ *
+ * @param dirPath - The directory path to scan recursively
+ * @param itemFactory - Factory function to convert filename and content into typed objects
+ * @param basePath - Base path for relative naming (used internally for recursion)
+ * @returns Promise resolving to Map of item names to created objects
+ *
+ * @throws {Error} When directory access fails or file reading encounters errors
+ *
+ * @example
+ * ```typescript
+ * // Scan commands directory
+ * const commands = await scanDirectory(
+ *   '/path/to/commands',
+ *   (name, content) => ({
+ *     name,
+ *     content,
+ *     description: extractDescriptionFromContent(content)
+ *   })
+ * );
+ *
+ * // Access nested command: subdirs/command-name
+ * const nestedCommand = commands.get('subdirs/command-name');
+ * ```
+ *
+ * @since 1.0.0
+ * @public
  */
 async function scanDirectory<T>(
   dirPath: string,
@@ -110,6 +207,25 @@ async function scanDirectory<T>(
   return itemsMap;
 }
 
+/**
+ * Gets directory entries with compatibility for both Dirent objects and strings
+ *
+ * Handles different return types from fs.readdir() to ensure consistent
+ * string array output regardless of the underlying implementation.
+ *
+ * @param dirPath - The directory path to read entries from
+ * @returns Promise resolving to object containing entries array and type indicator
+ *
+ * @example
+ * ```typescript
+ * const { entries, usesDirent } = await getDirectoryEntries('/path/to/dir');
+ * // entries: ["file1.md", "file2.md", "subdir"]
+ * // usesDirent: true (if Dirent objects were used)
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 async function getDirectoryEntries(
   dirPath: string
 ): Promise<{ entries: string[]; usesDirent: boolean }> {
@@ -128,6 +244,34 @@ async function getDirectoryEntries(
   }
 }
 
+/**
+ * Processes directory entries and categorizes them into files and subdirectories
+ *
+ * Separates directory entries into files and subdirectories for parallel processing,
+ * creating appropriate promises for each type to enable efficient scanning.
+ *
+ * @param entries - Array of entry names to process
+ * @param context - Processing context containing paths, factory function, and results map
+ * @param context.dirPath - The directory path being processed
+ * @param context.basePath - The base path for relative naming
+ * @param context.itemFactory - Factory function to create items from file content
+ * @param context.itemsMap - Map to store created items
+ * @returns Promise resolving to arrays of directory and file processing promises
+ *
+ * @example
+ * ```typescript
+ * const context = {
+ *   dirPath: '/path/to/commands',
+ *   basePath: '',
+ *   itemFactory: (name, content) => ({ name, content }),
+ *   itemsMap: new Map()
+ * };
+ * const { directoryPromises, filePromises } = await processEntries(entries, context);
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 async function processEntries<T>(
   entries: string[],
   context: {
@@ -168,6 +312,28 @@ async function processEntries<T>(
   return { directoryPromises, filePromises };
 }
 
+/**
+ * Determines the type of a file system entry (directory or file)
+ *
+ * Uses fs.stat() to safely determine if a path represents a directory
+ * or file, with graceful error handling for inaccessible paths.
+ *
+ * @param fullPath - The absolute path to check
+ * @returns Promise resolving to object with boolean flags for directory and file types
+ *
+ * @example
+ * ```typescript
+ * const { isDirectory, isFile } = await getEntryType('/path/to/item');
+ * if (isDirectory) {
+ *   // Handle directory
+ * } else if (isFile) {
+ *   // Handle file
+ * }
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 async function getEntryType(fullPath: string): Promise<{ isDirectory: boolean; isFile: boolean }> {
   // Both cases need to check the file system since mocks may not behave like real Dirent objects
   try {
@@ -314,7 +480,28 @@ async function collectSettings(includeGlobal: boolean): Promise<Record<string, u
 }
 
 /**
- * Infer hook type from filename
+ * Infers the hook type from filename patterns and conventions
+ *
+ * Analyzes the hook filename to determine the appropriate hook type based
+ * on naming patterns and keywords, with fallback to PreToolUse for unknown patterns.
+ *
+ * @param name - The hook filename (without extension)
+ * @returns The inferred hook type based on filename analysis
+ *
+ * @example
+ * ```typescript
+ * const type1 = inferHookType('post-tool-cleanup');
+ * // Returns: "PostToolUse"
+ *
+ * const type2 = inferHookType('session-start-logger');
+ * // Returns: "SessionStart"
+ *
+ * const type3 = inferHookType('unknown-hook');
+ * // Returns: "PreToolUse" (default fallback)
+ * ```
+ *
+ * @since 1.0.0
+ * @public
  */
 function inferHookType(name: string): StackHook['type'] {
   const lowerName = name.toLowerCase();
@@ -338,21 +525,84 @@ function inferHookType(name: string): StackHook['type'] {
 }
 
 /**
- * Check if name contains post-tool patterns
+ * Checks if filename contains post-tool execution patterns
+ *
+ * Detects naming patterns that indicate the hook should run after tool execution,
+ * including hyphenated and non-hyphenated variations.
+ *
+ * @param lowerName - The lowercase hook filename to analyze
+ * @returns True if filename contains post-tool patterns
+ *
+ * @example
+ * ```typescript
+ * const isPostTool1 = containsPostToolPattern('post-tool-cleanup');
+ * // Returns: true
+ *
+ * const isPostTool2 = containsPostToolPattern('posttool-handler');
+ * // Returns: true
+ *
+ * const isPostTool3 = containsPostToolPattern('pre-tool-setup');
+ * // Returns: false
+ * ```
+ *
+ * @since 1.0.0
+ * @public
  */
 function containsPostToolPattern(lowerName: string): boolean {
   return lowerName.includes('post-tool') || lowerName.includes('posttool');
 }
 
 /**
- * Check if name contains pre-tool patterns
+ * Checks if filename contains pre-tool execution patterns
+ *
+ * Detects naming patterns that indicate the hook should run before tool execution,
+ * including hyphenated and non-hyphenated variations.
+ *
+ * @param lowerName - The lowercase hook filename to analyze
+ * @returns True if filename contains pre-tool patterns
+ *
+ * @example
+ * ```typescript
+ * const isPreTool1 = containsPreToolPattern('pre-tool-validation');
+ * // Returns: true
+ *
+ * const isPreTool2 = containsPreToolPattern('pretool-setup');
+ * // Returns: true
+ *
+ * const isPreTool3 = containsPreToolPattern('post-tool-cleanup');
+ * // Returns: false
+ * ```
+ *
+ * @since 1.0.0
+ * @public
  */
 function containsPreToolPattern(lowerName: string): boolean {
   return lowerName.includes('pre-tool') || lowerName.includes('pretool');
 }
 
 /**
- * Get session hook type from name
+ * Extracts session-related hook types from filename patterns
+ *
+ * Identifies session lifecycle hook types (SessionStart, SessionEnd) based on
+ * filename patterns, supporting both hyphenated and non-hyphenated formats.
+ *
+ * @param lowerName - The lowercase hook filename to analyze
+ * @returns The session hook type if detected, null if no session patterns found
+ *
+ * @example
+ * ```typescript
+ * const sessionType1 = getSessionHookType('session-start-init');
+ * // Returns: "SessionStart"
+ *
+ * const sessionType2 = getSessionHookType('sessionend-cleanup');
+ * // Returns: "SessionEnd"
+ *
+ * const sessionType3 = getSessionHookType('tool-handler');
+ * // Returns: null
+ * ```
+ *
+ * @since 1.0.0
+ * @public
  */
 function getSessionHookType(lowerName: string): StackHook['type'] | null {
   if (lowerName.includes('session-start') || lowerName.includes('sessionstart')) {
@@ -365,7 +615,28 @@ function getSessionHookType(lowerName: string): StackHook['type'] | null {
 }
 
 /**
- * Get other hook types from name
+ * Extracts miscellaneous hook types from filename patterns
+ *
+ * Identifies various hook types beyond session and tool hooks, including
+ * user prompt, notification, subagent, compaction, and stop hooks.
+ *
+ * @param lowerName - The lowercase hook filename to analyze
+ * @returns The hook type if recognized pattern found, null otherwise
+ *
+ * @example
+ * ```typescript
+ * const hookType1 = getOtherHookType('user-prompt-validator');
+ * // Returns: "UserPromptSubmit"
+ *
+ * const hookType2 = getOtherHookType('notification-handler');
+ * // Returns: "Notification"
+ *
+ * const hookType3 = getOtherHookType('subagent-stop-monitor');
+ * // Returns: "SubagentStop"
+ * ```
+ *
+ * @since 1.0.0
+ * @public
  */
 function getOtherHookType(lowerName: string): StackHook['type'] | null {
   if (lowerName.includes('user-prompt') || lowerName.includes('prompt')) {
@@ -387,7 +658,28 @@ function getOtherHookType(lowerName: string): StackHook['type'] | null {
 }
 
 /**
- * Convert numeric score to risk level
+ * Converts numeric risk score to categorical risk level
+ *
+ * Maps hook security scan scores to human-readable risk categories
+ * to help users understand potential security implications.
+ *
+ * @param score - Numeric risk score from hook security scanning (0-100)
+ * @returns Risk level category based on score thresholds
+ *
+ * @example
+ * ```typescript
+ * const risk1 = getRiskLevel(10);
+ * // Returns: "safe" (score < 30)
+ *
+ * const risk2 = getRiskLevel(45);
+ * // Returns: "warning" (30 <= score < 70)
+ *
+ * const risk3 = getRiskLevel(85);
+ * // Returns: "dangerous" (score >= 70)
+ * ```
+ *
+ * @since 1.0.0
+ * @public
  */
 function getRiskLevel(score: number): 'safe' | 'warning' | 'dangerous' {
   if (score >= 70) return 'dangerous';
@@ -395,6 +687,33 @@ function getRiskLevel(score: number): 'safe' | 'warning' | 'dangerous' {
   return 'safe';
 }
 
+/**
+ * Collects and analyzes hook files from the local .claude/hooks directory
+ *
+ * Scans for JavaScript, TypeScript, and Python hook files, determines their
+ * hook type from filename patterns, and performs security analysis to assess
+ * risk levels before including them in the stack export.
+ *
+ * @returns Promise resolving to array of StackHook objects with security analysis
+ *
+ * @throws {Error} When hook file reading or security scanning fails
+ *
+ * @example
+ * ```typescript
+ * const hooks = await collectHooks();
+ * // Returns: [{
+ * //   name: "pre-tool-security",
+ * //   type: "PreToolUse",
+ * //   filePath: ".claude/hooks/pre-tool-security.js",
+ * //   content: "...",
+ * //   riskLevel: "safe",
+ * //   scanResults: { riskScore: 10, ... }
+ * // }]
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 async function collectHooks(): Promise<StackHook[]> {
   const fileService = new FileService();
   const hookScanner = new HookScannerService();
@@ -435,7 +754,24 @@ async function collectHooks(): Promise<StackHook[]> {
 }
 
 /**
- * Helper function to read a settings file safely
+ * Safely reads and parses a JSON settings file with error handling
+ *
+ * Attempts to read and parse a JSON file, returning an empty object
+ * if the file doesn't exist or parsing fails. Provides user-friendly
+ * warning messages for debugging.
+ *
+ * @param filePath - The absolute path to the settings file
+ * @param description - Human-readable description for error messages
+ * @returns Promise resolving to parsed JSON object or empty object on failure
+ *
+ * @example
+ * ```typescript
+ * const settings = await readSettingsFile('/path/to/settings.json', 'user settings');
+ * // Returns: { key: "value" } or {} if file doesn't exist/invalid
+ * ```
+ *
+ * @since 1.0.0
+ * @public
  */
 async function readSettingsFile(
   filePath: string,
@@ -454,7 +790,14 @@ async function readSettingsFile(
 }
 
 /**
- * Get MCP server configuration for current project
+ * Configuration structure for claude_desktop_config.json file
+ *
+ * Defines the expected structure of the Claude desktop configuration file,
+ * specifically focusing on project-specific MCP server configurations.
+ *
+ * @interface ClaudeConfig
+ * @since 1.0.0
+ * @public
  */
 interface ClaudeConfig {
   projects?: Record<
@@ -474,6 +817,32 @@ interface ClaudeConfig {
   >;
 }
 
+/**
+ * Converts raw MCP server configuration to StackMcpServer array format
+ *
+ * Transforms the claude_desktop_config.json MCP server format into the
+ * standardized StackMcpServer format used by the stack export system.
+ *
+ * @param mcpServers - Raw MCP server configurations from claude_desktop_config.json
+ * @returns Array of StackMcpServer objects with normalized configuration
+ *
+ * @example
+ * ```typescript
+ * const rawConfig = {
+ *   "filesystem": {
+ *     "type": "stdio",
+ *     "command": "npx",
+ *     "args": ["@modelcontextprotocol/server-filesystem", "/path"]
+ *   }
+ * };
+ *
+ * const servers = convertMcpConfig(rawConfig);
+ * // Returns: [{ name: "filesystem", type: "stdio", command: "npx", args: [...] }]
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 function convertMcpConfig(
   mcpServers: Record<
     string,
@@ -500,6 +869,23 @@ function convertMcpConfig(
   return servers;
 }
 
+/**
+ * Collects MCP server configurations from the current project
+ *
+ * Reads the claude_desktop_config.json file and extracts MCP server
+ * configurations specific to the current project directory.
+ *
+ * @returns Promise resolving to array of StackMcpServer objects for the current project
+ *
+ * @example
+ * ```typescript
+ * const mcpServers = await collectMcpServers();
+ * // Returns: [{ name: "filesystem", type: "stdio", command: "npx", ... }]
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 async function collectMcpServers(): Promise<StackMcpServer[]> {
   const claudeJsonPath = CLAUDE_JSON_PATH;
   if (!(await fs.pathExists(claudeJsonPath))) {
@@ -522,6 +908,34 @@ async function collectMcpServers(): Promise<StackMcpServer[]> {
   }
 }
 
+/**
+ * Creates a base DeveloperStack object with minimal required properties
+ *
+ * Initializes a new stack object with metadata, empty component arrays,
+ * and optional published stack continuity information for version tracking.
+ *
+ * @param options - Configuration object for stack creation
+ * @param options.name - The stack name
+ * @param options.description - The stack description
+ * @param options.version - The stack version
+ * @param options.currentDir - The current directory path for metadata
+ * @param options.publishedMeta - Optional published stack metadata for continuity
+ * @returns Promise resolving to initialized DeveloperStack object
+ *
+ * @example
+ * ```typescript
+ * const baseStack = await createBaseStack({
+ *   name: 'my-stack',
+ *   description: 'My development stack',
+ *   version: '1.0.0',
+ *   currentDir: '/path/to/project',
+ *   publishedMeta: null
+ * });
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 async function createBaseStack(options: {
   name: string;
   description: string;
@@ -550,6 +964,29 @@ async function createBaseStack(options: {
   };
 }
 
+/**
+ * Populates a DeveloperStack with all available components from the file system
+ *
+ * Concurrently collects commands, agents, settings, MCP servers, and hooks
+ * from both global and local directories, then assigns them to the stack object.
+ *
+ * @param stack - The DeveloperStack object to populate
+ * @param includeGlobal - Whether to include global components from ~/.claude directories
+ * @param includeHooks - Whether to scan and include hook files (defaults to true)
+ * @returns Promise that resolves when all components are collected and assigned
+ *
+ * @throws {Error} When component collection fails due to file system or parsing errors
+ *
+ * @example
+ * ```typescript
+ * const stack = await createBaseStack(options);
+ * await populateStackComponents(stack, true, true);
+ * // stack now contains all commands, agents, settings, etc.
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 async function populateStackComponents(
   stack: DeveloperStack,
   includeGlobal: boolean,
@@ -570,6 +1007,36 @@ async function populateStackComponents(
   stack.hooks = hooks;
 }
 
+/**
+ * Exports the current project directory as a complete development stack
+ *
+ * Orchestrates the full export process by generating metadata, creating a base stack,
+ * and populating it with all available components based on the provided options.
+ *
+ * @param options - Export configuration options
+ * @param options.name - Optional custom stack name (defaults to directory name)
+ * @param options.description - Optional custom description (defaults to auto-generated)
+ * @param options.includeGlobal - Whether to include global ~/.claude components
+ * @param options.includeClaudeMd - Whether to include CLAUDE.md file (unused in current implementation)
+ * @param options.stackVersion - Optional custom version (defaults to auto-generated)
+ * @param options.hooks - Whether to include hook files (defaults to true)
+ * @returns Promise resolving to complete DeveloperStack object ready for export
+ *
+ * @throws {Error} When metadata generation, stack creation, or component collection fails
+ *
+ * @example
+ * ```typescript
+ * const stack = await exportCurrentStack({
+ *   name: 'my-project-stack',
+ *   includeGlobal: true,
+ *   stackVersion: '2.0.0'
+ * });
+ * // Returns: DeveloperStack with all components populated
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 async function exportCurrentStack(options: {
   name?: string;
   description?: string;
@@ -637,6 +1104,33 @@ export async function exportAction(filename?: string, options: ExportOptions = {
   }
 }
 
+/**
+ * Resolves and normalizes the output filename for stack export
+ *
+ * Generates a default filename based on the current directory name if none provided,
+ * and ensures the filename has a .json extension for proper file handling.
+ *
+ * @param filename - Optional custom filename for the exported stack
+ * @returns Resolved filename with .json extension guaranteed
+ *
+ * @example
+ * ```typescript
+ * // With custom filename
+ * const name1 = resolveOutputFilename('my-stack');
+ * // Returns: "my-stack.json"
+ *
+ * // With filename already having extension
+ * const name2 = resolveOutputFilename('my-stack.json');
+ * // Returns: "my-stack.json"
+ *
+ * // Without filename (uses current directory)
+ * const name3 = resolveOutputFilename();
+ * // Returns: "project-name-stack.json" (where project-name is cwd basename)
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 function resolveOutputFilename(filename?: string): string {
   let outputFilename = filename;
   if (!outputFilename) {
@@ -647,6 +1141,28 @@ function resolveOutputFilename(filename?: string): string {
   return outputFilename.endsWith('.json') ? outputFilename : `${outputFilename}.json`;
 }
 
+/**
+ * Writes a DeveloperStack object to a JSON file in the stacks directory
+ *
+ * Ensures the stacks directory exists and writes the stack data as formatted JSON
+ * to the specified filename within the ~/.claude/stacks directory.
+ *
+ * @param stack - The DeveloperStack object to write to file
+ * @param filename - The filename to save the stack as (will be placed in ~/.claude/stacks/)
+ * @returns Promise that resolves when file write is complete
+ *
+ * @throws {Error} When directory creation or file writing fails
+ *
+ * @example
+ * ```typescript
+ * const stack = await exportCurrentStack(options);
+ * await writeStackToFile(stack, 'my-project-stack.json');
+ * // File saved to: ~/.claude/stacks/my-project-stack.json
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 async function writeStackToFile(stack: DeveloperStack, filename: string): Promise<void> {
   const stacksDir = getStacksPath();
   await fs.ensureDir(stacksDir);
@@ -654,6 +1170,31 @@ async function writeStackToFile(stack: DeveloperStack, filename: string): Promis
   await fs.writeJson(outputPath, stack, { spaces: 2 });
 }
 
+/**
+ * Displays formatted success message with export summary statistics
+ *
+ * Shows a user-friendly success message including file location, version,
+ * and component counts to confirm successful stack export.
+ *
+ * @param stack - The exported DeveloperStack object for statistics
+ * @param filename - The filename the stack was saved as
+ *
+ * @example
+ * ```typescript
+ * const stack = await exportCurrentStack(options);
+ * await writeStackToFile(stack, filename);
+ * displayExportSuccess(stack, filename);
+ * // Outputs:
+ * // ✅ Stack exported successfully!
+ * //   File: ~/.claude/stacks/my-stack.json
+ * //   Version: 1.0.0
+ * //   Components: 15 items
+ * //   MCP Servers: 3 items
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 function displayExportSuccess(stack: DeveloperStack, filename: string): void {
   const totalComponents =
     (stack.commands?.length ?? 0) + (stack.agents?.length ?? 0) + (stack.mcpServers?.length ?? 0);
@@ -665,6 +1206,31 @@ function displayExportSuccess(stack: DeveloperStack, filename: string): void {
   console.log(ui.colorMeta(`  MCP Servers: ${stack.mcpServers?.length ?? 0} items`));
 }
 
+/**
+ * Handles export errors with appropriate logging and process termination
+ *
+ * Displays formatted error messages and either throws (in test environment)
+ * or exits the process (in production) based on NODE_ENV detection.
+ *
+ * @param error - The error that occurred during export
+ * @returns Never returns (always throws or exits)
+ *
+ * @throws {Error} When in test environment, re-throws error for test handling
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   await exportCurrentStack(options);
+ * } catch (error) {
+ *   handleExportError(error);
+ *   // In production: process.exit(1)
+ *   // In test: throws Error with original message
+ * }
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 function handleExportError(error: unknown): never {
   console.error(
     ui.colorError('Export failed:'),
@@ -679,7 +1245,31 @@ function handleExportError(error: unknown): never {
   process.exit(1);
 }
 
-// Export helper functions for testing
+/**
+ * Collection of utility functions for stack export functionality
+ *
+ * Provides access to all internal export helper functions for testing,
+ * debugging, and modular usage. Contains functions for content extraction,
+ * directory scanning, metadata generation, component collection, hook analysis,
+ * and export workflow management.
+ *
+ * @example
+ * ```typescript
+ * import { exportHelpers } from './export.js';
+ *
+ * // Extract description from markdown content
+ * const desc = exportHelpers.extractDescriptionFromContent(content);
+ *
+ * // Scan directory for commands
+ * const commands = await exportHelpers.collectCommands(true);
+ *
+ * // Analyze hook security
+ * const riskLevel = exportHelpers.getRiskLevel(scanScore);
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 export const exportHelpers = {
   truncateDescription,
   extractFromYamlFrontmatter,

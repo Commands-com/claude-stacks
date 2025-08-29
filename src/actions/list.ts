@@ -53,6 +53,43 @@ export class ListAction extends BaseAction {
     }
   }
 
+  /**
+   * Scans and loads all local development stacks from the filesystem
+   *
+   * Reads stack definition files from the user's ~/.claude/stacks directory,
+   * validates them as DeveloperStack objects, and returns them sorted by
+   * creation date. Gracefully handles missing directories and corrupted files.
+   *
+   * @returns Promise resolving to array of DeveloperStack objects sorted by creation date (newest first)
+   *
+   * @throws {@link Error} When filesystem access fails or JSON parsing encounters critical errors
+   *
+   * @example
+   * ```typescript
+   * const listAction = new ListAction();
+   * const stacks = await listAction.listLocalStacks();
+   *
+   * // Process each stack
+   * for (const stack of stacks) {
+   *   console.log(`Stack: ${stack.name} (${stack.commands?.length} commands)`);
+   * }
+   * ```
+   *
+   * @remarks
+   * This method performs several important operations:
+   * - Checks for existence of stacks directory (~/.claude/stacks)
+   * - Filters for .json files only to avoid processing other file types
+   * - Reads all stack files in parallel for optimal performance
+   * - Adds filePath property to each stack for file operations
+   * - Skips corrupted or invalid stack files without throwing errors
+   * - Sorts results by metadata.created_at timestamp (newest first)
+   *
+   * The method is designed to be resilient and won't fail due to individual
+   * corrupted stack files, making it suitable for user-facing operations.
+   *
+   * @since 1.2.3
+   * @public
+   */
   public async listLocalStacks(): Promise<DeveloperStack[]> {
     const stacksDir = getStacksPath();
 
@@ -154,7 +191,42 @@ Enter a number `) +
   }
 }
 
-// Export the standalone function that was used in list.ts for other parts of the codebase
+/**
+ * Standalone function to list local development stacks for backward compatibility
+ *
+ * Provides a simple functional interface for listing local stacks without requiring
+ * instantiation of the ListAction class. Delegates to the ListAction class method
+ * to maintain consistency and reduce code duplication.
+ *
+ * @returns Promise resolving to array of DeveloperStack objects sorted by creation date (newest first)
+ *
+ * @throws {@link Error} When filesystem access fails or JSON parsing encounters critical errors
+ *
+ * @example
+ * ```typescript
+ * // Simple functional usage
+ * import { listLocalStacks } from './actions/list.js';
+ *
+ * const stacks = await listLocalStacks();
+ * console.log(`Found ${stacks.length} local stacks`);
+ *
+ * // Process each stack
+ * stacks.forEach(stack => {
+ *   console.log(`- ${stack.name}: ${stack.description}`);
+ * });
+ * ```
+ *
+ * @remarks
+ * This function exists for backward compatibility with existing code that expects
+ * a standalone function rather than a class method. It creates a temporary
+ * ListAction instance and delegates to its listLocalStacks method.
+ *
+ * For new code, consider using the ListAction class directly for better
+ * performance when making multiple operations.
+ *
+ * @since 1.0.0
+ * @public
+ */
 export async function listLocalStacks(): Promise<DeveloperStack[]> {
   const listActionInstance = new ListAction();
   return listActionInstance.listLocalStacks();
@@ -166,21 +238,47 @@ const listActionInstance = new ListAction();
 /**
  * Lists and manages local development stacks with interactive navigation
  *
+ * Provides a comprehensive terminal-based interface for viewing, selecting, and managing
+ * local Claude Code development stacks. Users can browse their exported stacks, view
+ * detailed information, and navigate to published stack browser when needed.
+ *
  * @returns Promise that resolves when user exits the list interface
  *
- * @throws {@link Error} When file system errors occur reading stack files
+ * @throws {@link Error} When file system errors occur reading stack files from ~/.claude/stacks
+ * @throws {@link Error} When navigation between list and browse actions fails
+ * @throws {@link Error} When stack file parsing encounters critical JSON errors
  *
  * @example
  * ```typescript
- * // Show interactive stack list
+ * // Show interactive local stack list
  * await listAction();
- * // User can browse, select, and manage stacks
+ *
+ * // User can:
+ * // - View numbered list of local stacks
+ * // - Select a stack by number to see details
+ * // - Type 'b' to browse published stacks
+ * // - Press Enter to exit
+ *
+ * // Example output:
+ * // 💾 Local Development Stacks
+ * // Found 3 local stack(s):
+ * // 1. my-tools (my-tools-v1.json) - v1.0.0, 5 items
+ * // 2. api-stack (api-config.json) - v2.1.0, 3 items
  * ```
  *
  * @remarks
- * Provides an interactive terminal interface for browsing local stacks.
- * Automatically refreshes the list after stack operations.
- * Shows helpful messages when no stacks are found.
+ * The list action maintains navigation context and integrates seamlessly with
+ * the browse action for a complete stack management experience. It provides:
+ *
+ * - Interactive numbered stack selection
+ * - Real-time stack information display (version, component count, file name)
+ * - Integration with stack detail views and management operations
+ * - Automatic list refresh after stack operations
+ * - Helpful messages when no stacks are found with export guidance
+ * - Navigation to published stack browser via 'b' option
+ *
+ * The interface is designed to be user-friendly with clear prompts and
+ * consistent visual formatting using the UIService for colored output.
  *
  * @since 1.0.0
  * @public

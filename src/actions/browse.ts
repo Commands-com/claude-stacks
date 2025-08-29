@@ -24,6 +24,39 @@ interface BrowseState {
 }
 
 // Helper function to determine stack path from API response
+/**
+ * Determines the stack path identifier from API response data
+ *
+ * Constructs a standardized stack path in the format "org/name" or "author/name"
+ * for use in URLs, API calls, and stack identification. Provides fallback logic
+ * to handle different API response formats.
+ *
+ * @param stack - The remote stack object from API response
+ * @returns Stack path in format "org/name", "author/name", or "unknown-stack" as fallback
+ *
+ * @example
+ * ```typescript
+ * const stack: RemoteStack = {
+ *   org: 'anthropic',
+ *   name: 'claude-dev-tools',
+ *   author: 'anthropic-team'
+ * };
+ *
+ * const path = getStackPath(stack);
+ * // Returns: "anthropic/claude-dev-tools"
+ *
+ * // With missing org field:
+ * const stackNoOrg: RemoteStack = {
+ *   name: 'my-stack',
+ *   author: 'developer'
+ * };
+ * const pathFallback = getStackPath(stackNoOrg);
+ * // Returns: "developer/my-stack"
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 function getStackPath(stack: RemoteStack): string {
   // API returns org and name (already slugified)
   if (stack.org && stack.name) {
@@ -37,6 +70,33 @@ function getStackPath(stack: RemoteStack): string {
   return 'unknown-stack';
 }
 
+/**
+ * Builds HTTP headers for API requests to Commands.com backend
+ *
+ * Constructs a headers object with required User-Agent and optional Authorization
+ * headers for authenticated requests. Ensures consistent header format across
+ * all API requests from the CLI.
+ *
+ * @param accessToken - Bearer token for authentication, null if unauthenticated
+ * @returns Object containing HTTP headers ready for fetch requests
+ *
+ * @example
+ * ```typescript
+ * // Unauthenticated request headers
+ * const headers = buildFetchHeaders(null);
+ * // Returns: { 'User-Agent': 'claude-stacks-cli/1.0.0' }
+ *
+ * // Authenticated request headers
+ * const authHeaders = buildFetchHeaders('abc123token');
+ * // Returns: {
+ * //   'User-Agent': 'claude-stacks-cli/1.0.0',
+ * //   'Authorization': 'Bearer abc123token'
+ * // }
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 function buildFetchHeaders(accessToken: string | null): Record<string, string> {
   const headers: Record<string, string> = {
     'User-Agent': 'claude-stacks-cli/1.0.0',
@@ -49,6 +109,41 @@ function buildFetchHeaders(accessToken: string | null): Record<string, string> {
   return headers;
 }
 
+/**
+ * Converts API stack response format to internal RemoteStack type
+ *
+ * Transforms the stack data structure returned by the Commands.com API into
+ * the internal RemoteStack interface used throughout the CLI. Ensures type
+ * safety and consistent data structure handling across the application.
+ *
+ * @param apiStack - Stack object from Commands.com API response
+ * @returns RemoteStack object with normalized structure for CLI usage
+ *
+ * @example
+ * ```typescript
+ * // API response structure
+ * const apiResponse: ApiStackResponse = {
+ *   org: 'anthropic',
+ *   name: 'claude-tools',
+ *   description: 'Development tools for Claude',
+ *   commandCount: 5,
+ *   installCount: 1250,
+ *   // ... other API fields
+ * };
+ *
+ * // Convert to internal format
+ * const remoteStack = convertApiStackToRemoteStack(apiResponse);
+ * // Returns: RemoteStack with all fields mapped correctly
+ * ```
+ *
+ * @remarks
+ * This conversion ensures that any changes to the API response structure
+ * can be handled in a single location, maintaining backward compatibility
+ * and providing a stable interface for the rest of the CLI.
+ *
+ * @since 1.0.0
+ * @public
+ */
 function convertApiStackToRemoteStack(apiStack: ApiStackResponse): RemoteStack {
   return {
     org: apiStack.org,
@@ -75,6 +170,49 @@ function convertApiStackToRemoteStack(apiStack: ApiStackResponse): RemoteStack {
   };
 }
 
+/**
+ * Fetches stacks from Commands.com API with optional search and filtering
+ *
+ * Performs authenticated or unauthenticated requests to retrieve stacks based on
+ * search criteria. Supports filtering by ownership (myStacks) and keyword search.
+ * Handles both local development and production API endpoints automatically.
+ *
+ * @param options - Configuration object for the fetch operation
+ * @param options.search - Optional search term to filter stacks by keyword
+ * @param options.myStacks - If true, fetch only stacks owned by authenticated user
+ * @param accessToken - Bearer token for authenticated requests, null for public access
+ * @returns Promise resolving to array of RemoteStack objects
+ *
+ * @throws {@link Error} When API request fails with HTTP error status
+ * @throws {@link Error} When network connectivity issues occur
+ * @throws {@link Error} When API response format is invalid or unexpected
+ *
+ * @example
+ * ```typescript
+ * // Fetch all public stacks
+ * const publicStacks = await fetchStacks({}, null);
+ *
+ * // Search for stacks containing "react"
+ * const reactStacks = await fetchStacks({ search: 'react' }, null);
+ *
+ * // Fetch user's private stacks (requires authentication)
+ * const myStacks = await fetchStacks({ myStacks: true }, accessToken);
+ *
+ * // Combined search and ownership filter
+ * const myReactStacks = await fetchStacks({
+ *   search: 'react',
+ *   myStacks: true
+ * }, accessToken);
+ * ```
+ *
+ * @remarks
+ * The function automatically detects local development mode and adjusts the
+ * API base URL accordingly. It provides user feedback through console messages
+ * and handles API response validation to ensure data integrity.
+ *
+ * @since 1.0.0
+ * @public
+ */
 async function fetchStacks(
   options: { search?: string; myStacks?: boolean } = {},
   accessToken: string | null
@@ -738,6 +876,53 @@ async function handleMainAction(action: string, state: BrowseState): Promise<boo
   }
 }
 
+/**
+ * Interactive browser for discovering and managing development stacks from Commands.com
+ *
+ * Provides a comprehensive terminal-based interface for browsing, searching, and managing
+ * Claude Code development stacks. Users can discover public stacks from the community,
+ * manage their own published stacks, search by keywords, and perform stack operations
+ * like installation, deletion, and visibility management.
+ *
+ * @returns Promise that resolves when user exits the browse interface
+ *
+ * @throws {@link Error} When network errors occur or API requests fail
+ * @throws {@link Error} When authentication fails for protected operations
+ * @throws {@link Error} When browser operations fail during stack viewing
+ *
+ * @example
+ * ```typescript
+ * // Start interactive stack browser
+ * await browseAction();
+ *
+ * // User navigates through menu options:
+ * // - (a) All Stacks - Browse public community stacks
+ * // - (m) My Stacks - Manage personal published stacks
+ * // - (s) Search - Find stacks by keyword
+ * // - (l) Local - View local development stacks
+ * // - (q) Quit - Exit browser
+ * ```
+ *
+ * @remarks
+ * The browse action maintains navigation context and handles authentication
+ * automatically when needed for operations like viewing private stacks or
+ * managing stack visibility. It integrates with the Commands.com platform
+ * for fetching remote stacks and supports both public and authenticated
+ * operations.
+ *
+ * Features include:
+ * - Browse public stacks from the community
+ * - Manage your own published stacks (requires authentication)
+ * - Search stacks by keyword or functionality
+ * - Install stacks directly from the browser
+ * - Manage stack visibility (public/private)
+ * - Rename and delete owned stacks
+ * - View stacks in web browser
+ * - Navigate to local stack management
+ *
+ * @since 1.0.0
+ * @public
+ */
 export async function browseAction(): Promise<void> {
   const state: BrowseState = {};
   navigationService.pushContext({ source: 'browse' });
@@ -760,6 +945,40 @@ export async function browseAction(): Promise<void> {
 
 /**
  * Handle browse action errors consistently
+ */
+/**
+ * Handles browse action errors with appropriate user feedback and process management
+ *
+ * Centralizes error handling for the browse action, providing consistent error
+ * reporting and process termination behavior. Adapts behavior based on runtime
+ * environment to support both production usage and test scenarios.
+ *
+ * @param error - The error that occurred during browse operation
+ * @returns Never returns - either throws or exits process
+ *
+ * @throws {@link Error} In test environments, re-throws error for test handling
+ * @throws Never returns in production - calls process.exit(1)
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   await someStackOperation();
+ * } catch (error) {
+ *   handleBrowseError(error);
+ *   // Never reached in production
+ * }
+ * ```
+ *
+ * @remarks
+ * This function provides environment-aware error handling:
+ * - In production: Displays error message and exits with code 1
+ * - In test environment: Throws error to allow test frameworks to handle it
+ *
+ * The function ensures user-friendly error messages regardless of error type,
+ * converting unknown error types to strings for display.
+ *
+ * @since 1.0.0
+ * @public
  */
 function handleBrowseError(error: unknown): never {
   console.error(

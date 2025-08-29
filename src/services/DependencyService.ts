@@ -73,10 +73,49 @@ export class DependencyService {
    * @param mcpServers - Array of MCP server configurations to check
    * @returns Promise that resolves to dependency summary
    */
+  /**
+   * Get a comprehensive summary of dependency check results for MCP servers
+   *
+   * @remarks
+   * Analyzes all provided MCP server configurations and returns a detailed summary
+   * including counts of total, missing, and satisfied dependencies. This method
+   * provides both statistical overview and specific missing dependency details
+   * for comprehensive dependency validation reporting.
+   *
+   * @param mcpServers - Array of MCP server configurations to check for dependencies
+   * @returns Promise that resolves to a dependency summary object containing:
+   * - `total`: Total number of MCP servers being checked
+   * - `missing`: Number of MCP servers with missing dependencies
+   * - `satisfied`: Number of MCP servers with all dependencies satisfied
+   * - `missingDependencies`: Array of detailed missing dependency objects with installation instructions
+   * @throws Error if dependency checking fails due to system issues
+   * @example
+   * ```typescript
+   * const dependencyService = new DependencyService();
+   * const mcpServers = [
+   *   { name: 'filesystem', command: 'mcp-server-filesystem' },
+   *   { name: 'postgres', command: 'mcp-server-postgres' }
+   * ];
+   *
+   * const summary = await dependencyService.getDependencySummary(mcpServers);
+   * console.log(`Total: ${summary.total}, Missing: ${summary.missing}`);
+   * // Output: Total: 2, Missing: 1
+   *
+   * if (summary.missingDependencies.length > 0) {
+   *   console.log('Missing dependencies:', summary.missingDependencies.map(dep => dep.command));
+   * }
+   * ```
+   * @since 1.2.3
+   * @public
+   */
   async getDependencySummary(mcpServers: StackMcpServer[]): Promise<{
+    /** Total number of MCP servers being checked for dependencies */
     total: number;
+    /** Number of MCP servers that have missing dependencies */
     missing: number;
+    /** Number of MCP servers with all dependencies satisfied (total - missing) */
     satisfied: number;
+    /** Array of detailed missing dependency objects containing command names, types, and installation instructions */
     missingDependencies: MissingDependency[];
   }> {
     const missingDeps = await this.checkMcpDependencies(mcpServers);
