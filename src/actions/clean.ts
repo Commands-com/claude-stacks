@@ -157,7 +157,7 @@ const cleanActionInstance = new CleanAction();
  *
  * @returns Promise that resolves when cleanup is complete
  *
- * @throws {@link Error} When configuration file is corrupted or file system errors occur
+ * @throws {Error} When configuration file is corrupted or file system errors occur
  *
  * @example
  * ```typescript

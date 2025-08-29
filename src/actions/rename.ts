@@ -151,7 +151,7 @@ const renameActionInstance = new RenameAction();
  *
  * @returns Promise that resolves when rename is complete
  *
- * @throws {@link Error} When stack is not published, authentication fails, or API errors occur
+ * @throws {Error} When stack is not published, authentication fails, or API errors occur
  *
  * @example
  * ```typescript

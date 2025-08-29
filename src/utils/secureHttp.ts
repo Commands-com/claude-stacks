@@ -4,6 +4,35 @@ import type { RequestInit, Response } from 'node-fetch';
 import fetch from 'node-fetch';
 import { isTestEnvironment, isTestHost } from './testHelpers.js';
 
+/**
+ * Secure HTTP client for making validated HTTPS requests to Commands.com API
+ *
+ * Provides enterprise-grade security features including TLS 1.2+ enforcement,
+ * hostname allowlisting, certificate validation, and secure connection pooling.
+ * All requests are restricted to approved domains and use proper SSL/TLS settings.
+ *
+ * @example
+ * ```typescript
+ * // Make a secure GET request
+ * const response = await SecureHttpClient.get('https://api.commands.com/stacks');
+ * const data = await response.json();
+ *
+ * // Make a secure POST request with authentication
+ * const result = await SecureHttpClient.post(
+ *   'https://api.commands.com/stacks/publish',
+ *   { name: 'my-stack', description: 'A sample stack' },
+ *   { 'Authorization': `Bearer ${token}` }
+ * );
+ *
+ * // Validate URL before making request
+ * if (SecureHttpClient.isUrlAllowed(url)) {
+ *   const response = await SecureHttpClient.secureRequest(url);
+ * }
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 export class SecureHttpClient {
   private static readonly ALLOWED_HOSTS = [
     'api.commands.com',

@@ -1,6 +1,29 @@
 import * as path from 'path';
 import { isTestEnvironment, isTestPath } from './testHelpers.js';
 
+/**
+ * Path security utility for preventing path traversal and validating file operations
+ *
+ * Provides comprehensive path sanitization and validation to prevent security
+ * vulnerabilities such as directory traversal attacks, invalid file types,
+ * and access to restricted locations.
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   const safePath = PathSecurity.sanitizePath('../etc/passwd', '/safe/dir');
+ * } catch (error) {
+ *   console.error('Path traversal blocked:', error.message);
+ * }
+ *
+ * if (PathSecurity.isPathAllowed('/some/path', ['/allowed/dir'])) {
+ *   console.log('Path access granted');
+ * }
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 export class PathSecurity {
   private static readonly ALLOWED_EXTENSIONS = ['.json', '.md', '.txt', '.yaml', '.yml'];
   private static readonly FORBIDDEN_PATTERNS = [

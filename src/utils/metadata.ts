@@ -2,15 +2,70 @@ import fs from 'fs-extra';
 import * as path from 'path';
 import { METADATA_FILE_PATH } from '../constants/paths.js';
 
+/**
+ * Metadata tracking information for published stacks
+ *
+ * Contains essential information about stacks that have been published to
+ * Commands.com, including versioning and change tracking data.
+ *
+ * @example
+ * ```typescript
+ * const stackMetadata: PublishedStackMetadata = {
+ *   stack_id: 'user/my-stack',
+ *   stack_name: 'my-stack',
+ *   last_published_version: '1.2.0',
+ *   last_published_at: '2023-12-01T10:30:00Z',
+ *   last_export_hash: 'abc123def456'
+ * };
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 export interface PublishedStackMetadata {
+  /** Unique identifier for the stack in format 'org/name' */
   stack_id: string;
+  /** Display name of the stack */
   stack_name: string;
+  /** Semantic version string of the last published version */
   last_published_version: string;
+  /** ISO timestamp of when the stack was last published */
   last_published_at: string;
+  /** Optional hash of the last exported content for change detection */
   last_export_hash?: string;
 }
 
+/**
+ * Root metadata structure containing all published stack information
+ *
+ * Top-level container for all stack metadata, organized by directory path
+ * for efficient lookup and management of published stacks.
+ *
+ * @example
+ * ```typescript
+ * const metadata: StacksMetadata = {
+ *   published_stacks: {
+ *     '/path/to/stack1': {
+ *       stack_id: 'user/stack1',
+ *       stack_name: 'stack1',
+ *       last_published_version: '1.0.0',
+ *       last_published_at: '2023-12-01T10:30:00Z'
+ *     },
+ *     '/path/to/stack2': {
+ *       stack_id: 'user/stack2',
+ *       stack_name: 'stack2',
+ *       last_published_version: '2.1.0',
+ *       last_published_at: '2023-12-15T14:20:00Z'
+ *     }
+ *   }
+ * };
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 export interface StacksMetadata {
+  /** Map of directory paths to their published stack metadata */
   published_stacks: Record<string, PublishedStackMetadata>;
 }
 
@@ -96,10 +151,31 @@ export async function getAllPublishedStacks(): Promise<Record<string, PublishedS
 
 /**
  * Find stack metadata by stack ID
+ *
+ * Searches through all published stack metadata to find a stack with the
+ * specified ID and returns both its directory path and metadata.
+ *
+ * @param stackId - The stack ID to search for (format: 'org/name')
+ * @returns Promise resolving to an object with path and metadata, or null if not found
+ *
+ * @example
+ * ```typescript
+ * const result = await findStackByStackId('user/my-stack');
+ * if (result) {
+ *   console.log(`Found at: ${result.path}`);
+ *   console.log(`Version: ${result.metadata.last_published_version}`);
+ * }
+ * ```
+ *
+ * @since 1.0.0
+ * @public
  */
-export async function findStackByStackId(
-  stackId: string
-): Promise<{ path: string; metadata: PublishedStackMetadata } | null> {
+export async function findStackByStackId(stackId: string): Promise<{
+  /** The file system path where the stack is located */
+  path: string;
+  /** The published metadata for the found stack */
+  metadata: PublishedStackMetadata;
+} | null> {
   const metadata = await loadMetadata();
 
   for (const [directoryPath, stackMetadata] of Object.entries(metadata.published_stacks)) {

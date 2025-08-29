@@ -37,7 +37,7 @@ const metadata = new MetadataService();
  *
  * @returns Promise that resolves when publishing is complete
  *
- * @throws {@link Error} When authentication fails, stack validation fails, or upload errors occur
+ * @throws {Error} When authentication fails, stack validation fails, or upload errors occur
  *
  * @example
  * ```typescript

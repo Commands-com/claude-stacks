@@ -30,6 +30,24 @@ const ui = new UIService();
 const metadata = new MetadataService();
 
 /**
+ * Stack metadata containing essential information for stack identification
+ *
+ * Represents the core metadata required for stack creation and identification,
+ * combining user input with auto-generated or derived values.
+ *
+ * @since 1.0.0
+ * @public
+ */
+export interface StackMetadata {
+  /** Stack name (often derived from directory name) */
+  name: string;
+  /** Stack description (from user input, package.json, or auto-generated) */
+  description: string;
+  /** Stack version following semantic versioning */
+  version: string;
+}
+
+/**
  * Truncates a description string to 80 characters or less
  *
  * Ensures descriptions remain readable in UI displays by limiting length
@@ -349,12 +367,24 @@ async function getEntryType(fullPath: string): Promise<{ isDirectory: boolean; i
 
 /**
  * Generate stack metadata (name, description, version)
+ *
+ * Creates essential stack metadata by combining user-provided options with
+ * auto-generated values from the current directory and package.json.
+ *
+ * @param options - Configuration options for metadata generation
+ * @param options.name - Optional stack name (defaults to directory name)
+ * @param options.description - Optional stack description (auto-generated from package.json or directory)
+ * @param options.stackVersion - Optional version override
+ * @returns {Promise<StackMetadata>} Complete stack metadata for export
+ *
+ * @since 1.0.0
+ * @public
  */
 async function generateStackMetadata(options: {
   name?: string;
   description?: string;
   stackVersion?: string;
-}): Promise<{ name: string; description: string; version: string }> {
+}): Promise<StackMetadata> {
   const currentDir = process.cwd();
   const dirName = path.basename(currentDir);
 
@@ -1063,7 +1093,7 @@ async function exportCurrentStack(options: {
  *
  * @returns Promise that resolves when export is complete
  *
- * @throws {@link Error} When stack export fails due to file system or validation errors
+ * @throws {Error} When stack export fails due to file system or validation errors
  *
  * @example
  * ```typescript
@@ -1252,6 +1282,33 @@ function handleExportError(error: unknown): never {
  * debugging, and modular usage. Contains functions for content extraction,
  * directory scanning, metadata generation, component collection, hook analysis,
  * and export workflow management.
+ *
+ * @namespace exportHelpers
+ *
+ * @property {Function} truncateDescription - Truncates description text to 80 characters with ellipsis
+ * @property {Function} extractFromYamlFrontmatter - Extracts description from YAML frontmatter
+ * @property {Function} extractFromFirstMeaningfulLine - Gets description from first non-empty line
+ * @property {Function} extractDescriptionFromContent - Main function to extract description from content
+ * @property {Function} scanDirectory - Recursively scans directory for stack components
+ * @property {Function} generateStackMetadata - Creates metadata object for stack export
+ * @property {Function} collectCommands - Gathers all command configurations from Claude files
+ * @property {Function} collectAgents - Gathers all agent configurations from Claude files
+ * @property {Function} collectSettings - Collects settings from configuration files
+ * @property {Function} collectHooks - Analyzes and collects hook scripts with security scanning
+ * @property {Function} readSettingsFile - Reads and parses settings files safely
+ * @property {Function} convertMcpConfig - Converts MCP configuration to stack format
+ * @property {Function} collectMcpServers - Gathers MCP server configurations
+ * @property {Function} exportCurrentStack - Main function to export current directory as stack
+ * @property {Function} resolveOutputFilename - Determines appropriate output filename
+ * @property {Function} writeStackToFile - Writes stack data to JSON file
+ * @property {Function} displayExportSuccess - Shows success message to user
+ * @property {Function} handleExportError - Handles and displays export errors
+ * @property {Function} inferHookType - Determines hook type from file content analysis
+ * @property {Function} containsPostToolPattern - Checks for post-tool execution patterns
+ * @property {Function} containsPreToolPattern - Checks for pre-tool execution patterns
+ * @property {Function} getSessionHookType - Determines session-based hook type
+ * @property {Function} getOtherHookType - Determines non-session hook type
+ * @property {Function} getRiskLevel - Converts risk score to categorical risk level
  *
  * @example
  * ```typescript

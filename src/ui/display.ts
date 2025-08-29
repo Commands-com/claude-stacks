@@ -24,7 +24,24 @@ interface ClaudeMdComponent {
   content: string;
 }
 
-// Show detailed stack information
+/**
+ * Displays comprehensive information about a stack or current directory
+ *
+ * Shows stack metadata, components, and configuration details in a formatted
+ * display. Can show either a specific stack file or current directory analysis.
+ *
+ * @param stackFile - Optional path to stack file, uses default if not provided
+ * @param showCurrent - If true, shows current directory info instead of stack details
+ * @returns Promise that resolves when display is complete
+ * @throws {Error} When stack file cannot be found or loaded
+ * @example
+ * ```typescript
+ * await showStackInfo('./my-stack.json');
+ * await showStackInfo(undefined, true); // Show current directory
+ * ```
+ * @since 1.0.0
+ * @public
+ */
 export async function showStackInfo(
   stackFile?: string,
   showCurrent: boolean = false
@@ -432,6 +449,26 @@ function calculateTotalHooks(hookConfig: unknown[]): number {
   }, 0);
 }
 
+/**
+ * Displays comprehensive hook safety analysis with risk categorization
+ *
+ * Analyzes both file-based hooks and inline script patterns, presenting
+ * a detailed security report with risk levels, suspicious patterns, and
+ * safety statistics to help users make informed decisions about stack installation.
+ *
+ * @param hooks - Array of analyzed hook objects from stack files
+ * @param inlineResults - Map of inline script analysis results with risk scores
+ *
+ * @example
+ * ```typescript
+ * const hooks = await analyzeStackHooks(stack);
+ * const inlineResults = await scanInlineScripts(stack);
+ * displayHookSafetySummary(hooks, inlineResults);
+ * ```
+ *
+ * @since 1.2.0
+ * @public
+ */
 function displayHookSafetySummary(hooks: unknown[], inlineResults?: Map<string, unknown>): void {
   if (!hooks?.length && (!inlineResults || inlineResults.size === 0)) {
     return;
@@ -612,12 +649,51 @@ function calculateInlineHookCounts(inlineResults?: Map<string, unknown>) {
   };
 }
 
+/**
+ * Calculates risk level category based on numerical risk score
+ *
+ * Categorizes security risk scores into meaningful levels for user decision making.
+ * Uses established thresholds to determine if code execution poses safety concerns.
+ *
+ * @param riskScore - Numerical risk score (0-100 scale)
+ * @returns Risk level category for user display and decision making
+ *
+ * @example
+ * ```typescript
+ * const level = calculateRiskLevel(85); // 'dangerous'
+ * const level = calculateRiskLevel(45); // 'warning'
+ * const level = calculateRiskLevel(10); // 'safe'
+ * ```
+ *
+ * @since 1.2.0
+ * @public
+ */
 function calculateRiskLevel(riskScore: number): 'safe' | 'warning' | 'dangerous' {
   if (riskScore >= 70) return 'dangerous';
   if (riskScore >= 30) return 'warning';
   return 'safe';
 }
 
+/**
+ * Gets appropriate emoji icon for risk level visualization
+ *
+ * Provides visual indicators to help users quickly assess security risk levels
+ * in console output and user interfaces.
+ *
+ * @param riskLevel - Risk level string ('safe', 'warning', 'dangerous')
+ * @returns Emoji character representing the risk level
+ *
+ * @example
+ * ```typescript
+ * const emoji = getRiskEmoji('safe');      // '✅'
+ * const emoji = getRiskEmoji('warning');   // '⚠️'
+ * const emoji = getRiskEmoji('dangerous'); // '🔴'
+ * const emoji = getRiskEmoji('unknown');   // '❓'
+ * ```
+ *
+ * @since 1.2.0
+ * @public
+ */
 function getRiskEmoji(riskLevel: string): string {
   const riskEmojis = {
     safe: '✅',

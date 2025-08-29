@@ -136,8 +136,31 @@ export class MetadataService {
    * @since 1.2.3
    * @public
    */
+  /**
+   * Find stack metadata by stack ID
+   *
+   * Searches through all published stack metadata to find a stack with the
+   * specified ID and returns both its project path and metadata.
+   *
+   * @param stackId - The stack ID to search for (format: 'org/name')
+   * @returns Promise resolving to an object with project path and metadata, or null if not found
+   *
+   * @example
+   * ```typescript
+   * const result = await metadataService.findStackByStackId('user/my-stack');
+   * if (result) {
+   *   console.log(`Found at: ${result.projectPath}`);
+   *   console.log(`Version: ${result.metadata.last_published_version}`);
+   * }
+   * ```
+   *
+   * @since 1.0.0
+   * @public
+   */
   async findStackByStackId(stackId: string): Promise<{
+    /** The file system project path where the stack is located */
     projectPath: string;
+    /** The published metadata for the found stack */
     metadata: PublishedStackMetadata;
   } | null> {
     const result = await findStackByStackId(stackId);

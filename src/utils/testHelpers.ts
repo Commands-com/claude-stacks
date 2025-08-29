@@ -3,6 +3,24 @@
  */
 
 /**
+ * Configuration object for environment-specific security and validation settings
+ *
+ * Provides different configuration values based on whether running in test
+ * or production environment to balance security with testing convenience.
+ *
+ * @since 1.0.0
+ * @public
+ */
+export interface EnvironmentConfig {
+  /** Whether to skip path security validation */
+  skipPathValidation: boolean;
+  /** Whether to allow test host connections */
+  allowTestHosts: boolean;
+  /** Whether to skip encryption for sensitive data */
+  skipEncryption: boolean;
+}
+
+/**
  * Checks if the application is running in test environment
  * @returns true if NODE_ENV is 'test'
  */
@@ -52,10 +70,31 @@ export function isTestHost(hostname: string): boolean {
 }
 
 /**
- * Gets environment-specific configuration
- * @returns configuration object with test overrides if in test environment
+ * Gets environment-specific configuration for security and validation settings
+ *
+ * Provides different configuration values based on whether running in test
+ * or production environment. Test environment disables security measures
+ * for easier testing while production enables all safety features.
+ *
+ * @returns {EnvironmentConfig} Configuration object with environment-appropriate security settings
+ *
+ * @example
+ * ```typescript
+ * const config = getEnvironmentConfig();
+ *
+ * if (!config.skipPathValidation) {
+ *   await validatePath(userPath);
+ * }
+ *
+ * if (config.allowTestHosts) {
+ *   // Allow connections to localhost for testing
+ * }
+ * ```
+ *
+ * @since 1.0.0
+ * @public
  */
-export function getEnvironmentConfig() {
+export function getEnvironmentConfig(): EnvironmentConfig {
   if (isTestEnvironment()) {
     return {
       skipPathValidation: true,

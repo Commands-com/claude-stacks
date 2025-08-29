@@ -19,7 +19,22 @@ const OAUTH_CONFIG: OAuthConfig & { scopes: string[] } = {
   scopes: ['write_assets', 'read_assets'],
 };
 
-// Find available port for OAuth callback
+/**
+ * Finds an available port for OAuth callback server
+ *
+ * Creates a temporary HTTP server on port 0 to automatically assign an available
+ * port, then closes the server and returns the port number for use with OAuth callbacks.
+ *
+ * @returns Promise resolving to an available port number
+ * @throws {Error} When unable to determine port or server creation fails
+ * @example
+ * ```typescript
+ * const port = await findAvailablePort();
+ * console.log(`OAuth server will run on port ${port}`);
+ * ```
+ * @since 1.0.0
+ * @public
+ */
 export function findAvailablePort(): Promise<number> {
   return new Promise((resolve, reject) => {
     const server = http.createServer();
@@ -38,12 +53,53 @@ export function findAvailablePort(): Promise<number> {
   });
 }
 
-// Generate PKCE challenge with enhanced security
-export function generatePKCE(): { codeVerifier: string; codeChallenge: string } {
+/**
+ * Generates PKCE (Proof Key for Code Exchange) challenge pair for OAuth security
+ *
+ * Creates a cryptographically secure code verifier and corresponding SHA256 challenge
+ * following RFC 7636 specifications. Uses maximum recommended length for enhanced security.
+ *
+ * @returns Object containing codeVerifier and codeChallenge strings
+ * @example
+ * ```typescript
+ * const { codeVerifier, codeChallenge } = generatePKCE();
+ * // Use codeChallenge in authorization URL
+ * // Use codeVerifier in token exchange
+ * ```
+ * @since 1.0.0
+ * @public
+ */
+/**
+ * Generate PKCE (Proof Key for Code Exchange) parameters for OAuth2 security
+ *
+ * Creates a cryptographically secure code verifier and its corresponding
+ * challenge according to RFC 7636 standards for enhanced OAuth2 security.
+ *
+ * @returns Object containing the PKCE parameter pair
+ *
+ * @example
+ * ```typescript
+ * const { codeVerifier, codeChallenge } = generatePKCE();
+ * console.log(`Challenge: ${codeChallenge}`);
+ * // Store codeVerifier securely for later token exchange
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
+export function generatePKCE(): {
+  /** Cryptographically secure random string used to verify token exchange */
+  codeVerifier: string;
+  /** SHA256 hash of code verifier sent in authorization request */
+  codeChallenge: string;
+} {
   // RFC 7636 recommends 43-128 characters, use maximum for security
   const codeVerifier = crypto.randomBytes(96).toString('base64url'); // ~128 chars
   const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
-  return { codeVerifier, codeChallenge };
+  return {
+    codeVerifier,
+    codeChallenge,
+  };
 }
 
 // Token encryption utilities
@@ -165,7 +221,26 @@ function validateOAuthState(receivedState: string, expectedState: string): boole
   return crypto.timingSafeEqual(receivedBuffer, expectedBuffer);
 }
 
-// Store/retrieve tokens
+/**
+ * Retrieves stored authentication token from encrypted local storage
+ *
+ * Reads encrypted token file and decrypts using machine-specific key material.
+ * Handles backward compatibility with legacy token formats and automatically
+ * re-encrypts unencrypted tokens for security.
+ *
+ * @returns Promise resolving to stored AuthToken or null if none exists
+ * @example
+ * ```typescript
+ * const token = await getStoredToken();
+ * if (token) {
+ *   console.log('Found existing authentication');
+ * } else {
+ *   console.log('User needs to authenticate');
+ * }
+ * ```
+ * @since 1.0.0
+ * @public
+ */
 export async function getStoredToken(): Promise<AuthToken | null> {
   const tokenPath = AUTH_TOKEN_PATH;
   if (await fs.pathExists(tokenPath)) {
@@ -190,6 +265,25 @@ export async function getStoredToken(): Promise<AuthToken | null> {
   return null;
 }
 
+/**
+ * Securely stores authentication token with encryption
+ *
+ * Encrypts token using AES-256-GCM with machine-specific key derivation and stores
+ * to local file system with restrictive permissions (600). Uses PBKDF2 with high
+ * iteration count for key strengthening.
+ *
+ * @param token - Authentication token object to store securely
+ * @returns Promise that resolves when token is successfully stored
+ * @throws {Error} When file system operations fail or encryption fails
+ * @example
+ * ```typescript
+ * const authToken = { access_token: 'abc123', ... };
+ * await storeToken(authToken);
+ * console.log('Token stored securely');
+ * ```
+ * @since 1.0.0
+ * @public
+ */
 export async function storeToken(token: AuthToken): Promise<void> {
   const tokenPath = AUTH_TOKEN_PATH;
   const encryptedToken = encryptToken(token);
@@ -201,6 +295,21 @@ export async function storeToken(token: AuthToken): Promise<void> {
   await fs.writeFile(tokenPath, encryptedToken, { mode: 0o600 });
 }
 
+/**
+ * Removes stored authentication token from local storage
+ *
+ * Safely deletes the encrypted token file from the file system if it exists.
+ * Used during logout or when token becomes invalid and needs to be cleared.
+ *
+ * @returns Promise that resolves when token file is removed or doesn't exist
+ * @example
+ * ```typescript
+ * await clearStoredToken();
+ * console.log('Authentication cleared');
+ * ```
+ * @since 1.0.0
+ * @public
+ */
 export async function clearStoredToken(): Promise<void> {
   const tokenPath = AUTH_TOKEN_PATH;
   if (await fs.pathExists(tokenPath)) {
@@ -208,6 +317,24 @@ export async function clearStoredToken(): Promise<void> {
   }
 }
 
+/**
+ * Refreshes an expired access token using the refresh token
+ *
+ * Exchanges a refresh token for a new access token via Commands.com OAuth endpoint.
+ * Validates the response and returns the new token data for storage.
+ *
+ * @param token - Refresh token string to exchange for new access token
+ * @returns Promise resolving to new AuthToken with updated access credentials
+ * @throws {Error} When token refresh fails due to network issues or invalid refresh token
+ * @example
+ * ```typescript
+ * const newToken = await refreshToken(oldToken.refresh_token);
+ * await storeToken(newToken);
+ * console.log('Token refreshed successfully');
+ * ```
+ * @since 1.0.0
+ * @public
+ */
 export async function refreshToken(token: string): Promise<AuthToken> {
   const response = await fetch(OAUTH_CONFIG.tokenUrl, {
     method: 'POST',
@@ -405,7 +532,7 @@ async function exchangeCodeForToken(
  *
  * @returns Promise resolving to access token for API requests
  *
- * @throws {@link Error} When authentication fails, network errors occur, or user cancels
+ * @throws {Error} When authentication fails, network errors occur, or user cancels
  *
  * @example
  * ```typescript

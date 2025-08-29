@@ -5,28 +5,94 @@ import { homedir } from 'os';
 import { colors } from './colors.js';
 import type { StackMcpServer } from '../types/index.js';
 
+/**
+ * Represents a missing system dependency that prevents functionality from working
+ *
+ * Contains information about a command or tool that is required but not found
+ * on the system, including installation instructions and affected components.
+ *
+ * @since 1.0.0
+ * @public
+ */
 export interface MissingDependency {
+  /** The command or executable name that is missing */
   command: string;
+  /** Optional human-readable description of what this dependency provides */
   description?: string;
+  /** Classification of dependency type (MCP server, status line, or system command) */
   type: 'mcp' | 'statusline' | 'system';
+  /** List of components, servers, or features that require this dependency */
   requiredBy: string[];
+  /** Platform-specific installation instructions for this dependency */
   installInstructions: string;
+  /** Optional additional notes about installation or usage */
   notes?: string;
 }
 
-export interface DependencyMapping {
-  description: string;
-  type: 'system' | 'statusline';
-  checkPaths?: string[];
-  installInstructions: {
-    default: string;
-    notes?: string;
-  } & {
-    [platform: string]: string | { [packageManager: string]: string; default: string } | undefined;
-  };
+/**
+ * Package manager specific installation instructions
+ *
+ * Maps package managers to their installation commands with a default fallback.
+ *
+ * @since 1.0.0
+ * @public
+ */
+export interface PackageManagerInstructions {
+  /** Default installation command when no specific package manager is available */
+  default: string;
+  /** Additional package manager specific commands (npm, brew, apt, etc.) */
+  [packageManager: string]: string;
 }
 
+/**
+ * Installation instructions for a dependency
+ *
+ * Contains default installation commands and optional platform-specific alternatives.
+ *
+ * @since 1.0.0
+ * @public
+ */
+export interface InstallationInstructions {
+  /** Default installation instructions if no platform-specific option available */
+  default: string;
+  /** Optional additional notes about installation */
+  notes?: string;
+  /** Platform-specific installation instructions (darwin, linux, win32, etc.) */
+  [platform: string]: string | PackageManagerInstructions | undefined;
+}
+
+/**
+ * Defines how to check for and install a specific dependency
+ *
+ * Contains platform-specific installation instructions and alternative
+ * paths to check for command availability. Used by the dependency
+ * checking system to provide accurate installation guidance.
+ *
+ * @since 1.0.0
+ * @public
+ */
+export interface DependencyMapping {
+  /** Human-readable description of what this dependency provides */
+  description: string;
+  /** Classification of this dependency type */
+  type: 'system' | 'statusline';
+  /** Optional alternative paths to check for command existence */
+  checkPaths?: string[];
+  /** Installation instructions organized by platform and package manager */
+  installInstructions: InstallationInstructions;
+}
+
+/**
+ * Container for all dependency mapping configurations
+ *
+ * Loaded from dependency-mappings.json file, contains mappings for all
+ * known commands and their installation instructions across platforms.
+ *
+ * @since 1.0.0
+ * @public
+ */
 export interface DependencyMappings {
+  /** Map of command names to their dependency configurations */
   commands: Record<string, DependencyMapping>;
 }
 
@@ -68,6 +134,26 @@ function loadDependencyMappings(): DependencyMappings {
   return dependencyMappings;
 }
 
+/**
+ * Checks if a command exists and is available in the system PATH
+ *
+ * Uses the 'which' command to determine if the specified command is installed
+ * and executable. Works across Unix-like systems (macOS, Linux).
+ *
+ * @param command - The command name to check for existence
+ * @returns Promise resolving to true if command exists, false otherwise
+ * @example
+ * ```typescript
+ * const hasGit = await checkCommandExists('git');
+ * if (hasGit) {
+ *   console.log('Git is available');
+ * } else {
+ *   console.log('Git is not installed');
+ * }
+ * ```
+ * @since 1.0.0
+ * @public
+ */
 export async function checkCommandExists(command: string): Promise<boolean> {
   return new Promise(resolve => {
     const child = spawn('which', [command], { stdio: 'ignore' });
@@ -181,6 +267,27 @@ async function createMissingDependency(
   };
 }
 
+/**
+ * Checks for missing dependencies required by MCP servers in a stack
+ *
+ * Analyzes the provided MCP servers to identify command dependencies and
+ * verifies their availability on the system. Returns detailed information
+ * about any missing dependencies including installation instructions.
+ *
+ * @param mcpServers - Array of MCP server configurations to check dependencies for
+ * @returns Promise resolving to array of missing dependencies, empty if all found
+ * @throws {Error} When dependency mapping configuration cannot be loaded
+ * @example
+ * ```typescript
+ * const servers = [{ name: 'github', command: 'gh', type: 'stdio' }];
+ * const missing = await checkMcpDependencies(servers);
+ * if (missing.length > 0) {
+ *   console.log('Missing dependencies:', missing.map(d => d.command));
+ * }
+ * ```
+ * @since 1.0.0
+ * @public
+ */
 export async function checkMcpDependencies(
   mcpServers: StackMcpServer[]
 ): Promise<MissingDependency[]> {
@@ -211,6 +318,26 @@ export async function checkMcpDependencies(
   return Promise.all(missingDepsPromises);
 }
 
+/**
+ * Checks for missing dependencies required by status line display functionality
+ *
+ * Verifies that commands specified in status line configuration are available
+ * on the system. Status line dependencies are typically optional and only
+ * affect visual display enhancements.
+ *
+ * @param statusLine - Optional status line configuration with command requirements
+ * @returns Promise resolving to array of missing status line dependencies
+ * @example
+ * ```typescript
+ * const statusConfig = { type: 'command', command: 'git' };
+ * const missing = await checkStatusLineDependencies(statusConfig);
+ * if (missing.length === 0) {
+ *   console.log('Status line ready');
+ * }
+ * ```
+ * @since 1.0.0
+ * @public
+ */
 // eslint-disable-next-line complexity
 export async function checkStatusLineDependencies(statusLine?: {
   type?: string;
@@ -269,6 +396,23 @@ function displayDependenciesGroup(
   }
 }
 
+/**
+ * Displays formatted output of missing dependencies organized by type
+ *
+ * Presents missing dependencies in a user-friendly format with installation
+ * instructions, categorized by dependency type (MCP, status line, system).
+ * Includes helpful context about impact and installation guidance.
+ *
+ * @param missingDeps - Array of missing dependencies to display
+ * @example
+ * ```typescript
+ * const missing = await checkMcpDependencies(servers);
+ * displayMissingDependencies(missing);
+ * // Outputs formatted dependency information to console
+ * ```
+ * @since 1.0.0
+ * @public
+ */
 export function displayMissingDependencies(missingDeps: MissingDependency[]): void {
   if (missingDeps.length === 0) return;
 

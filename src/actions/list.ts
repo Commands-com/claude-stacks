@@ -62,7 +62,7 @@ export class ListAction extends BaseAction {
    *
    * @returns Promise resolving to array of DeveloperStack objects sorted by creation date (newest first)
    *
-   * @throws {@link Error} When filesystem access fails or JSON parsing encounters critical errors
+   * @throws {Error} When filesystem access fails or JSON parsing encounters critical errors
    *
    * @example
    * ```typescript
@@ -200,7 +200,7 @@ Enter a number `) +
  *
  * @returns Promise resolving to array of DeveloperStack objects sorted by creation date (newest first)
  *
- * @throws {@link Error} When filesystem access fails or JSON parsing encounters critical errors
+ * @throws {Error} When filesystem access fails or JSON parsing encounters critical errors
  *
  * @example
  * ```typescript
@@ -244,9 +244,9 @@ const listActionInstance = new ListAction();
  *
  * @returns Promise that resolves when user exits the list interface
  *
- * @throws {@link Error} When file system errors occur reading stack files from ~/.claude/stacks
- * @throws {@link Error} When navigation between list and browse actions fails
- * @throws {@link Error} When stack file parsing encounters critical JSON errors
+ * @throws {Error} When file system errors occur reading stack files from ~/.claude/stacks
+ * @throws {Error} When navigation between list and browse actions fails
+ * @throws {Error} When stack file parsing encounters critical JSON errors
  *
  * @example
  * ```typescript

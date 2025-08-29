@@ -43,7 +43,7 @@ const restoreActionInstance = new RestoreAction();
  *
  * @returns Promise that resolves when restoration is complete
  *
- * @throws {@link Error} When stack file is not found or restoration fails
+ * @throws {Error} When stack file is not found or restoration fails
  *
  * @example
  * ```typescript

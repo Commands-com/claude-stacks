@@ -1084,7 +1084,7 @@ const uninstallActionInstance = new UninstallAction();
  *
  * @returns Promise that resolves when uninstallation is complete
  *
- * @throws {@link Error} When stack is not found or uninstallation fails
+ * @throws {Error} When stack is not found or uninstallation fails
  *
  * @example
  * ```typescript

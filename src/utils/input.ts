@@ -1,4 +1,31 @@
-// Utility function for single character input without Enter
+/**
+ * Reads a single character from user input without requiring Enter key
+ *
+ * Provides immediate character input for interactive prompts and menus.
+ * Handles TTY detection, raw mode management, and special key combinations
+ * including Ctrl+C for graceful termination and Enter for empty selection.
+ *
+ * @param prompt - Text prompt to display to user before reading input
+ * @returns Promise resolving to the lowercase character entered by user
+ *
+ * @example
+ * ```typescript
+ * // Interactive menu selection
+ * const choice = await readSingleChar('Select option (y/n): ');
+ * if (choice === 'y') {
+ *   console.log('User confirmed');
+ * }
+ *
+ * // Stack deletion confirmation
+ * const confirm = await readSingleChar('Delete stack? (y/N): ');
+ * if (confirm === 'y') {
+ *   await deleteStack(stackId);
+ * }
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 export function readSingleChar(prompt: string): Promise<string> {
   return new Promise(resolve => {
     process.stdout.write(prompt);

@@ -2,6 +2,22 @@ import * as path from 'path';
 import type { StackMcpServer } from '../types/index.js';
 
 /**
+ * Summary of sanitization analysis for an MCP server
+ *
+ * Provides details about which fields in an MCP server configuration
+ * contain sensitive data that would be sanitized during export.
+ *
+ * @since 1.1.0
+ * @public
+ */
+export interface SanitizationSummary {
+  /** Name of the MCP server being analyzed */
+  serverName: string;
+  /** Array of field names that contain sensitive data */
+  sensitiveFields: string[];
+}
+
+/**
  * Patterns that indicate a value is a local filesystem path
  */
 const PATH_PATTERNS = {
@@ -168,6 +184,33 @@ function generateGenericFilename(originalFilename: string): string {
   return `sensitive_file${extension}`;
 }
 
+/**
+ * Sanitizes filesystem paths for safe public sharing in stack exports
+ *
+ * Replaces user-specific and sensitive paths with generic placeholders while
+ * preserving filename structure and extensions. Maps common executables to
+ * standard command names and handles sensitive filenames appropriately.
+ *
+ * @param originalPath - The original filesystem path to sanitize
+ * @returns Sanitized path safe for public sharing
+ *
+ * @example
+ * ```typescript
+ * // User-specific paths become generic
+ * sanitizePath('/Users/john/project/script.js'); // '/path/to/script.js'
+ * sanitizePath('C:\\Users\\john\\config.json'); // '/path/to/config.json'
+ *
+ * // Common executables become standard commands
+ * sanitizePath('/usr/local/bin/node'); // 'node'
+ * sanitizePath('/opt/homebrew/bin/python3'); // 'python3'
+ *
+ * // Sensitive filenames are generalized
+ * sanitizePath('/path/oauth_client_123.json'); // '/path/to/oauth_credentials.json'
+ * ```
+ *
+ * @since 1.1.0
+ * @public
+ */
 export function sanitizePath(originalPath: string): string {
   if (!originalPath || typeof originalPath !== 'string') {
     return originalPath;
@@ -307,11 +350,30 @@ export function containsSensitiveData(server: StackMcpServer): boolean {
 
 /**
  * Get a summary of what would be sanitized in an MCP server
+ *
+ * Analyzes an MCP server configuration to identify which fields contain
+ * sensitive data that would be sanitized during stack export.
+ *
+ * @param server - MCP server configuration to analyze
+ * @returns {SanitizationSummary} Summary object with server name and list of sensitive fields
+ *
+ * @example
+ * ```typescript
+ * const server = {
+ *   name: 'my-server',
+ *   command: '/Users/john/.local/bin/server',
+ *   args: ['--config', '/home/john/config.json']
+ * };
+ *
+ * const summary = getSanitizationSummary(server);
+ * console.log(summary.serverName);     // 'my-server'
+ * console.log(summary.sensitiveFields); // ['command', 'args']
+ * ```
+ *
+ * @since 1.1.0
+ * @public
  */
-export function getSanitizationSummary(server: StackMcpServer): {
-  serverName: string;
-  sensitiveFields: string[];
-} {
+export function getSanitizationSummary(server: StackMcpServer): SanitizationSummary {
   const sensitiveFields: string[] = [];
 
   if (server.command && isLocalPath(server.command)) {

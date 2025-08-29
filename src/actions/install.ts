@@ -149,7 +149,7 @@ const installActionInstance = new InstallAction();
  *
  * @returns Promise that resolves when installation is complete
  *
- * @throws {@link Error} When stack is not found or installation fails
+ * @throws {Error} When stack is not found or installation fails
  *
  * @example
  * ```typescript

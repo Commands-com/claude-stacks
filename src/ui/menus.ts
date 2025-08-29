@@ -147,6 +147,22 @@ async function handleDeleteAction(stack: DeveloperStack): Promise<boolean> {
   return false;
 }
 
+/**
+ * Displays local stack details and interactive action menu
+ *
+ * Shows stack metadata and presents interactive menu with options like restore,
+ * publish, delete, and view details. Handles user input and executes chosen actions.
+ *
+ * @param stack - Developer stack object containing stack metadata and file path
+ * @returns Promise that resolves when user exits the menu
+ * @example
+ * ```typescript
+ * const stack = await loadLocalStack('./my-stack.json');
+ * await showLocalStackDetailsAndActions(stack);
+ * ```
+ * @since 1.0.0
+ * @public
+ */
 export async function showLocalStackDetailsAndActions(stack: DeveloperStack): Promise<void> {
   displayLocalStackDetails(stack);
   displayLocalStackComponents(stack);
@@ -276,6 +292,23 @@ async function handleRemoteDeleteAction(stack: RemoteStack): Promise<boolean> {
   return false;
 }
 
+/**
+ * Displays remote stack details and interactive action menu
+ *
+ * Shows detailed information about a remote stack from Commands.com including
+ * stats, components, and provides interactive menu for install, view, or delete actions.
+ *
+ * @param stack - Remote stack object with metadata from Commands.com API
+ * @param accessToken - Optional access token for authenticated actions like delete
+ * @returns Promise that resolves when user exits the menu
+ * @example
+ * ```typescript
+ * const remoteStack = await fetchStackFromAPI('org/stack-name');
+ * await showStackDetailsAndActions(remoteStack, token);
+ * ```
+ * @since 1.0.0
+ * @public
+ */
 export async function showStackDetailsAndActions(
   stack: RemoteStack,
   accessToken: string | null

@@ -1,11 +1,69 @@
 import type { DeveloperStack } from '../types/index.js';
 
+/**
+ * Version bump type for semantic version increments
+ *
+ * Defines how to increment version numbers based on the nature of changes:
+ * - `major`: Breaking changes that require major version bump (1.0.0 → 2.0.0)
+ * - `minor`: New features that are backward compatible (1.0.0 → 1.1.0)
+ * - `patch`: Bug fixes and small improvements (1.0.0 → 1.0.1)
+ *
+ * @example
+ * ```typescript
+ * const bumpType: VersionBumpType = 'minor';
+ * const newVersion = bumpVersion('1.0.0', bumpType); // '1.1.0'
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 export type VersionBumpType = 'major' | 'minor' | 'patch';
 
 /**
- * Parse a semantic version string into components
+ * Version components for semantic version parsing
+ *
+ * Represents the three components of a semantic version number,
+ * following the MAJOR.MINOR.PATCH convention.
+ *
+ * @since 1.0.0
+ * @public
  */
-export function parseVersion(version: string): { major: number; minor: number; patch: number } {
+export interface ParsedVersion {
+  /** Major version number (breaking changes) */
+  major: number;
+  /** Minor version number (new features) */
+  minor: number;
+  /** Patch version number (bug fixes) */
+  patch: number;
+}
+
+/**
+ * Parse a semantic version string into components
+ *
+ * Extracts major, minor, and patch numbers from a valid semantic version string.
+ * Validates format and throws error for invalid version strings.
+ *
+ * @param version - Semantic version string to parse (e.g., "1.2.3")
+ * @returns {ParsedVersion} Object containing version components
+ *
+ * @throws {Error} When version string is not in valid X.Y.Z format
+ *
+ * @example
+ * ```typescript
+ * const components = parseVersion('2.1.0');
+ * console.log(components.major); // 2
+ * console.log(components.minor); // 1
+ * console.log(components.patch); // 0
+ *
+ * // Invalid formats throw errors
+ * parseVersion('v1.0.0');    // Error: Invalid version format
+ * parseVersion('1.0');       // Error: Invalid version format
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
+export function parseVersion(version: string): ParsedVersion {
   const match = version.match(/^(\d+)\.(\d+)\.(\d+)$/);
   if (!match) {
     throw new Error(`Invalid version format: ${version}. Expected format: X.Y.Z`);
@@ -21,7 +79,7 @@ export function parseVersion(version: string): { major: number; minor: number; p
 /**
  * Format version components into a semantic version string
  */
-export function formatVersion(version: { major: number; minor: number; patch: number }): string {
+export function formatVersion(version: ParsedVersion): string {
   return `${version.major}.${version.minor}.${version.patch}`;
 }
 

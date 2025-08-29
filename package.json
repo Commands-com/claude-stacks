@@ -35,7 +35,7 @@
     "coverage:open": "open coverage/lcov-report/index.html",
     "coverage:serve": "npx http-server coverage/lcov-report -p 8080",
     "jsdoc:coverage": "typedoc --entryPointStrategy expand --out docs/jsdoc src --pretty --validation.notDocumented",
-    "docs": "typedoc --entryPointStrategy expand --out /dev/null src --validation.notDocumented --pretty | grep -E 'warning|error' | wc -l"
+    "docs": "typedoc --entryPointStrategy expand --out .tmp-docs src --validation.notDocumented --pretty 2>&1 | grep -E 'warning|error' | wc -l && rm -rf .tmp-docs"
   },
   "keywords": [
     "claude",

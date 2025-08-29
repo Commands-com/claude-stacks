@@ -183,9 +183,9 @@ function convertApiStackToRemoteStack(apiStack: ApiStackResponse): RemoteStack {
  * @param accessToken - Bearer token for authenticated requests, null for public access
  * @returns Promise resolving to array of RemoteStack objects
  *
- * @throws {@link Error} When API request fails with HTTP error status
- * @throws {@link Error} When network connectivity issues occur
- * @throws {@link Error} When API response format is invalid or unexpected
+ * @throws {Error} When API request fails with HTTP error status
+ * @throws {Error} When network connectivity issues occur
+ * @throws {Error} When API response format is invalid or unexpected
  *
  * @example
  * ```typescript
@@ -820,7 +820,7 @@ async function handleLocalStacksAction(): Promise<void> {
  *
  * @returns Promise that resolves when user exits the browse interface
  *
- * @throws {@link Error} When network errors occur or API requests fail
+ * @throws {Error} When network errors occur or API requests fail
  *
  * @example
  * ```typescript
@@ -886,9 +886,9 @@ async function handleMainAction(action: string, state: BrowseState): Promise<boo
  *
  * @returns Promise that resolves when user exits the browse interface
  *
- * @throws {@link Error} When network errors occur or API requests fail
- * @throws {@link Error} When authentication fails for protected operations
- * @throws {@link Error} When browser operations fail during stack viewing
+ * @throws {Error} When network errors occur or API requests fail
+ * @throws {Error} When authentication fails for protected operations
+ * @throws {Error} When browser operations fail during stack viewing
  *
  * @example
  * ```typescript
@@ -956,7 +956,7 @@ export async function browseAction(): Promise<void> {
  * @param error - The error that occurred during browse operation
  * @returns Never returns - either throws or exits process
  *
- * @throws {@link Error} In test environments, re-throws error for test handling
+ * @throws {Error} In test environments, re-throws error for test handling
  * @throws Never returns in production - calls process.exit(1)
  *
  * @example

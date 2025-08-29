@@ -311,11 +311,36 @@ export const FilePathValidator: BrandedTypeValidator<string, 'FilePath'> = {
 /**
  * Interface for safe MCP server configuration
  */
-interface SafeMcpServerConfig {
+/**
+ * Interface for safe MCP server configuration
+ *
+ * Defines the structure for MCP server configuration objects that have
+ * been validated for basic format correctness. Used internally by the
+ * validation system to ensure type safety after validation.
+ *
+ * @example
+ * ```typescript
+ * const config: SafeMcpServerConfig = {
+ *   command: 'node',
+ *   args: ['server.js', '--port', '3000'],
+ *   env: { NODE_ENV: 'production' },
+ *   url: 'http://localhost:3000'
+ * };
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
+export interface SafeMcpServerConfig {
+  /** Optional command to execute for the MCP server */
   command?: string;
+  /** Optional array of arguments to pass to the command */
   args?: string[];
+  /** Optional environment variables for the MCP server process */
   env?: Record<string, string>;
+  /** Optional URL for connecting to the MCP server */
   url?: string;
+  /** Optional type identifier for the MCP server */
   type?: string;
 }
 
@@ -347,24 +372,56 @@ export const McpServerConfigValidator = {
     return true;
   },
 
+  /**
+   * Validates the command property of an MCP server configuration
+   *
+   * @param server - The server configuration object to validate
+   * @throws {Error} When command property exists but is not a string
+   * @since 1.0.0
+   * @public
+   */
   validateCommand: (server: Record<string, unknown>): void => {
     if (server.command !== undefined && typeof server.command !== 'string') {
       throw new Error('MCP server command must be a string');
     }
   },
 
+  /**
+   * Validates the args property of an MCP server configuration
+   *
+   * @param server - The server configuration object to validate
+   * @throws {Error} When args property exists but is not an array
+   * @since 1.0.0
+   * @public
+   */
   validateArgs: (server: Record<string, unknown>): void => {
     if (server.args !== undefined && !Array.isArray(server.args)) {
       throw new Error('MCP server args must be an array');
     }
   },
 
+  /**
+   * Validates the env property of an MCP server configuration
+   *
+   * @param server - The server configuration object to validate
+   * @throws {Error} When env property exists but is not a valid object
+   * @since 1.0.0
+   * @public
+   */
   validateEnv: (server: Record<string, unknown>): void => {
     if (server.env !== undefined && (typeof server.env !== 'object' || server.env === null)) {
       throw new Error('MCP server env must be an object');
     }
   },
 
+  /**
+   * Validates the url property of an MCP server configuration
+   *
+   * @param server - The server configuration object to validate
+   * @throws {Error} When url property exists but is not a string
+   * @since 1.0.0
+   * @public
+   */
   validateUrl: (server: Record<string, unknown>): void => {
     if (server.url !== undefined && typeof server.url !== 'string') {
       throw new Error('MCP server URL must be a string');
@@ -379,10 +436,48 @@ export const McpServerConfigValidator = {
 /**
  * Type-safe parser that returns a Result type
  */
+/**
+ * Type-safe parser that returns a Result type
+ *
+ * Attempts to validate and create a branded type from an unknown value.
+ * Returns a discriminated union indicating success or failure with
+ * appropriate data or error information.
+ *
+ * @template T The base type to validate
+ * @template TBrand The brand identifier for the type
+ * @param validator - The branded type validator to use
+ * @param value - The unknown value to validate and convert
+ * @returns Success result with data or failure result with error message
+ *
+ * @example
+ * ```typescript
+ * const result = safeParse(StackNameValidator, 'my-stack');
+ * if (result.success) {
+ *   console.log(result.data); // TypeScript knows data exists
+ * } else {
+ *   console.error(result.error); // TypeScript knows error exists
+ * }
+ * ```
+ *
+ * @since 1.0.0
+ * @public
+ */
 export const safeParse = <T, TBrand extends string>(
   validator: BrandedTypeValidator<T, TBrand>,
   value: unknown
-): { success: true; data: Brand<T, TBrand> } | { success: false; error: string } => {
+):
+  | {
+      /** Success state indicator */
+      success: true;
+      /** Validated and branded data on success */
+      data: Brand<T, TBrand>;
+    }
+  | {
+      /** Failure state indicator */
+      success: false;
+      /** Error message explaining validation failure */
+      error: string;
+    } => {
   try {
     const result = validator.create(value as T);
     return { success: true, data: result };

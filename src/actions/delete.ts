@@ -97,7 +97,7 @@ const deleteActionInstance = new DeleteAction();
  *
  * @returns Promise that resolves when deletion is complete
  *
- * @throws {@link Error} When stack is not found or deletion fails
+ * @throws {Error} When stack is not found or deletion fails
  *
  * @example
  * ```typescript
