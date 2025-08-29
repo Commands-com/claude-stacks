@@ -1,6 +1,6 @@
 {
   "name": "claude-stacks",
-  "version": "1.4.6",
+  "version": "1.4.7",
   "description": "Share your Claude Code environment in seconds - export and import development stacks",
   "main": "./dist/cli.js",
   "type": "module",
