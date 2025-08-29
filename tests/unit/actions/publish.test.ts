@@ -235,7 +235,7 @@ describe('publishAction', () => {
         'https://api.test.com/v1/stacks/test-org/existing-stack',
         expect.objectContaining({
           method: 'PUT',
-          body: expect.not.stringContaining('"name"'), // Name not included in updates
+          body: expect.stringContaining('"name"'), // Name included in updates to preserve it
         })
       );
 
@@ -616,9 +616,9 @@ describe('publishAction', () => {
         }),
       });
 
-      // Should not include name/description for updates
-      expect(callBody).not.toHaveProperty('name');
-      expect(callBody).not.toHaveProperty('description');
+      // Should include name/description for updates to preserve them
+      expect(callBody).toHaveProperty('name');
+      expect(callBody).toHaveProperty('description');
       expect(callBody).not.toHaveProperty('public');
     });
   });

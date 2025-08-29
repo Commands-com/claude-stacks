@@ -290,6 +290,8 @@ function prepareStackPayload(
 
   if (isUpdate) {
     return {
+      name: stack.name,
+      description: stack.description,
       ...basePayload,
       metadata: baseMetadata,
     };
