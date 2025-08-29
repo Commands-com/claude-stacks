@@ -1,10 +1,10 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2025-08-28T19:21:17.669Z",
+  "lastUpdated": "2025-08-29T03:48:18.316Z",
   "stacks": {
     "local/firecrawl-mcp-stack": {
       "stackId": "local/firecrawl-mcp-stack",
-      "name": "firecrawl-mcp",
+      "name": "Firecrawl MCP (local)",
       "source": "local-file",
       "version": "1.0.0",
       "components": {
@@ -42,7 +42,7 @@
         ],
         "claudeMd": []
       },
-      "installedAt": "2025-08-28T19:21:17.669Z"
+      "installedAt": "2025-08-29T03:48:18.316Z"
     }
   }
 }

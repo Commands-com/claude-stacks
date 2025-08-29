@@ -2,7 +2,6 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
-      "Read(//Users/dtannen/.claude/stacks/**)",
       "mcp__serena__read_file",
       "Bash(npm run build:*)",
       "mcp__serena__replace_regex",
@@ -46,7 +45,6 @@
       "Bash(npx tsc:*)",
       "mcp__serena__insert_before_symbol",
       "Bash(git add:*)",
-      "Read(//Users/dtannen/.claude/**)",
       "mcp__serena__find_referencing_symbols",
       "WebSearch",
       "WebFetch(domain:developers.google.com)",
