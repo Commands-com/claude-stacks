@@ -60,7 +60,14 @@ jest.mock('../../../src/services/index.js', () => ({
     getMissingDependencyNames: jest.fn().mockResolvedValue([]),
   })),
   StackService: jest.fn(),
-  FileService: jest.fn(),
+  FileService: jest.fn().mockImplementation(() => ({
+    exists: jest.fn(),
+    readJsonFile: jest.fn(),
+    writeJsonFile: jest.fn(),
+    ensureDir: jest.fn(),
+    copyFile: jest.fn(),
+    removeFile: jest.fn(),
+  })),
   ConfigService: jest.fn(),
 }));
 

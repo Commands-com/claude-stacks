@@ -1,6 +1,8 @@
 import fetch from 'node-fetch';
 import type { DeveloperStack, InstallOptions, RemoteStack } from '../types/index.js';
 import { BaseAction } from './BaseAction.js';
+import { StackRegistryService } from '../services/StackRegistryService.js';
+import { UninstallAction } from './uninstall.js';
 
 /**
  * Action class for installing stacks from Commands.com
@@ -9,6 +11,14 @@ import { BaseAction } from './BaseAction.js';
  * @public
  */
 export class InstallAction extends BaseAction {
+  private readonly stackRegistry: StackRegistryService;
+
+  constructor(services?: ConstructorParameters<typeof BaseAction>[0]) {
+    super(services);
+    // Initialize stackRegistry after parent initialization so fileService is available
+    this.stackRegistry = new StackRegistryService(this.fileService);
+  }
+
   /**
    * Execute the install action
    */
@@ -40,7 +50,14 @@ export class InstallAction extends BaseAction {
 
       this.ui.log(this.ui.colorStackName(`Installing: ${stack.name}`));
       this.ui.meta(`By: ${remoteStack.author ?? 'Unknown'}`);
-      this.ui.log(`Description: ${this.ui.colorDescription(stack.description)}\n`);
+      this.ui.log(`Description: ${this.ui.colorDescription(stack.description)}
+`);
+
+      // Handle existing installation
+      const shouldContinue = await this.handleExistingInstallation(stackId, stack);
+      if (!shouldContinue) {
+        return;
+      }
 
       // Check dependencies and display warnings
       await this.checkAndDisplayDependencies(stack);
@@ -135,6 +152,66 @@ export class InstallAction extends BaseAction {
     } catch {
       // Ignore tracking errors
     }
+  }
+
+  /**
+   * Check if stack is already installed and compare versions
+   */
+  /**
+   * Handle existing installation by checking version and optionally uninstalling
+   */
+  private async handleExistingInstallation(
+    stackId: string,
+    stack: DeveloperStack
+  ): Promise<boolean> {
+    const existingInstallation = await this.checkExistingInstallation(
+      stackId,
+      stack.version ?? '1.0.0'
+    );
+
+    if (existingInstallation.status === 'same-version') {
+      this.ui.info(
+        `✅ Stack "${stack.name}" (v${stack.version}) is already installed with the same version.`
+      );
+      this.ui.meta('   No changes needed.');
+      return false; // Don't continue with installation
+    }
+
+    if (existingInstallation.status === 'different-version') {
+      this.ui.info(
+        `🔄 Updating stack "${stack.name}" from v${existingInstallation.currentVersion} to v${stack.version}...`
+      );
+      this.ui.meta('   Removing existing installation before installing new version...');
+
+      // Uninstall existing stack silently
+      const uninstallAction = new UninstallAction();
+      await uninstallAction.execute(stackId, { force: true });
+      this.ui.meta('   ✓ Existing installation removed');
+    }
+
+    return true; // Continue with installation
+  }
+
+  private async checkExistingInstallation(
+    stackId: string,
+    newVersion: string
+  ): Promise<{
+    status: 'not-installed' | 'same-version' | 'different-version';
+    currentVersion?: string;
+  }> {
+    const stackEntry = await this.stackRegistry.getStackEntry(stackId);
+
+    if (!stackEntry) {
+      return { status: 'not-installed' };
+    }
+
+    const currentVersion = stackEntry.version ?? '1.0.0';
+
+    if (currentVersion === newVersion) {
+      return { status: 'same-version', currentVersion };
+    }
+
+    return { status: 'different-version', currentVersion };
   }
 }
 
