@@ -53,6 +53,7 @@
     // Performance Optimizations
     "incremental": true,
     "tsBuildInfoFile": "./dist/.tsbuildinfo",
+    "assumeChangesOnlyAffectDirectDependencies": true,
 
     // Advanced Features
     "experimentalDecorators": true,
@@ -67,7 +68,10 @@
       "@/utils/*": ["utils/*"],
       "@/services/*": ["services/*"],
       "@/controllers/*": ["controllers/*"],
-      "@/actions/*": ["actions/*"]
+      "@/actions/*": ["actions/*"],
+      "@/constants/*": ["constants/*"],
+      "@/config/*": ["config/*"],
+      "@/ui/*": ["ui/*"]
     }
   },
   "include": ["src/**/*", "src/**/*.json"],
