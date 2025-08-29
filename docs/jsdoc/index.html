@@ -1,668 +1,114 @@
-<!doctype html>
-<html class="default" lang="en" data-base="./">
-  <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="x-ua-compatible" content="IE=edge" />
-    <title>claude-stacks</title>
-    <meta name="description" content="Documentation for claude-stacks" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="assets/style.css" />
-    <link rel="stylesheet" href="assets/highlight.css" />
-    <script defer src="assets/main.js"></script>
-    <script async src="assets/icons.js" id="tsd-icons-script"></script>
-    <script async src="assets/search.js" id="tsd-search-script"></script>
-    <script async src="assets/navigation.js" id="tsd-nav-script"></script>
-    <script async src="assets/hierarchy.js" id="tsd-hierarchy-script"></script>
-  </head>
-  <body>
-    <script>
-      document.documentElement.dataset.theme = localStorage.getItem('tsd-theme') || 'os';
-      document.body.style.display = 'none';
-      setTimeout(
-        () => (window.app ? app.showPage() : document.body.style.removeProperty('display')),
-        500
-      );
-    </script>
-    <header class="tsd-page-toolbar">
-      <div class="tsd-toolbar-contents container">
-        <a href="index.html" class="title">claude-stacks</a>
-        <div id="tsd-toolbar-links"></div>
-        <button id="tsd-search-trigger" class="tsd-widget" aria-label="Search">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <use href="assets/icons.svg#icon-search"></use>
-          </svg>
-        </button>
-        <dialog id="tsd-search" aria-label="Search">
-          <input
-            role="combobox"
-            id="tsd-search-input"
-            aria-controls="tsd-search-results"
-            aria-autocomplete="list"
-            aria-expanded="true"
-            autocapitalize="off"
-            autocomplete="off"
-            placeholder="Search the docs"
-            maxlength="100"
-          />
-          <ul role="listbox" id="tsd-search-results"></ul>
-          <div id="tsd-search-status" aria-live="polite" aria-atomic="true">
-            <div>Preparing search index...</div>
-          </div>
-        </dialog>
-        <a
-          href="#"
-          class="tsd-widget menu"
-          id="tsd-toolbar-menu-trigger"
-          data-toggle="menu"
-          aria-label="Menu"
-          ><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <use href="assets/icons.svg#icon-menu"></use></svg
-        ></a>
-      </div>
-    </header>
-    <div class="container container-main">
-      <div class="col-content">
-        <div class="tsd-page-title"><h1>claude-stacks</h1></div>
-        <div class="tsd-panel tsd-typography">
-          <h1 id="claude-stacks" class="tsd-anchor-link">
-            Claude Stacks<a href="#claude-stacks" aria-label="Permalink" class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h1>
-          <p>
-            <img src="https://img.shields.io/badge/coverage-91%25-brightgreen" alt="Coverage" />
-            <a href="https://www.npmjs.com/package/claude-stacks"
-              ><img src="https://badge.fury.io/js/claude-stacks.svg" alt="npm version"
-            /></a>
-            <a href="https://opensource.org/licenses/MIT"
-              ><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"
-            /></a>
-          </p>
-          <p>
-            Share your Claude Code environment in seconds - export and restore development stacks.
-          </p>
-          <h2 id="what-is-claude-stacks" class="tsd-anchor-link">
-            What is Claude Stacks?<a
-              href="#what-is-claude-stacks"
-              aria-label="Permalink"
-              class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h2>
-          <p>Claude Stacks is a CLI tool that allows you to:</p>
-          <ul>
-            <li>
-              <strong>Export</strong> your Claude Code environment configurations as portable stack
-              files
-            </li>
-            <li>
-              <strong>Share</strong> development stacks with your team or the community via
-              <a href="http://Commands.com">Commands.com</a>
-            </li>
-            <li>
-              <strong>Restore</strong> environments quickly across different projects and machines
-            </li>
-            <li>
-              <strong>Browse</strong> and install stacks from the
-              <a href="http://Commands.com">Commands.com</a> marketplace
-            </li>
-          </ul>
-          <p>
-            Perfect for sharing MCP server configurations, project setups, and development
-            environments with Claude Code users.
-          </p>
-          <h2 id="installation" class="tsd-anchor-link">
-            Installation<a href="#installation" aria-label="Permalink" class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h2>
-          <p>Install globally via npm:</p>
-          <pre><code class="bash"><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">install</span><span class="hl-1"> </span><span class="hl-3">-g</span><span class="hl-1"> </span><span class="hl-2">claude-stacks</span>
+<!DOCTYPE html><html class="default" lang="en" data-base="./"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>claude-stacks</title><meta name="description" content="Documentation for claude-stacks"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script defer src="assets/main.js"></script><script async src="assets/icons.js" id="tsd-icons-script"></script><script async src="assets/search.js" id="tsd-search-script"></script><script async src="assets/navigation.js" id="tsd-nav-script"></script><script async src="assets/hierarchy.js" id="tsd-hierarchy-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="index.html" class="title">claude-stacks</a><div id="tsd-toolbar-links"></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><h1>claude-stacks</h1></div><div class="tsd-panel tsd-typography"><h1 id="claude-stacks" class="tsd-anchor-link">Claude Stacks<a href="#claude-stacks" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1><p><img src="https://img.shields.io/badge/coverage-91%25-brightgreen" alt="Coverage">
+<a href="https://www.npmjs.com/package/claude-stacks"><img src="https://badge.fury.io/js/claude-stacks.svg" alt="npm version"></a>
+<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a></p>
+<p>Share your Claude Code environment in seconds - export and restore development stacks.</p>
+<h2 id="what-is-claude-stacks" class="tsd-anchor-link">What is Claude Stacks?<a href="#what-is-claude-stacks" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>Claude Stacks is a CLI tool that allows you to:</p>
+<ul>
+<li><strong>Export</strong> your Claude Code environment configurations as portable stack files</li>
+<li><strong>Share</strong> development stacks with your team or the community via <a href="http://Commands.com">Commands.com</a></li>
+<li><strong>Restore</strong> environments quickly across different projects and machines</li>
+<li><strong>Browse</strong> and install stacks from the <a href="http://Commands.com">Commands.com</a> marketplace</li>
+</ul>
+<p>Perfect for sharing MCP server configurations, project setups, and development environments with Claude Code users.</p>
+<h2 id="installation" class="tsd-anchor-link">Installation<a href="#installation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>Install globally via npm:</p>
+<pre><code class="bash"><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">install</span><span class="hl-1"> </span><span class="hl-3">-g</span><span class="hl-1"> </span><span class="hl-2">claude-stacks</span>
 </code><button type="button">Copy</button></pre>
 
-          <p>Or use npx to run without installing:</p>
-          <pre><code class="bash"><span class="hl-0">npx</span><span class="hl-1"> </span><span class="hl-2">claude-stacks</span><span class="hl-1"> </span><span class="hl-3">--help</span>
+<p>Or use npx to run without installing:</p>
+<pre><code class="bash"><span class="hl-0">npx</span><span class="hl-1"> </span><span class="hl-2">claude-stacks</span><span class="hl-1"> </span><span class="hl-3">--help</span>
 </code><button type="button">Copy</button></pre>
 
-          <h2 id="quick-start" class="tsd-anchor-link">
-            Quick Start<a href="#quick-start" aria-label="Permalink" class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h2>
-          <h3 id="export-your-current-setup" class="tsd-anchor-link">
-            Export Your Current Setup<a
-              href="#export-your-current-setup"
-              aria-label="Permalink"
-              class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h3>
-          <pre><code class="bash"><span class="hl-4"># Export current project&#39;s Claude Code configuration</span><br/><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">export</span><span class="hl-1"> </span><span class="hl-2">my-stack.json</span><br/><br/><span class="hl-4"># Export with custom metadata</span><br/><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">export</span><span class="hl-1"> </span><span class="hl-3">--name</span><span class="hl-1"> </span><span class="hl-2">&quot;My Dev Stack&quot;</span><span class="hl-1"> </span><span class="hl-3">--description</span><span class="hl-1"> </span><span class="hl-2">&quot;Full-stack development environment&quot;</span><br/><br/><span class="hl-4"># Include global Claude configurations</span><br/><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">export</span><span class="hl-1"> </span><span class="hl-3">--include-global</span><span class="hl-1"> </span><span class="hl-2">my-complete-stack.json</span>
+<h2 id="quick-start" class="tsd-anchor-link">Quick Start<a href="#quick-start" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><h3 id="export-your-current-setup" class="tsd-anchor-link">Export Your Current Setup<a href="#export-your-current-setup" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3><pre><code class="bash"><span class="hl-4"># Export current project&#39;s Claude Code configuration</span><br/><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">export</span><span class="hl-1"> </span><span class="hl-2">my-stack.json</span><br/><br/><span class="hl-4"># Export with custom metadata</span><br/><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">export</span><span class="hl-1"> </span><span class="hl-3">--name</span><span class="hl-1"> </span><span class="hl-2">&quot;My Dev Stack&quot;</span><span class="hl-1"> </span><span class="hl-3">--description</span><span class="hl-1"> </span><span class="hl-2">&quot;Full-stack development environment&quot;</span><br/><br/><span class="hl-4"># Include global Claude configurations</span><br/><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">export</span><span class="hl-1"> </span><span class="hl-3">--include-global</span><span class="hl-1"> </span><span class="hl-2">my-complete-stack.json</span>
 </code><button type="button">Copy</button></pre>
 
-          <h3 id="restore-from-a-stack" class="tsd-anchor-link">
-            Restore from a Stack<a
-              href="#restore-from-a-stack"
-              aria-label="Permalink"
-              class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h3>
-          <pre><code class="bash"><span class="hl-4"># Restore from a local stack file</span><br/><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">restore</span><span class="hl-1"> </span><span class="hl-2">my-stack.json</span><br/><br/><span class="hl-4"># Merge with existing configuration (default)</span><br/><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">restore</span><span class="hl-1"> </span><span class="hl-2">stack.json</span><br/><br/><span class="hl-4"># Overwrite existing files</span><br/><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">restore</span><span class="hl-1"> </span><span class="hl-3">--overwrite</span><span class="hl-1"> </span><span class="hl-2">stack.json</span>
+<h3 id="restore-from-a-stack" class="tsd-anchor-link">Restore from a Stack<a href="#restore-from-a-stack" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3><pre><code class="bash"><span class="hl-4"># Restore from a local stack file</span><br/><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">restore</span><span class="hl-1"> </span><span class="hl-2">my-stack.json</span><br/><br/><span class="hl-4"># Merge with existing configuration (default)</span><br/><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">restore</span><span class="hl-1"> </span><span class="hl-2">stack.json</span><br/><br/><span class="hl-4"># Overwrite existing files</span><br/><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">restore</span><span class="hl-1"> </span><span class="hl-3">--overwrite</span><span class="hl-1"> </span><span class="hl-2">stack.json</span>
 </code><button type="button">Copy</button></pre>
 
-          <h3 id="share-via-commandscom" class="tsd-anchor-link">
-            Share via <a href="http://Commands.com">Commands.com</a
-            ><a href="#share-via-commandscom" aria-label="Permalink" class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h3>
-          <pre><code class="bash"><span class="hl-4"># Publish to the marketplace</span><br/><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">publish</span><span class="hl-1"> </span><span class="hl-2">my-stack.json</span><br/><br/><span class="hl-4"># Browse available stacks</span><br/><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">browse</span><br/><br/><span class="hl-4"># Install from marketplace</span><br/><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">install</span><span class="hl-1"> </span><span class="hl-2">org-name/stack-name</span>
+<h3 id="share-via-commandscom" class="tsd-anchor-link">Share via <a href="http://Commands.com">Commands.com</a><a href="#share-via-commandscom" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3><pre><code class="bash"><span class="hl-4"># Publish to the marketplace</span><br/><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">publish</span><span class="hl-1"> </span><span class="hl-2">my-stack.json</span><br/><br/><span class="hl-4"># Browse available stacks</span><br/><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">browse</span><br/><br/><span class="hl-4"># Install from marketplace</span><br/><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">install</span><span class="hl-1"> </span><span class="hl-2">org-name/stack-name</span>
 </code><button type="button">Copy</button></pre>
 
-          <h2 id="commands" class="tsd-anchor-link">
-            Commands<a href="#commands" aria-label="Permalink" class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h2>
-          <h3 id="core-commands" class="tsd-anchor-link">
-            Core Commands<a href="#core-commands" aria-label="Permalink" class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h3>
-          <ul>
-            <li>
-              <strong><code>export [filename]</code></strong> - Export current environment to a
-              stack file
-            </li>
-            <li>
-              <strong><code>restore &lt;filename&gt;</code></strong> - Restore environment from a
-              stack file
-            </li>
-            <li>
-              <strong><code>publish &lt;filename&gt;</code></strong> - Publish stack to
-              <a href="http://Commands.com">Commands.com</a> marketplace
-            </li>
-            <li>
-              <strong><code>install &lt;stack-id&gt;</code></strong> - Install stack from
-              <a href="http://Commands.com">Commands.com</a>
-            </li>
-            <li>
-              <strong><code>browse</code></strong> - Browse marketplace stacks interactively
-            </li>
-          </ul>
-          <h3 id="management-commands" class="tsd-anchor-link">
-            Management Commands<a
-              href="#management-commands"
-              aria-label="Permalink"
-              class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h3>
-          <ul>
-            <li>
-              <strong><code>list</code></strong> - List local stacks
-            </li>
-            <li>
-              <strong><code>delete &lt;stack-id&gt;</code></strong> - Delete published stack from
-              <a href="http://Commands.com">Commands.com</a>
-            </li>
-            <li>
-              <strong><code>rename &lt;stack-id&gt;</code></strong> - Rename published stack
-            </li>
-            <li>
-              <strong><code>clean</code></strong> - Clean up local stack metadata
-            </li>
-          </ul>
-          <h3 id="export-options" class="tsd-anchor-link">
-            Export Options<a href="#export-options" aria-label="Permalink" class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h3>
-          <ul>
-            <li><code>--name &lt;name&gt;</code> - Custom stack name</li>
-            <li><code>--description &lt;description&gt;</code> - Stack description</li>
-            <li>
-              <code>--stack-version &lt;version&gt;</code> - Set version (default: auto-increment)
-            </li>
-            <li>
-              <code>--include-global</code> - Include global <code>~/.claude</code> configurations
-            </li>
-            <li><code>--include-claude-md</code> - Include <code>CLAUDE.md</code> files</li>
-          </ul>
-          <h3 id="restore-options" class="tsd-anchor-link">
-            Restore Options<a href="#restore-options" aria-label="Permalink" class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h3>
-          <ul>
-            <li><code>--overwrite</code> - Overwrite existing files (default: merge)</li>
-            <li><code>--global-only</code> - Only restore to global <code>~/.claude</code></li>
-          </ul>
-          <h2 id="what-gets-exported" class="tsd-anchor-link">
-            What Gets Exported?<a
-              href="#what-gets-exported"
-              aria-label="Permalink"
-              class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h2>
-          <p>Claude Stacks captures your Claude Code environment including:</p>
-          <ul>
-            <li>
-              <strong>MCP Server Configurations</strong> - All configured MCP servers and their
-              settings
-            </li>
-            <li><strong>Project Commands</strong> - Custom commands defined for your project</li>
-            <li><strong>Agent Configurations</strong> - Custom agents and their configurations</li>
-            <li><strong>Project Settings</strong> - Claude Code project-specific settings</li>
-            <li>
-              <strong><a href="http://CLAUDE.md">CLAUDE.md</a> Files</strong> - Project instructions
-              (when <code>--include-claude-md</code> is used)
-            </li>
-            <li>
-              <strong>Global Configurations</strong> - User-level settings (when
-              <code>--include-global</code> is used)
-            </li>
-          </ul>
-          <h2 id="authentication" class="tsd-anchor-link">
-            Authentication<a href="#authentication" aria-label="Permalink" class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h2>
-          <p>
-            To publish or manage stacks on <a href="http://Commands.com">Commands.com</a>, you'll
-            need to authenticate:
-          </p>
-          <pre><code class="bash"><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">publish</span><span class="hl-1"> </span><span class="hl-2">my-stack.json</span>
+<h2 id="commands" class="tsd-anchor-link">Commands<a href="#commands" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><h3 id="core-commands" class="tsd-anchor-link">Core Commands<a href="#core-commands" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3><ul>
+<li><strong><code>export [filename]</code></strong> - Export current environment to a stack file</li>
+<li><strong><code>restore &lt;filename&gt;</code></strong> - Restore environment from a stack file</li>
+<li><strong><code>publish &lt;filename&gt;</code></strong> - Publish stack to <a href="http://Commands.com">Commands.com</a> marketplace</li>
+<li><strong><code>install &lt;stack-id&gt;</code></strong> - Install stack from <a href="http://Commands.com">Commands.com</a></li>
+<li><strong><code>browse</code></strong> - Browse marketplace stacks interactively</li>
+</ul>
+<h3 id="management-commands" class="tsd-anchor-link">Management Commands<a href="#management-commands" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3><ul>
+<li><strong><code>list</code></strong> - List local stacks</li>
+<li><strong><code>delete &lt;stack-id&gt;</code></strong> - Delete published stack from <a href="http://Commands.com">Commands.com</a></li>
+<li><strong><code>rename &lt;stack-id&gt;</code></strong> - Rename published stack</li>
+<li><strong><code>clean</code></strong> - Clean up local stack metadata</li>
+</ul>
+<h3 id="export-options" class="tsd-anchor-link">Export Options<a href="#export-options" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3><ul>
+<li><code>--name &lt;name&gt;</code> - Custom stack name</li>
+<li><code>--description &lt;description&gt;</code> - Stack description</li>
+<li><code>--stack-version &lt;version&gt;</code> - Set version (default: auto-increment)</li>
+<li><code>--include-global</code> - Include global <code>~/.claude</code> configurations</li>
+<li><code>--include-claude-md</code> - Include <code>CLAUDE.md</code> files</li>
+</ul>
+<h3 id="restore-options" class="tsd-anchor-link">Restore Options<a href="#restore-options" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3><ul>
+<li><code>--overwrite</code> - Overwrite existing files (default: merge)</li>
+<li><code>--global-only</code> - Only restore to global <code>~/.claude</code></li>
+</ul>
+<h2 id="what-gets-exported" class="tsd-anchor-link">What Gets Exported?<a href="#what-gets-exported" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>Claude Stacks captures your Claude Code environment including:</p>
+<ul>
+<li><strong>MCP Server Configurations</strong> - All configured MCP servers and their settings</li>
+<li><strong>Project Commands</strong> - Custom commands defined for your project</li>
+<li><strong>Agent Configurations</strong> - Custom agents and their configurations</li>
+<li><strong>Project Settings</strong> - Claude Code project-specific settings</li>
+<li><strong><a href="http://CLAUDE.md">CLAUDE.md</a> Files</strong> - Project instructions (when <code>--include-claude-md</code> is used)</li>
+<li><strong>Global Configurations</strong> - User-level settings (when <code>--include-global</code> is used)</li>
+</ul>
+<h2 id="authentication" class="tsd-anchor-link">Authentication<a href="#authentication" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>To publish or manage stacks on <a href="http://Commands.com">Commands.com</a>, you'll need to authenticate:</p>
+<pre><code class="bash"><span class="hl-0">claude-stacks</span><span class="hl-1"> </span><span class="hl-2">publish</span><span class="hl-1"> </span><span class="hl-2">my-stack.json</span>
 </code><button type="button">Copy</button></pre>
 
-          <p>
-            The CLI will automatically guide you through the OAuth authentication process on first
-            use.
-          </p>
-          <h2 id="stack-file-format" class="tsd-anchor-link">
-            Stack File Format<a
-              href="#stack-file-format"
-              aria-label="Permalink"
-              class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h2>
-          <p>Stack files are JSON documents containing:</p>
-          <pre><code class="json"><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;name&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;My Development Stack&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;description&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;Full-stack development environment with MCP servers&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;version&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;1.0.0&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;author&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;Your Name&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;mcpServers&quot;</span><span class="hl-1">: [</span><span class="hl-6">...</span><span class="hl-1">],</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;commands&quot;</span><span class="hl-1">: [</span><span class="hl-6">...</span><span class="hl-1">],</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;agents&quot;</span><span class="hl-1">: [</span><span class="hl-6">...</span><span class="hl-1">],</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;settings&quot;</span><span class="hl-1">: {</span><span class="hl-6">...</span><span class="hl-1">}</span><br/><span class="hl-1">}</span>
+<p>The CLI will automatically guide you through the OAuth authentication process on first use.</p>
+<h2 id="stack-file-format" class="tsd-anchor-link">Stack File Format<a href="#stack-file-format" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>Stack files are JSON documents containing:</p>
+<pre><code class="json"><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;name&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;My Development Stack&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;description&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;Full-stack development environment with MCP servers&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;version&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;1.0.0&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;author&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;Your Name&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;mcpServers&quot;</span><span class="hl-1">: [</span><span class="hl-6">...</span><span class="hl-1">],</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;commands&quot;</span><span class="hl-1">: [</span><span class="hl-6">...</span><span class="hl-1">],</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;agents&quot;</span><span class="hl-1">: [</span><span class="hl-6">...</span><span class="hl-1">],</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;settings&quot;</span><span class="hl-1">: {</span><span class="hl-6">...</span><span class="hl-1">}</span><br/><span class="hl-1">}</span>
 </code><button type="button">Copy</button></pre>
 
-          <h2 id="development" class="tsd-anchor-link">
-            Development<a href="#development" aria-label="Permalink" class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h2>
-          <h3 id="prerequisites" class="tsd-anchor-link">
-            Prerequisites<a href="#prerequisites" aria-label="Permalink" class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h3>
-          <ul>
-            <li>Node.js 18+</li>
-            <li>npm or yarn</li>
-          </ul>
-          <h3 id="setup" class="tsd-anchor-link">
-            Setup<a href="#setup" aria-label="Permalink" class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h3>
-          <pre><code class="bash"><span class="hl-4"># Clone the repository</span><br/><span class="hl-0">git</span><span class="hl-1"> </span><span class="hl-2">clone</span><span class="hl-1"> </span><span class="hl-2">https://github.com/commands-com/claude-stacks.git</span><br/><span class="hl-0">cd</span><span class="hl-1"> </span><span class="hl-2">claude-stacks</span><br/><br/><span class="hl-4"># Install dependencies</span><br/><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">install</span><br/><br/><span class="hl-4"># Build the project</span><br/><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">run</span><span class="hl-1"> </span><span class="hl-2">build</span><br/><br/><span class="hl-4"># Run tests</span><br/><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">test</span>
+<h2 id="development" class="tsd-anchor-link">Development<a href="#development" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><h3 id="prerequisites" class="tsd-anchor-link">Prerequisites<a href="#prerequisites" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3><ul>
+<li>Node.js 18+</li>
+<li>npm or yarn</li>
+</ul>
+<h3 id="setup" class="tsd-anchor-link">Setup<a href="#setup" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3><pre><code class="bash"><span class="hl-4"># Clone the repository</span><br/><span class="hl-0">git</span><span class="hl-1"> </span><span class="hl-2">clone</span><span class="hl-1"> </span><span class="hl-2">https://github.com/commands-com/claude-stacks.git</span><br/><span class="hl-0">cd</span><span class="hl-1"> </span><span class="hl-2">claude-stacks</span><br/><br/><span class="hl-4"># Install dependencies</span><br/><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">install</span><br/><br/><span class="hl-4"># Build the project</span><br/><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">run</span><span class="hl-1"> </span><span class="hl-2">build</span><br/><br/><span class="hl-4"># Run tests</span><br/><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">test</span>
 </code><button type="button">Copy</button></pre>
 
-          <h3 id="development-scripts" class="tsd-anchor-link">
-            Development Scripts<a
-              href="#development-scripts"
-              aria-label="Permalink"
-              class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h3>
-          <ul>
-            <li><code>npm run dev</code> - Run in development mode</li>
-            <li><code>npm run build</code> - Build TypeScript to JavaScript</li>
-            <li><code>npm run test</code> - Run test suite with coverage</li>
-            <li><code>npm run lint</code> - Lint code</li>
-            <li><code>npm run format</code> - Format code with Prettier</li>
-            <li><code>npm run quality</code> - Run all quality checks</li>
-          </ul>
-          <h3 id="testing" class="tsd-anchor-link">
-            Testing<a href="#testing" aria-label="Permalink" class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h3>
-          <p>The project has comprehensive test coverage (96%+):</p>
-          <pre><code class="bash"><span class="hl-4"># Run all tests</span><br/><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">test</span><br/><br/><span class="hl-4"># Run specific test types</span><br/><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">run</span><span class="hl-1"> </span><span class="hl-2">test:unit</span><br/><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">run</span><span class="hl-1"> </span><span class="hl-2">test:integration</span><br/><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">run</span><span class="hl-1"> </span><span class="hl-2">test:e2e</span><br/><br/><span class="hl-4"># Watch mode during development</span><br/><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">run</span><span class="hl-1"> </span><span class="hl-2">test:watch</span>
+<h3 id="development-scripts" class="tsd-anchor-link">Development Scripts<a href="#development-scripts" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3><ul>
+<li><code>npm run dev</code> - Run in development mode</li>
+<li><code>npm run build</code> - Build TypeScript to JavaScript</li>
+<li><code>npm run test</code> - Run test suite with coverage</li>
+<li><code>npm run lint</code> - Lint code</li>
+<li><code>npm run format</code> - Format code with Prettier</li>
+<li><code>npm run quality</code> - Run all quality checks</li>
+</ul>
+<h3 id="testing" class="tsd-anchor-link">Testing<a href="#testing" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3><p>The project has comprehensive test coverage (96%+):</p>
+<pre><code class="bash"><span class="hl-4"># Run all tests</span><br/><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">test</span><br/><br/><span class="hl-4"># Run specific test types</span><br/><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">run</span><span class="hl-1"> </span><span class="hl-2">test:unit</span><br/><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">run</span><span class="hl-1"> </span><span class="hl-2">test:integration</span><br/><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">run</span><span class="hl-1"> </span><span class="hl-2">test:e2e</span><br/><br/><span class="hl-4"># Watch mode during development</span><br/><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">run</span><span class="hl-1"> </span><span class="hl-2">test:watch</span>
 </code><button type="button">Copy</button></pre>
 
-          <h2 id="contributing" class="tsd-anchor-link">
-            Contributing<a href="#contributing" aria-label="Permalink" class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h2>
-          <ol>
-            <li>Fork the repository</li>
-            <li>Create a feature branch (<code>git checkout -b feature/amazing-feature</code>)</li>
-            <li>Make your changes</li>
-            <li>Run quality checks (<code>npm run quality</code>)</li>
-            <li>Commit your changes (<code>git commit -m 'Add amazing feature'</code>)</li>
-            <li>Push to the branch (<code>git push origin feature/amazing-feature</code>)</li>
-            <li>Open a Pull Request</li>
-          </ol>
-          <h2 id="security" class="tsd-anchor-link">
-            Security<a href="#security" aria-label="Permalink" class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h2>
-          <p>
-            This tool handles your Claude Code configurations and requires network access to
-            <a href="http://Commands.com">Commands.com</a>. All data transmission is encrypted and
-            the tool follows security best practices:
-          </p>
-          <ul>
-            <li>OAuth 2.0 PKCE for secure authentication</li>
-            <li>HTTPS-only API communication</li>
-            <li>Local credential storage with appropriate permissions</li>
-            <li>Input validation and sanitization</li>
-          </ul>
-          <h2 id="license" class="tsd-anchor-link">
-            License<a href="#license" aria-label="Permalink" class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h2>
-          <p>MIT License - see <a href="media/LICENSE">LICENSE</a> file for details.</p>
-          <h2 id="support" class="tsd-anchor-link">
-            Support<a href="#support" aria-label="Permalink" class="tsd-anchor-icon"
-              ><svg viewBox="0 0 24 24" aria-hidden="true">
-                <use href="assets/icons.svg#icon-anchor"></use></svg
-            ></a>
-          </h2>
-          <ul>
-            <li>
-              <a href="https://github.com/commands-com/claude-stacks/issues">GitHub Issues</a> - Bug
-              reports and feature requests
-            </li>
-            <li><a href="https://commands.com">Commands.com</a> - Browse and share stacks</li>
-          </ul>
-          <hr />
-          <p>Made with ❤️ for the Claude Code community</p>
-        </div>
-      </div>
-      <div class="col-sidebar">
-        <div class="page-menu">
-          <div class="tsd-navigation settings">
-            <details class="tsd-accordion">
-              <summary class="tsd-accordion-summary">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <use href="assets/icons.svg#icon-chevronDown"></use>
-                </svg>
-                <h3>Settings</h3>
-              </summary>
-              <div class="tsd-accordion-details">
-                <div class="tsd-filter-visibility">
-                  <span class="settings-label">Member Visibility</span>
-                  <ul id="tsd-filter-options">
-                    <li class="tsd-filter-item">
-                      <label class="tsd-filter-input"
-                        ><input type="checkbox" id="tsd-filter-protected" name="protected" /><svg
-                          width="32"
-                          height="32"
-                          viewBox="0 0 32 32"
-                          aria-hidden="true"
-                        >
-                          <rect
-                            class="tsd-checkbox-background"
-                            width="30"
-                            height="30"
-                            x="1"
-                            y="1"
-                            rx="6"
-                            fill="none"
-                          ></rect>
-                          <path
-                            class="tsd-checkbox-checkmark"
-                            d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25"
-                            stroke="none"
-                            stroke-width="3.5"
-                            stroke-linejoin="round"
-                            fill="none"
-                          ></path></svg
-                        ><span>Protected</span></label
-                      >
-                    </li>
-                    <li class="tsd-filter-item">
-                      <label class="tsd-filter-input"
-                        ><input
-                          type="checkbox"
-                          id="tsd-filter-inherited"
-                          name="inherited"
-                          checked
-                        /><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
-                          <rect
-                            class="tsd-checkbox-background"
-                            width="30"
-                            height="30"
-                            x="1"
-                            y="1"
-                            rx="6"
-                            fill="none"
-                          ></rect>
-                          <path
-                            class="tsd-checkbox-checkmark"
-                            d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25"
-                            stroke="none"
-                            stroke-width="3.5"
-                            stroke-linejoin="round"
-                            fill="none"
-                          ></path></svg
-                        ><span>Inherited</span></label
-                      >
-                    </li>
-                    <li class="tsd-filter-item">
-                      <label class="tsd-filter-input"
-                        ><input type="checkbox" id="tsd-filter-external" name="external" /><svg
-                          width="32"
-                          height="32"
-                          viewBox="0 0 32 32"
-                          aria-hidden="true"
-                        >
-                          <rect
-                            class="tsd-checkbox-background"
-                            width="30"
-                            height="30"
-                            x="1"
-                            y="1"
-                            rx="6"
-                            fill="none"
-                          ></rect>
-                          <path
-                            class="tsd-checkbox-checkmark"
-                            d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25"
-                            stroke="none"
-                            stroke-width="3.5"
-                            stroke-linejoin="round"
-                            fill="none"
-                          ></path></svg
-                        ><span>External</span></label
-                      >
-                    </li>
-                  </ul>
-                </div>
-                <div class="tsd-theme-toggle">
-                  <label class="settings-label" for="tsd-theme">Theme</label
-                  ><select id="tsd-theme">
-                    <option value="os">OS</option>
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                  </select>
-                </div>
-              </div>
-            </details>
-          </div>
-          <details open class="tsd-accordion tsd-page-navigation">
-            <summary class="tsd-accordion-summary">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <use href="assets/icons.svg#icon-chevronDown"></use>
-              </svg>
-              <h3>On This Page</h3>
-            </summary>
-            <div class="tsd-accordion-details">
-              <a href="#claude-stacks"
-                ><span>Claude <wbr />Stacks</span></a
-              >
-              <ul>
-                <li>
-                  <a href="#what-is-claude-stacks"
-                    ><span>What is <wbr />Claude <wbr />Stacks?</span></a
-                  >
-                </li>
-                <li>
-                  <a href="#installation"><span>Installation</span></a>
-                </li>
-                <li>
-                  <a href="#quick-start"
-                    ><span>Quick <wbr />Start</span></a
-                  >
-                </li>
-                <li>
-                  <ul>
-                    <li>
-                      <a href="#export-your-current-setup"
-                        ><span>Export <wbr />Your <wbr />Current <wbr />Setup</span></a
-                      >
-                    </li>
-                    <li>
-                      <a href="#restore-from-a-stack"
-                        ><span>Restore from a <wbr />Stack</span></a
-                      >
-                    </li>
-                    <li>
-                      <a href="#share-via-commandscom"
-                        ><span>Share via <wbr />Commands.com</span></a
-                      >
-                    </li>
-                  </ul>
-                </li>
-                <li>
-                  <a href="#commands"><span>Commands</span></a>
-                </li>
-                <li>
-                  <ul>
-                    <li>
-                      <a href="#core-commands"
-                        ><span>Core <wbr />Commands</span></a
-                      >
-                    </li>
-                    <li>
-                      <a href="#management-commands"
-                        ><span>Management <wbr />Commands</span></a
-                      >
-                    </li>
-                    <li>
-                      <a href="#export-options"
-                        ><span>Export <wbr />Options</span></a
-                      >
-                    </li>
-                    <li>
-                      <a href="#restore-options"
-                        ><span>Restore <wbr />Options</span></a
-                      >
-                    </li>
-                  </ul>
-                </li>
-                <li>
-                  <a href="#what-gets-exported"
-                    ><span>What <wbr />Gets <wbr />Exported?</span></a
-                  >
-                </li>
-                <li>
-                  <a href="#authentication"><span>Authentication</span></a>
-                </li>
-                <li>
-                  <a href="#stack-file-format"
-                    ><span>Stack <wbr />File <wbr />Format</span></a
-                  >
-                </li>
-                <li>
-                  <a href="#development"><span>Development</span></a>
-                </li>
-                <li>
-                  <ul>
-                    <li>
-                      <a href="#prerequisites"><span>Prerequisites</span></a>
-                    </li>
-                    <li>
-                      <a href="#setup"><span>Setup</span></a>
-                    </li>
-                    <li>
-                      <a href="#development-scripts"
-                        ><span>Development <wbr />Scripts</span></a
-                      >
-                    </li>
-                    <li>
-                      <a href="#testing"><span>Testing</span></a>
-                    </li>
-                  </ul>
-                </li>
-                <li>
-                  <a href="#contributing"><span>Contributing</span></a>
-                </li>
-                <li>
-                  <a href="#security"><span>Security</span></a>
-                </li>
-                <li>
-                  <a href="#license"><span>License</span></a>
-                </li>
-                <li>
-                  <a href="#support"><span>Support</span></a>
-                </li>
-              </ul>
-            </div>
-          </details>
-        </div>
-        <div class="site-menu">
-          <nav class="tsd-navigation">
-            <a href="modules.html">claude-stacks</a>
-            <ul class="tsd-small-nested-navigation" id="tsd-nav-container">
-              <li>Loading...</li>
-            </ul>
-          </nav>
-        </div>
-      </div>
-    </div>
-    <footer>
-      <p class="tsd-generator">
-        Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a>
-      </p>
-    </footer>
-    <div class="overlay"></div>
-  </body>
-</html>
+<h2 id="contributing" class="tsd-anchor-link">Contributing<a href="#contributing" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><ol>
+<li>Fork the repository</li>
+<li>Create a feature branch (<code>git checkout -b feature/amazing-feature</code>)</li>
+<li>Make your changes</li>
+<li>Run quality checks (<code>npm run quality</code>)</li>
+<li>Commit your changes (<code>git commit -m 'Add amazing feature'</code>)</li>
+<li>Push to the branch (<code>git push origin feature/amazing-feature</code>)</li>
+<li>Open a Pull Request</li>
+</ol>
+<h2 id="security" class="tsd-anchor-link">Security<a href="#security" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>This tool handles your Claude Code configurations and requires network access to <a href="http://Commands.com">Commands.com</a>. All data transmission is encrypted and the tool follows security best practices:</p>
+<ul>
+<li>OAuth 2.0 PKCE for secure authentication</li>
+<li>HTTPS-only API communication</li>
+<li>Local credential storage with appropriate permissions</li>
+<li>Input validation and sanitization</li>
+</ul>
+<h2 id="license" class="tsd-anchor-link">License<a href="#license" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>MIT License - see <a href="media/LICENSE">LICENSE</a> file for details.</p>
+<h2 id="support" class="tsd-anchor-link">Support<a href="#support" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><ul>
+<li><a href="https://github.com/commands-com/claude-stacks/issues">GitHub Issues</a> - Bug reports and feature requests</li>
+<li><a href="https://commands.com">Commands.com</a> - Browse and share stacks</li>
+</ul>
+<hr>
+<p>Made with ❤️ for the Claude Code community</p>
+</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#claude-stacks"><span>Claude <wbr/>Stacks</span></a><ul><li><a href="#what-is-claude-stacks"><span>What is <wbr/>Claude <wbr/>Stacks?</span></a></li><li><a href="#installation"><span>Installation</span></a></li><li><a href="#quick-start"><span>Quick <wbr/>Start</span></a></li><li><ul><li><a href="#export-your-current-setup"><span>Export <wbr/>Your <wbr/>Current <wbr/>Setup</span></a></li><li><a href="#restore-from-a-stack"><span>Restore from a <wbr/>Stack</span></a></li><li><a href="#share-via-commandscom"><span>Share via <wbr/>Commands.com</span></a></li></ul></li><li><a href="#commands"><span>Commands</span></a></li><li><ul><li><a href="#core-commands"><span>Core <wbr/>Commands</span></a></li><li><a href="#management-commands"><span>Management <wbr/>Commands</span></a></li><li><a href="#export-options"><span>Export <wbr/>Options</span></a></li><li><a href="#restore-options"><span>Restore <wbr/>Options</span></a></li></ul></li><li><a href="#what-gets-exported"><span>What <wbr/>Gets <wbr/>Exported?</span></a></li><li><a href="#authentication"><span>Authentication</span></a></li><li><a href="#stack-file-format"><span>Stack <wbr/>File <wbr/>Format</span></a></li><li><a href="#development"><span>Development</span></a></li><li><ul><li><a href="#prerequisites"><span>Prerequisites</span></a></li><li><a href="#setup"><span>Setup</span></a></li><li><a href="#development-scripts"><span>Development <wbr/>Scripts</span></a></li><li><a href="#testing"><span>Testing</span></a></li></ul></li><li><a href="#contributing"><span>Contributing</span></a></li><li><a href="#security"><span>Security</span></a></li><li><a href="#license"><span>License</span></a></li><li><a href="#support"><span>Support</span></a></li></ul></div></details></div><div class="site-menu"><nav class="tsd-navigation"><a href="modules.html">claude-stacks</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>
