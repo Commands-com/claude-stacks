@@ -1,144 +1,141 @@
 ---
-description: Generate comprehensive technical documentation using the docs-architect agent for system architecture, API reference, and implementation guides
+description: Focus on improving JSDoc coverage across the codebase and maintaining documentation tracking
 model: opus
 ---
 
-Use the @docs-architect agent to create comprehensive technical documentation from the existing codebase. This command analyzes the architecture, design patterns, and implementation details to produce long-form technical manuals and documentation.
+Use the @docs-architect agent to systematically improve JSDoc coverage across the codebase. This command focuses specifically on analyzing existing JSDoc comments, identifying gaps, and generating comprehensive inline documentation.
 
-## Documentation Scope
+## JSDoc Coverage Analysis & Improvement
 
-### Phase 1: System Architecture Documentation
-Create high-level architectural documentation:
+### Primary Objectives
 
-1. **System Overview**: Generate comprehensive system architecture documentation
-   - Core system components and their interactions
-   - Data flow diagrams and system boundaries
-   - Technology stack and dependency analysis
-   - Design patterns and architectural decisions
+1. **JSDoc Gap Analysis**: Systematically audit all TypeScript files for missing or incomplete JSDoc
+2. **Coverage Tracking**: Maintain `docs/JSDOC_COVERAGE.md` with detailed coverage status
+3. **Incremental Improvement**: Focus on high-impact files first (services, public APIs, utilities)
+4. **Quality Assurance**: Ensure JSDoc follows consistent patterns with proper tags
 
-2. **Module Structure**: Document modular organization
-   - Directory structure and organization principles
-   - Module responsibilities and interfaces
-   - Inter-module communication patterns
-   - Dependency graphs and coupling analysis
+### Phase 1: Coverage Assessment & Tracking
 
-3. **Configuration & Setup**: Installation and configuration guides
-   - Environment setup and prerequisites
-   - Configuration options and their effects
-   - Deployment strategies and best practices
+**Initial Analysis**:
+- Scan all `.ts` files in `src/` directory
+- Identify functions, classes, interfaces, and types without JSDoc
+- Categorize by priority: Critical (services/APIs) > Important (actions/controllers) > Supporting (utils/types)
+- Generate initial `docs/JSDOC_COVERAGE.md` tracking file
 
-### Phase 2: API & Interface Documentation
-Generate detailed API and interface documentation:
+**Tracking File Structure** (`docs/JSDOC_COVERAGE.md`):
+```markdown
+# JSDoc Coverage Tracking
 
-1. **Public APIs**: Document all public interfaces
-   - Function signatures and parameter descriptions
-   - Return types and possible exceptions
-   - Usage examples and common patterns
-   - Integration guidelines and best practices
+Last Updated: YYYY-MM-DD
+Overall Coverage: X% (YYY/ZZZ items documented)
 
-2. **Internal APIs**: Document internal system interfaces
-   - Service layer interfaces and contracts
-   - Data access patterns and repository interfaces
-   - Event handling and notification systems
-   - Plugin and extension points
+## Coverage by Category
 
-3. **Data Models**: Document data structures and schemas
-   - Core data models and their relationships
-   - Validation rules and constraints
-   - Serialization formats and protocols
-   - Migration strategies and versioning
+### Services (Priority: Critical)
+- [ ] `src/services/StackService.ts` - 2/12 methods documented (17%)
+- [ ] `src/services/ConfigService.ts` - 1/8 methods documented (12%)
+- [x] `src/services/AuthService.ts` - 8/8 methods documented (100%)
+- [ ] `src/services/ApiService.ts` - 0/15 methods documented (0%)
 
-### Phase 3: Implementation Guides
-Create detailed implementation and usage guides:
+### Actions (Priority: Important) 
+- [ ] `src/actions/export.ts` - 0/5 functions documented (0%)
+- [ ] `src/actions/install.ts` - 0/8 functions documented (0%)
 
-1. **Developer Guides**: How to work with the codebase
-   - Development environment setup
-   - Code organization and style guidelines
-   - Testing strategies and practices
-   - Debugging and troubleshooting guides
+### Utilities (Priority: Important)
+- [ ] `src/utils/colors.ts` - 0/12 functions documented (0%)
+- [ ] `src/utils/validators.ts` - 0/6 functions documented (0%)
 
-2. **Feature Implementation**: Step-by-step implementation guides
-   - Adding new features and components
-   - Extending existing functionality
-   - Integration with external systems
-   - Performance optimization techniques
+## Recent Progress
+- 2024-XX-XX: Added JSDoc to AuthService (8 methods)
+- 2024-XX-XX: Started StackService documentation (2/12 complete)
+```
 
-3. **Maintenance Documentation**: Ongoing maintenance procedures
-   - Code review checklists and standards
-   - Monitoring and logging strategies
-   - Error handling and recovery procedures
-   - Security considerations and best practices
+### Phase 2: Systematic JSDoc Enhancement
 
-## Output Requirements
+**Priority Order**:
+1. **Services** (`src/services/`) - Core business logic APIs
+2. **Public APIs** (exported functions, main interfaces)
+3. **Action classes** (`src/actions/`) - CLI command implementations  
+4. **Utility functions** (`src/utils/`) - Shared helper functions
+5. **Type definitions** (`src/types/`) - Complex interfaces and types
+6. **Controllers** (`src/controllers/`) - Orchestration logic
 
-### Architecture Documentation
-- **System Architecture Guide**: Complete system overview with diagrams
-- **Component Documentation**: Detailed component descriptions and interactions
-- **Integration Guide**: How different parts of the system work together
-- **Decision Records**: Architectural decisions and their rationale
+**JSDoc Standards**:
+```typescript
+/**
+ * Brief one-line description of the function/class
+ * 
+ * Longer description if needed, explaining the purpose,
+ * context, and any important behavioral notes.
+ *
+ * @param paramName - Description of parameter and its constraints
+ * @param optionalParam - Description with default value info
+ * @returns Description of return value and possible types
+ * @throws {ErrorType} When this specific error occurs
+ * @example
+ * ```typescript
+ * const result = await myFunction('example', { option: true });
+ * console.log(result.data);
+ * ```
+ * @since 1.2.0 - Version when introduced
+ * @public - Visibility (public/private/internal)
+ */
+```
 
-### API Reference
-- **Complete API Reference**: All public and internal APIs documented
-- **Usage Examples**: Practical examples for each major API
-- **Integration Patterns**: Common integration scenarios and solutions
-- **Error Handling Guide**: Comprehensive error scenarios and handling
+### Phase 3: Quality Assurance & Validation
 
-### Implementation Manuals
-- **Developer Handbook**: Complete guide for developers working on the project
-- **Feature Development Guide**: Step-by-step process for adding new features
-- **Troubleshooting Guide**: Common issues and their solutions
-- **Best Practices Manual**: Coding standards and recommended patterns
+**Validation Checks**:
+- All public methods have comprehensive JSDoc
+- All parameters documented with types and constraints
+- Return values clearly described
+- Error conditions documented with @throws
+- At least one @example for complex functions
+- Consistent terminology and style
 
-### Technical Deep-Dives
-- **Performance Analysis**: System performance characteristics and optimization
-- **Security Architecture**: Security considerations and implementation details
-- **Scalability Guide**: How the system handles growth and scaling
-- **Monitoring & Observability**: Logging, metrics, and monitoring strategies
+**Coverage Metrics**:
+- Track percentage coverage by file and category
+- Measure before/after improvement
+- Identify files reaching 100% coverage
+- Highlight remaining gaps for future work
 
-## Specific Focus Areas for This Project
+## Implementation Strategy
 
-### CLI Tool Documentation
-- Command-line interface design and usage patterns
-- Configuration management and settings documentation
-- File processing and transformation workflows
-- Error handling and user feedback systems
+### High-Impact Files (Address First)
 
-### TypeScript Implementation Details
-- Type system architecture and custom type definitions
-- Generic utilities and reusable components
-- Module organization and export strategies
-- Build system and compilation processes
+**Services Layer** - Most critical for API documentation:
+- `src/services/StackService.ts` - Core stack operations
+- `src/services/ConfigService.ts` - Configuration management  
+- `src/services/FileService.ts` - File system operations
+- `src/services/ApiService.ts` - HTTP API client
+- `src/services/HookScannerService.ts` - Security analysis
 
-### Integration Documentation
-- External service integrations and API clients
-- File system operations and data persistence
-- Authentication and authorization flows
-- Plugin and extension architecture
+**Public APIs** - External interfaces:
+- `src/types/index.ts` - Main type exports
+- `src/types/stack.ts` - Stack schema definitions
+- `src/types/api.ts` - API interfaces
+- Exported functions from actions and utilities
 
-### User Experience Documentation
-- Installation and setup procedures
-- Common usage patterns and workflows
-- Troubleshooting common user issues
-- Migration guides and upgrade procedures
+### Documentation Workflow
 
-## Documentation Standards
+1. **Update Tracking**: Always update `docs/JSDOC_COVERAGE.md` before and after work
+2. **File-by-File**: Complete one file at a time to maintain focus
+3. **Validation**: Test JSDoc generates correctly with `tsc` and documentation tools
+4. **Review**: Ensure consistency with existing documented code (like AuthService)
 
-### Technical Writing Requirements
-- Clear, concise explanations with practical examples
-- Consistent terminology and naming conventions
-- Progressive complexity from basic to advanced topics
-- Cross-references and navigation aids
+### Coverage Milestones
 
-### Code Examples and Samples
-- Working code examples for all major features
-- Complete sample applications and use cases
-- Test cases that demonstrate proper usage
-- Performance benchmarks and optimization examples
+- **Phase 1**: Services reach 80%+ coverage (most critical)
+- **Phase 2**: Actions and utilities reach 60%+ coverage  
+- **Phase 3**: Overall codebase reaches 70%+ coverage
+- **Final Goal**: All public APIs have comprehensive JSDoc
 
-### Visual Documentation
-- Architecture diagrams and flow charts
-- Sequence diagrams for complex interactions
-- Class diagrams for object relationships
-- Network diagrams for system topology
+## Coordination & Progress Tracking
 
-The documentation should serve as both a comprehensive reference for experienced developers and a learning resource for new team members, covering everything from high-level architecture to specific implementation details.
+The `docs/JSDOC_COVERAGE.md` file serves as the central coordination point:
+- Updated before starting work on any file
+- Shows current coverage percentages
+- Tracks recent progress and milestones
+- Identifies next priority files
+- Documents JSDoc patterns and standards used
+
+This focused approach ensures systematic improvement of code documentation while maintaining coordination between team members working on documentation tasks.

@@ -99,7 +99,10 @@ export class StackOperationService {
     await this.checkDependencies(stack);
 
     // Restore components based on options and get tracking info
-    const { addedSettingsFields, addedPermissions } = await this.restoreComponents(stack, options);
+    const { addedSettingsFields, addedPermissions, hooksMetadata } = await this.restoreComponents(
+      stack,
+      options
+    );
 
     // Track installation if requested
     if (trackInstallation) {
@@ -110,6 +113,7 @@ export class StackOperationService {
         restoreOptions: options,
         addedSettingsFields,
         addedPermissions,
+        hooksMetadata,
       });
     }
 
@@ -164,6 +168,7 @@ export class StackOperationService {
     restoreOptions?: RestoreOptions;
     addedSettingsFields?: string[];
     addedPermissions?: { allow: string[]; deny: string[]; ask: string[] };
+    hooksMetadata?: Record<string, unknown>;
   }): Promise<void> {
     const {
       stackId,
@@ -172,14 +177,14 @@ export class StackOperationService {
       restoreOptions = {},
       addedSettingsFields,
       addedPermissions,
+      hooksMetadata,
     } = options;
 
-    const components = await this.buildComponentsTracking(
-      stack,
-      restoreOptions,
+    const components = await this.buildComponentsTracking(stack, restoreOptions, {
       addedSettingsFields,
-      addedPermissions
-    );
+      addedPermissions,
+      hooksMetadata,
+    });
 
     await this.stackRegistry.registerStack({
       stackId,
@@ -196,15 +201,18 @@ export class StackOperationService {
   private async buildComponentsTracking(
     stack: DeveloperStack,
     options: RestoreOptions,
-    addedSettingsFields?: string[],
-    addedPermissions?: { allow: string[]; deny: string[]; ask: string[] }
+    trackingData: {
+      addedSettingsFields?: string[];
+      addedPermissions?: { allow: string[]; deny: string[]; ask: string[] };
+      hooksMetadata?: Record<string, unknown>;
+    }
   ): Promise<StackRegistryEntry['components']> {
     return {
       commands: this.buildCommandsTracking(stack, options),
       agents: this.buildAgentsTracking(stack, options),
       hooks: this.buildHooksTracking(stack),
       mcpServers: this.buildMcpServersTracking(stack),
-      settings: this.buildSettingsTracking(stack, options, addedSettingsFields, addedPermissions),
+      settings: this.buildSettingsTracking(stack, options, trackingData),
       claudeMd: this.buildClaudeMdTracking(stack, options),
     };
   }
@@ -274,13 +282,19 @@ export class StackOperationService {
   private buildSettingsTracking(
     stack: DeveloperStack,
     options: RestoreOptions,
-    addedSettingsFields?: string[],
-    addedPermissions?: { allow: string[]; deny: string[]; ask: string[] }
+    trackingData: {
+      addedSettingsFields?: string[];
+      addedPermissions?: { allow: string[]; deny: string[]; ask: string[] };
+      hooksMetadata?: Record<string, unknown>;
+    }
   ): {
     type: 'global' | 'local';
     fields: string[];
     permissions?: { allow: string[]; deny: string[]; ask: string[] };
+    hooksMetadata?: Record<string, unknown>;
   }[] {
+    const { addedSettingsFields, addedPermissions, hooksMetadata } = trackingData;
+
     // Use the actual added fields if provided, otherwise fall back to all stack fields
     const fieldsToTrack = addedSettingsFields ?? Object.keys(stack.settings ?? {});
 
@@ -288,27 +302,60 @@ export class StackOperationService {
       return [];
     }
 
+    const trackingEntry = this.createSettingsTrackingEntry(
+      options,
+      fieldsToTrack,
+      addedPermissions,
+      hooksMetadata
+    );
+
+    return [trackingEntry];
+  }
+
+  private createSettingsTrackingEntry(
+    options: RestoreOptions,
+    fieldsToTrack: string[],
+    addedPermissions?: { allow: string[]; deny: string[]; ask: string[] },
+    hooksMetadata?: Record<string, unknown>
+  ): {
+    type: 'global' | 'local';
+    fields: string[];
+    permissions?: { allow: string[]; deny: string[]; ask: string[] };
+    hooksMetadata?: Record<string, unknown>;
+  } {
     const settingsType = options.globalOnly ? 'global' : 'local';
     const trackingEntry: {
       type: 'global' | 'local';
       fields: string[];
       permissions?: { allow: string[]; deny: string[]; ask: string[] };
+      hooksMetadata?: Record<string, unknown>;
     } = {
       type: settingsType,
       fields: fieldsToTrack,
     };
 
     // If we have specific permissions that were added, track those
-    if (
-      addedPermissions &&
-      (addedPermissions.allow.length > 0 ||
-        addedPermissions.deny.length > 0 ||
-        addedPermissions.ask.length > 0)
-    ) {
+    if (this.hasValidPermissions(addedPermissions)) {
       trackingEntry.permissions = addedPermissions;
     }
 
-    return [trackingEntry];
+    // If we have hooks metadata, track that
+    if (hooksMetadata && Object.keys(hooksMetadata).length > 0) {
+      trackingEntry.hooksMetadata = hooksMetadata;
+    }
+
+    return trackingEntry;
+  }
+
+  private hasValidPermissions(permissions?: {
+    allow: string[];
+    deny: string[];
+    ask: string[];
+  }): boolean {
+    return !!(
+      permissions &&
+      (permissions.allow.length > 0 || permissions.deny.length > 0 || permissions.ask.length > 0)
+    );
   }
 
   private buildClaudeMdTracking(
@@ -374,6 +421,7 @@ export class StackOperationService {
   ): Promise<{
     addedSettingsFields: string[];
     addedPermissions?: { allow: string[]; deny: string[]; ask: string[] };
+    hooksMetadata?: Record<string, unknown>;
   }> {
     await this.restoreCommandComponents(stack, options);
     await this.restoreAgentComponents(stack, options);
@@ -579,6 +627,7 @@ export class StackOperationService {
   ): Promise<{
     addedSettingsFields: string[];
     addedPermissions?: { allow: string[]; deny: string[]; ask: string[] };
+    hooksMetadata?: Record<string, unknown>;
   }> {
     if (stack.mcpServers && stack.mcpServers.length > 0) {
       await this.restoreMcpServers(stack.mcpServers, options);
@@ -586,21 +635,24 @@ export class StackOperationService {
 
     let addedSettingsFields: string[] = [];
     let addedPermissions: { allow: string[]; deny: string[]; ask: string[] } | undefined;
+    let hooksMetadata: Record<string, unknown> | undefined;
 
     if (stack.settings && Object.keys(stack.settings).length > 0) {
-      const { addedFields, addedPermissions: permissions } = await this.restoreSettings(
-        stack.settings,
-        options
-      );
+      const {
+        addedFields,
+        addedPermissions: permissions,
+        hooksMetadata: hooks,
+      } = await this.restoreSettings(stack.settings, options);
       addedSettingsFields = addedFields;
       addedPermissions = permissions;
+      hooksMetadata = hooks;
     }
 
     if (stack.claudeMd) {
       await this.restoreClaudeMdFiles(stack.claudeMd, options);
     }
 
-    return { addedSettingsFields, addedPermissions };
+    return { addedSettingsFields, addedPermissions, hooksMetadata };
   }
 
   private async restoreGlobalCommands(
@@ -954,15 +1006,21 @@ export class StackOperationService {
   ): Promise<{
     addedFields: string[];
     addedPermissions?: { allow: string[]; deny: string[]; ask: string[] };
+    hooksMetadata?: Record<string, unknown>;
   }> {
     try {
-      const { targetPath, settingsType, allowedBase } = this.getSettingsPath(options);
+      const pathInfo = this.getSettingsPath(options);
+      const { targetPath, settingsType, allowedBase } = pathInfo;
       await this.fileService.ensureDir(path.dirname(targetPath));
 
       if (options.overwrite) {
         await this.replaceSettings(targetPath, settings, settingsType, allowedBase);
         // When overwriting, consider all fields as "added"
-        return { addedFields: Object.keys(settings) };
+        const hooksMetadata = settings.hooks ? { hooks: settings.hooks } : undefined;
+        return {
+          addedFields: Object.keys(settings),
+          hooksMetadata: hooksMetadata as Record<string, unknown>,
+        };
       } else {
         const result = await this.mergeSettings(targetPath, settings, settingsType, allowedBase);
         return result;
@@ -1041,28 +1099,137 @@ export class StackOperationService {
   ): {
     fieldAdded: boolean;
     addedPermissions?: { allow: string[]; deny: string[]; ask: string[] };
+    hooksMetadata?: Record<string, unknown>;
   } {
     if (!(key in existingSettings)) {
-      mergedSettings[key] = value;
-      return { fieldAdded: true };
+      return this.handleNewField(key, value, mergedSettings);
     }
 
     if (key === 'permissions' && this.isObject(value) && this.isObject(existingSettings[key])) {
-      const result = this.mergePermissions(
-        existingSettings[key] as Record<string, unknown>,
-        value as Record<string, unknown>
-      );
-      mergedSettings[key] = result.merged;
-      return {
-        fieldAdded: result.hasNewItems,
-        addedPermissions: result.hasNewItems ? result.addedPermissions : undefined,
-      };
+      return this.handlePermissionsField(key, value, existingSettings, mergedSettings);
+    }
+
+    if (key === 'hooks' && this.isObject(value) && this.isObject(existingSettings[key])) {
+      return this.handleHooksField(key, value, existingSettings, mergedSettings);
     }
 
     if (this.isObject(value) && this.isObject(existingSettings[key])) {
       return this.mergeObjectField(key, value, existingSettings, mergedSettings);
     }
+
     return { fieldAdded: false };
+  }
+
+  private handleNewField(
+    key: string,
+    value: unknown,
+    mergedSettings: Record<string, unknown>
+  ): {
+    fieldAdded: boolean;
+    hooksMetadata?: Record<string, unknown>;
+  } {
+    mergedSettings[key] = value;
+
+    // For hooks field, track what was added
+    if (key === 'hooks' && this.isObject(value)) {
+      return {
+        fieldAdded: true,
+        hooksMetadata: value as Record<string, unknown>,
+      };
+    }
+
+    return { fieldAdded: true };
+  }
+
+  private handlePermissionsField(
+    key: string,
+    value: unknown,
+    existingSettings: Record<string, unknown>,
+    mergedSettings: Record<string, unknown>
+  ): {
+    fieldAdded: boolean;
+    addedPermissions?: { allow: string[]; deny: string[]; ask: string[] };
+  } {
+    const result = this.mergePermissions(
+      existingSettings[key] as Record<string, unknown>,
+      value as Record<string, unknown>
+    );
+    mergedSettings[key] = result.merged;
+    return {
+      fieldAdded: result.hasNewItems,
+      addedPermissions: result.hasNewItems ? result.addedPermissions : undefined,
+    };
+  }
+
+  private handleHooksField(
+    key: string,
+    value: unknown,
+    existingSettings: Record<string, unknown>,
+    mergedSettings: Record<string, unknown>
+  ): {
+    fieldAdded: boolean;
+    hooksMetadata?: Record<string, unknown>;
+  } {
+    const existingHooks = existingSettings[key] as Record<string, unknown>;
+    const newHooks = value as Record<string, unknown>;
+
+    // Track what hooks are being added
+    const addedHooks = this.trackHookAdditions(existingHooks, newHooks);
+
+    // Merge the hooks
+    const { mergedObj, hasNewSubFields } = this.mergeHooksObject(existingHooks, newHooks);
+
+    mergedSettings[key] = mergedObj;
+    return {
+      fieldAdded: hasNewSubFields,
+      hooksMetadata: Object.keys(addedHooks).length > 0 ? addedHooks : undefined,
+    };
+  }
+
+  private mergeHooksObject(
+    existingHooks: Record<string, unknown>,
+    newHooks: Record<string, unknown>
+  ): { mergedObj: Record<string, unknown>; hasNewSubFields: boolean } {
+    const mergedObj = { ...existingHooks };
+    let hasNewSubFields = false;
+
+    for (const [subKey, subValue] of Object.entries(newHooks)) {
+      if (!(subKey in existingHooks)) {
+        mergedObj[subKey] = subValue;
+        hasNewSubFields = true;
+      } else if (Array.isArray(subValue) && Array.isArray(existingHooks[subKey])) {
+        const mergeResult = this.mergeHookArrays(
+          existingHooks[subKey] as unknown[],
+          subValue as unknown[]
+        );
+        mergedObj[subKey] = mergeResult.merged;
+        if (mergeResult.hasNewItems) {
+          hasNewSubFields = true;
+        }
+      }
+    }
+
+    return { mergedObj, hasNewSubFields };
+  }
+
+  private mergeHookArrays(
+    existingArray: unknown[],
+    newArray: unknown[]
+  ): { merged: unknown[]; hasNewItems: boolean } {
+    const merged = [...existingArray];
+    let hasNewItems = false;
+
+    for (const newConfig of newArray) {
+      const exists = existingArray.some(
+        existing => JSON.stringify(existing) === JSON.stringify(newConfig)
+      );
+      if (!exists) {
+        merged.push(newConfig);
+        hasNewItems = true;
+      }
+    }
+
+    return { merged, hasNewItems };
   }
 
   private mergeObjectField(
@@ -1088,6 +1255,40 @@ export class StackOperationService {
     return { fieldAdded: hasNewSubFields };
   }
 
+  /**
+   * Track specific hook additions when merging hooks field
+   */
+  private trackHookAdditions(
+    existingHooks: Record<string, unknown>,
+    newHooks: Record<string, unknown>
+  ): Record<string, unknown> {
+    const addedHooks: Record<string, unknown> = {};
+
+    for (const [eventType, hookConfigs] of Object.entries(newHooks)) {
+      if (!existingHooks[eventType]) {
+        // New event type, track all configs
+        addedHooks[eventType] = hookConfigs;
+      } else if (Array.isArray(hookConfigs) && Array.isArray(existingHooks[eventType])) {
+        // Compare existing and new configs to find additions
+        const existingConfigs = existingHooks[eventType] as unknown[];
+        const newConfigs = hookConfigs as unknown[];
+
+        const addedConfigs = newConfigs.filter(newConfig => {
+          // Check if this exact config already exists
+          return !existingConfigs.some(
+            existing => JSON.stringify(existing) === JSON.stringify(newConfig)
+          );
+        });
+
+        if (addedConfigs.length > 0) {
+          addedHooks[eventType] = addedConfigs;
+        }
+      }
+    }
+
+    return addedHooks;
+  }
+
   private async mergeSettings(
     targetPath: string,
     settings: StackSettings,
@@ -1096,10 +1297,12 @@ export class StackOperationService {
   ): Promise<{
     addedFields: string[];
     addedPermissions?: { allow: string[]; deny: string[]; ask: string[] };
+    hooksMetadata?: Record<string, unknown>;
   }> {
     const existingSettings = await this.loadExistingSettings(targetPath, settingsType);
     const addedFields: string[] = [];
     let addedPermissions: { allow: string[]; deny: string[]; ask: string[] } | undefined;
+    let hooksMetadata: Record<string, unknown> | undefined;
     const mergedSettings = { ...existingSettings };
 
     for (const [key, value] of Object.entries(settings)) {
@@ -1109,14 +1312,20 @@ export class StackOperationService {
         addedFields.push(key);
       }
 
-      if (result.addedPermissions) {
-        ({ addedPermissions } = { addedPermissions: result.addedPermissions });
+      const { addedPermissions: resultAddedPermissions, hooksMetadata: resultHooksMetadata } =
+        result;
+      if (resultAddedPermissions) {
+        addedPermissions = resultAddedPermissions;
+      }
+      if (resultHooksMetadata) {
+        hooksMetadata = resultHooksMetadata;
       }
     }
+
     await this.fileService.writeJsonFile(targetPath, mergedSettings, { allowedBase });
     this.ui.success(`✓ Merged ${settingsType} settings (added ${addedFields.length} new fields)`);
 
-    return { addedFields, addedPermissions };
+    return { addedFields, addedPermissions, hooksMetadata };
   }
 
   private mergePermissions(

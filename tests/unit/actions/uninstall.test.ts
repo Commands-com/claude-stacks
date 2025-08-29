@@ -90,6 +90,71 @@ const sampleStackEntry: StackRegistryEntry = {
     claudeMd: [{ type: 'local', path: '/local/.claude/CLAUDE.md' }],
   },
 };
+const sampleStackWithHooks: StackRegistryEntry = {
+  stackId: 'org/hooks-stack',
+  name: 'Hooks Stack',
+  installedAt: '2023-01-01T00:00:00.000Z',
+  source: 'commands.com',
+  version: '1.0.0',
+  components: {
+    commands: [],
+    agents: [],
+    hooks: [],
+    mcpServers: [],
+    settings: [
+      {
+        type: 'local',
+        fields: ['hooks'],
+        hooksMetadata: {
+          PreToolUse: [
+            {
+              matcher: 'Read|Grep|Glob|Task',
+              hooks: [
+                {
+                  type: 'command',
+                  command: '/usr/local/bin/test-hook.sh',
+                },
+              ],
+            },
+          ],
+          PostToolUse: [
+            {
+              matcher: 'Edit|Write',
+              hooks: [
+                {
+                  type: 'command',
+                  command: '/usr/local/bin/post-hook.sh',
+                },
+              ],
+            },
+          ],
+        },
+      },
+    ],
+    claudeMd: [],
+  },
+};
+
+const sampleStackWithHooksNoMetadata: StackRegistryEntry = {
+  stackId: 'org/old-hooks-stack',
+  name: 'Old Hooks Stack',
+  installedAt: '2023-01-01T00:00:00.000Z',
+  source: 'commands.com',
+  version: '1.0.0',
+  components: {
+    commands: [],
+    agents: [],
+    hooks: [],
+    mcpServers: [],
+    settings: [
+      {
+        type: 'local',
+        fields: ['hooks'], // No hooksMetadata - old format
+      },
+    ],
+    claudeMd: [],
+  },
+};
 
 describe('UninstallAction', () => {
   let uninstallAction: UninstallAction;
@@ -319,6 +384,372 @@ describe('UninstallAction', () => {
       expect(mockUI.warning).toHaveBeenCalledWith('⚠️  Command file not found: global-cmd');
       expect(mockUI.warning).toHaveBeenCalledWith('⚠️  Agent file not found: test-agent');
       expect(mockStackRegistry.unregisterStack).toHaveBeenCalledWith('org/test-stack');
+    });
+  });
+
+  describe('hooks metadata functionality', () => {
+    let mockSettingsFile: Record<string, any>;
+
+    beforeEach(() => {
+      // Reset the mock settings file before each test
+      mockSettingsFile = {
+        hooks: {
+          PreToolUse: [
+            {
+              matcher: 'Read|Grep|Glob|Task',
+              hooks: [
+                {
+                  type: 'command',
+                  command: '/usr/local/bin/test-hook.sh',
+                },
+              ],
+            },
+            {
+              matcher: 'Write|Edit',
+              hooks: [
+                {
+                  type: 'command',
+                  command: '/usr/local/bin/other-hook.sh',
+                },
+              ],
+            },
+          ],
+          PostToolUse: [
+            {
+              matcher: 'Edit|Write',
+              hooks: [
+                {
+                  type: 'command',
+                  command: '/usr/local/bin/post-hook.sh',
+                },
+                {
+                  type: 'command',
+                  command: '/usr/local/bin/other-post-hook.sh',
+                },
+              ],
+            },
+          ],
+        },
+        otherSettings: 'should not be affected',
+      };
+
+      // Mock file service to return our test settings
+      mockFileService.exists.mockResolvedValue(true);
+      mockFileService.readJsonFile.mockResolvedValue(mockSettingsFile);
+      mockFileService.writeJsonFile.mockResolvedValue(undefined);
+    });
+
+    it('should remove only specific hooks when hooksMetadata is present', async () => {
+      mockStackRegistry.getStackEntry.mockResolvedValue(sampleStackWithHooks);
+      mockStackRegistry.findStacksUsingMcpServer.mockResolvedValue([]);
+      mockStackRegistry.findStacksWithComponent.mockResolvedValue([]);
+      mockUI.confirm.mockResolvedValue(true);
+
+      await uninstallAction.execute('org/hooks-stack');
+
+      expect(mockFileService.writeJsonFile).toHaveBeenCalledWith(
+        expect.stringContaining('settings.local.json'),
+        expect.objectContaining({
+          hooks: {
+            PreToolUse: [
+              {
+                matcher: 'Write|Edit',
+                hooks: [
+                  {
+                    type: 'command',
+                    command: '/usr/local/bin/other-hook.sh',
+                  },
+                ],
+              },
+            ],
+            PostToolUse: [
+              {
+                matcher: 'Edit|Write',
+                hooks: [
+                  {
+                    type: 'command',
+                    command: '/usr/local/bin/other-post-hook.sh',
+                  },
+                ],
+              },
+            ],
+          },
+          otherSettings: 'should not be affected',
+        })
+      );
+
+      expect(mockStackRegistry.unregisterStack).toHaveBeenCalledWith('org/hooks-stack');
+      expect(mockUI.success).toHaveBeenCalledWith('✓ Removed 1 local setting(s)');
+    });
+
+    it('should remove entire hooks field when all hooks from that stack are removed', async () => {
+      // Set up a scenario where only the hooks from our stack exist
+      const singleHookSettings = {
+        hooks: {
+          PreToolUse: [
+            {
+              matcher: 'Read|Grep|Glob|Task',
+              hooks: [
+                {
+                  type: 'command',
+                  command: '/usr/local/bin/test-hook.sh',
+                },
+              ],
+            },
+          ],
+          PostToolUse: [
+            {
+              matcher: 'Edit|Write',
+              hooks: [
+                {
+                  type: 'command',
+                  command: '/usr/local/bin/post-hook.sh',
+                },
+              ],
+            },
+          ],
+        },
+        otherSettings: 'should not be affected',
+      };
+
+      mockFileService.readJsonFile.mockResolvedValue(singleHookSettings);
+      mockStackRegistry.getStackEntry.mockResolvedValue(sampleStackWithHooks);
+      mockStackRegistry.findStacksUsingMcpServer.mockResolvedValue([]);
+      mockStackRegistry.findStacksWithComponent.mockResolvedValue([]);
+      mockUI.confirm.mockResolvedValue(true);
+
+      await uninstallAction.execute('org/hooks-stack');
+
+      expect(mockFileService.writeJsonFile).toHaveBeenCalledWith(
+        expect.stringContaining('settings.local.json'),
+        expect.objectContaining({
+          otherSettings: 'should not be affected',
+          // hooks field should be completely removed
+        })
+      );
+
+      // Verify hooks field is not present in the written object
+      const writtenSettings = (mockFileService.writeJsonFile as jest.Mock).mock.calls[0][1];
+      expect(writtenSettings).not.toHaveProperty('hooks');
+    });
+
+    it('should fall back to removing entire hooks field when no hooksMetadata (backward compatibility)', async () => {
+      mockStackRegistry.getStackEntry.mockResolvedValue(sampleStackWithHooksNoMetadata);
+      mockStackRegistry.findStacksUsingMcpServer.mockResolvedValue([]);
+      mockStackRegistry.findStacksWithComponent.mockResolvedValue([]);
+      mockUI.confirm.mockResolvedValue(true);
+
+      await uninstallAction.execute('org/old-hooks-stack');
+
+      expect(mockFileService.writeJsonFile).toHaveBeenCalledWith(
+        expect.stringContaining('settings.local.json'),
+        expect.objectContaining({
+          otherSettings: 'should not be affected',
+          // hooks field should be completely removed (old behavior)
+        })
+      );
+
+      // Verify hooks field is completely removed (old behavior)
+      const writtenSettings = (mockFileService.writeJsonFile as jest.Mock).mock.calls[0][1];
+      expect(writtenSettings).not.toHaveProperty('hooks');
+
+      expect(mockStackRegistry.unregisterStack).toHaveBeenCalledWith('org/old-hooks-stack');
+      expect(mockUI.success).toHaveBeenCalledWith('✓ Removed 1 local setting(s)');
+    });
+
+    it('should handle multiple stacks with overlapping hooks correctly', async () => {
+      // First stack has some hooks
+      const firstStackHooks = {
+        PreToolUse: [
+          {
+            matcher: 'Read|Grep',
+            hooks: [{ type: 'command', command: '/usr/local/bin/shared-hook.sh' }],
+          },
+        ],
+      };
+
+      // Second stack has overlapping and unique hooks
+      const secondStackHooksMetadata = {
+        PreToolUse: [
+          {
+            matcher: 'Read|Grep',
+            hooks: [{ type: 'command', command: '/usr/local/bin/shared-hook.sh' }], // Same as first
+          },
+          {
+            matcher: 'Task|Write',
+            hooks: [{ type: 'command', command: '/usr/local/bin/unique-hook.sh' }], // Unique to second
+          },
+        ],
+      };
+
+      const secondStack: StackRegistryEntry = {
+        ...sampleStackWithHooks,
+        stackId: 'org/second-hooks-stack',
+        name: 'Second Hooks Stack',
+        components: {
+          ...sampleStackWithHooks.components,
+          settings: [
+            {
+              type: 'local',
+              fields: ['hooks'],
+              hooksMetadata: secondStackHooksMetadata,
+            },
+          ],
+        },
+      };
+
+      // Settings file has hooks from both stacks
+      const combinedSettings = {
+        hooks: {
+          PreToolUse: [
+            {
+              matcher: 'Read|Grep',
+              hooks: [{ type: 'command', command: '/usr/local/bin/shared-hook.sh' }],
+            },
+            {
+              matcher: 'Task|Write',
+              hooks: [{ type: 'command', command: '/usr/local/bin/unique-hook.sh' }],
+            },
+          ],
+        },
+        otherSettings: 'should not be affected',
+      };
+
+      mockFileService.readJsonFile.mockResolvedValue(combinedSettings);
+      mockStackRegistry.getStackEntry.mockResolvedValue(secondStack);
+      mockStackRegistry.findStacksUsingMcpServer.mockResolvedValue([]);
+      mockStackRegistry.findStacksWithComponent.mockResolvedValue([]);
+      mockUI.confirm.mockResolvedValue(true);
+
+      await uninstallAction.execute('org/second-hooks-stack');
+
+      // Should remove hooks specific to second stack but keep shared ones
+      expect(mockFileService.writeJsonFile).toHaveBeenCalledWith(
+        expect.stringContaining('settings.local.json'),
+        expect.objectContaining({
+          hooks: {
+            PreToolUse: [
+              {
+                matcher: 'Read|Grep',
+                hooks: [{ type: 'command', command: '/usr/local/bin/shared-hook.sh' }],
+              },
+              // unique-hook.sh should be removed
+            ],
+          },
+          otherSettings: 'should not be affected',
+        })
+      );
+
+      const writtenSettings = (mockFileService.writeJsonFile as jest.Mock).mock.calls[0][1];
+      const preToolUseHooks = writtenSettings.hooks.PreToolUse;
+
+      // Should only have the shared hook left
+      expect(preToolUseHooks).toHaveLength(1);
+      expect(preToolUseHooks[0].matcher).toBe('Read|Grep');
+      expect(preToolUseHooks[0].hooks[0].command).toBe('/usr/local/bin/shared-hook.sh');
+    });
+
+    it('should handle settings file not existing', async () => {
+      mockFileService.exists.mockResolvedValue(false);
+      mockStackRegistry.getStackEntry.mockResolvedValue(sampleStackWithHooks);
+      mockStackRegistry.findStacksUsingMcpServer.mockResolvedValue([]);
+      mockStackRegistry.findStacksWithComponent.mockResolvedValue([]);
+      mockUI.confirm.mockResolvedValue(true);
+
+      await uninstallAction.execute('org/hooks-stack');
+
+      // Should not try to read or write non-existent file
+      expect(mockFileService.readJsonFile).not.toHaveBeenCalled();
+      expect(mockFileService.writeJsonFile).not.toHaveBeenCalled();
+      expect(mockStackRegistry.unregisterStack).toHaveBeenCalledWith('org/hooks-stack');
+    });
+
+    it('should handle empty hooks metadata gracefully', async () => {
+      const emptyHooksStack: StackRegistryEntry = {
+        ...sampleStackWithHooks,
+        components: {
+          ...sampleStackWithHooks.components,
+          settings: [
+            {
+              type: 'local',
+              fields: ['hooks'],
+              hooksMetadata: {}, // Empty metadata
+            },
+          ],
+        },
+      };
+
+      mockStackRegistry.getStackEntry.mockResolvedValue(emptyHooksStack);
+      mockStackRegistry.findStacksUsingMcpServer.mockResolvedValue([]);
+      mockStackRegistry.findStacksWithComponent.mockResolvedValue([]);
+      mockUI.confirm.mockResolvedValue(true);
+
+      await uninstallAction.execute('org/hooks-stack');
+
+      // Should still process without errors
+      expect(mockFileService.writeJsonFile).toHaveBeenCalled();
+      expect(mockStackRegistry.unregisterStack).toHaveBeenCalledWith('org/hooks-stack');
+    });
+
+    it('should preserve non-hooks settings when removing hooks', async () => {
+      const mixedSettingsStack: StackRegistryEntry = {
+        ...sampleStackWithHooks,
+        components: {
+          ...sampleStackWithHooks.components,
+          settings: [
+            {
+              type: 'local',
+              fields: ['hooks', 'theme', 'timeout'],
+              hooksMetadata: {
+                PreToolUse: [
+                  {
+                    matcher: 'Read|Grep|Glob|Task',
+                    hooks: [{ type: 'command', command: '/usr/local/bin/test-hook.sh' }],
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      };
+
+      const settingsWithMultipleFields = {
+        hooks: {
+          PreToolUse: [
+            {
+              matcher: 'Read|Grep|Glob|Task',
+              hooks: [{ type: 'command', command: '/usr/local/bin/test-hook.sh' }],
+            },
+          ],
+        },
+        theme: 'dark',
+        timeout: 5000,
+        otherSettings: 'should not be affected',
+      };
+
+      mockFileService.readJsonFile.mockResolvedValue(settingsWithMultipleFields);
+      mockStackRegistry.getStackEntry.mockResolvedValue(mixedSettingsStack);
+      mockStackRegistry.findStacksUsingMcpServer.mockResolvedValue([]);
+      mockStackRegistry.findStacksWithComponent.mockResolvedValue([]);
+      mockUI.confirm.mockResolvedValue(true);
+
+      await uninstallAction.execute('org/hooks-stack');
+
+      expect(mockFileService.writeJsonFile).toHaveBeenCalledWith(
+        expect.stringContaining('settings.local.json'),
+        expect.objectContaining({
+          theme: 'dark',
+          timeout: 5000,
+          otherSettings: 'should not be affected',
+          // hooks should be removed, but other fields preserved
+        })
+      );
+
+      const writtenSettings = (mockFileService.writeJsonFile as jest.Mock).mock.calls[0][1];
+      expect(writtenSettings).not.toHaveProperty('hooks');
+      expect(writtenSettings.theme).toBe('dark');
+      expect(writtenSettings.timeout).toBe(5000);
+      expect(writtenSettings.otherSettings).toBe('should not be affected');
     });
   });
 

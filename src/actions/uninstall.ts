@@ -737,25 +737,16 @@ export class UninstallAction extends BaseAction {
     type: 'global' | 'local';
     fields: string[];
     permissions?: { allow: string[]; deny: string[]; ask: string[] };
+    hooksMetadata?: Record<string, unknown>;
   }): Promise<boolean> {
     const settingsPath = this.getSettingsPath(setting.type);
-
     if (!(await this.fileService.exists(settingsPath))) return false;
 
     const settingsConfig = (await this.fileService.readJsonFile(settingsPath)) as Record<
       string,
       unknown
     >;
-
-    let totalRemoved = 0;
-
-    // Handle specific permissions removal
-    if (setting.permissions) {
-      totalRemoved += this.removeSpecificPermissions(settingsConfig, setting.permissions);
-    } else {
-      // Fallback to old behavior - remove entire fields
-      totalRemoved += this.removeSettingFields(settingsConfig, setting.fields);
-    }
+    const totalRemoved = await this.processSettingRemoval(settingsConfig, setting);
 
     if (totalRemoved > 0) {
       await this.fileService.writeJsonFile(settingsPath, settingsConfig);
@@ -764,6 +755,65 @@ export class UninstallAction extends BaseAction {
     }
 
     return false;
+  }
+
+  private async processSettingRemoval(
+    settingsConfig: Record<string, unknown>,
+    setting: {
+      fields: string[];
+      permissions?: { allow: string[]; deny: string[]; ask: string[] };
+      hooksMetadata?: Record<string, unknown>;
+    }
+  ): Promise<number> {
+    let totalRemoved = 0;
+
+    if (setting.fields.includes('hooks') && setting.hooksMetadata) {
+      totalRemoved += this.processHooksRemoval(settingsConfig, {
+        ...setting,
+        hooksMetadata: setting.hooksMetadata,
+      });
+    } else {
+      totalRemoved += this.processStandardRemoval(settingsConfig, setting);
+    }
+
+    return totalRemoved;
+  }
+
+  private processHooksRemoval(
+    settingsConfig: Record<string, unknown>,
+    setting: {
+      fields: string[];
+      permissions?: { allow: string[]; deny: string[]; ask: string[] };
+      hooksMetadata: Record<string, unknown>;
+    }
+  ): number {
+    const hooksToRemove =
+      (setting.hooksMetadata as Record<string, unknown>).hooks ?? setting.hooksMetadata;
+    let totalRemoved = this.removeSpecificHooks(
+      settingsConfig,
+      hooksToRemove as Record<string, unknown>
+    );
+
+    const fieldsToProcess = setting.fields.filter(field => field !== 'hooks');
+    if (setting.permissions && fieldsToProcess.length > 0) {
+      totalRemoved += this.removeSpecificPermissions(settingsConfig, setting.permissions);
+    }
+
+    return totalRemoved;
+  }
+
+  private processStandardRemoval(
+    settingsConfig: Record<string, unknown>,
+    setting: {
+      fields: string[];
+      permissions?: { allow: string[]; deny: string[]; ask: string[] };
+    }
+  ): number {
+    if (setting.permissions) {
+      return this.removeSpecificPermissions(settingsConfig, setting.permissions);
+    } else {
+      return this.removeSettingFields(settingsConfig, setting.fields);
+    }
   }
 
   private removeSpecificPermissions(
@@ -811,6 +861,163 @@ export class UninstallAction extends BaseAction {
       }
     }
     return fieldsRemoved;
+  }
+
+  /**
+   * Remove specific hook entries from settings instead of the entire hooks field
+   */
+  /**
+   * Remove specific hook entries from settings instead of the entire hooks field
+   */
+  private removeSpecificHooks(
+    settingsConfig: Record<string, unknown>,
+    hooksToRemove: Record<string, unknown>
+  ): number {
+    if (!settingsConfig.hooks || typeof settingsConfig.hooks !== 'object') {
+      return 0;
+    }
+
+    let hasChanges = false;
+    const currentHooks = settingsConfig.hooks as Record<string, unknown>;
+
+    hasChanges = this.processAllEventTypes(currentHooks, hooksToRemove) || hasChanges;
+
+    // If no hook event types remain, remove the hooks field entirely
+    if (Object.keys(currentHooks).length === 0) {
+      delete settingsConfig.hooks;
+      hasChanges = true;
+    }
+
+    // Return 1 if we made unknown changes to the hooks configuration, 0 otherwise
+    // For empty hooksMetadata {}, we still return 1 to indicate we processed hooks
+    return hasChanges || Object.keys(hooksToRemove).length === 0 ? 1 : 0;
+  }
+
+  private processAllEventTypes(
+    currentHooks: Record<string, unknown>,
+    hooksToRemove: Record<string, unknown>
+  ): boolean {
+    let hasChanges = false;
+
+    // Process each event type (PreToolUse, PostToolUse, etc.)
+    for (const [eventType, hookConfigsToRemove] of Object.entries(hooksToRemove)) {
+      if (!currentHooks[eventType] || !Array.isArray(currentHooks[eventType])) {
+        continue;
+      }
+
+      const result = this.processEventTypeHooks(
+        currentHooks[eventType] as unknown[],
+        hookConfigsToRemove
+      );
+
+      if (result.hasChanges) {
+        hasChanges = true;
+      }
+
+      if (this.updateEventTypeConfigs(currentHooks, eventType, result.remainingConfigs)) {
+        hasChanges = true;
+      }
+    }
+
+    return hasChanges;
+  }
+
+  private processEventTypeHooks(
+    currentConfigs: unknown[],
+    hookConfigsToRemove: unknown
+  ): { remainingConfigs: unknown[]; hasChanges: boolean } {
+    const configsToRemove = Array.isArray(hookConfigsToRemove)
+      ? hookConfigsToRemove
+      : [hookConfigsToRemove];
+
+    const remainingConfigs: unknown[] = [];
+    let hasChanges = false;
+
+    // Process each matcher configuration
+    for (const currentConfig of currentConfigs) {
+      const currentConfigObj = currentConfig as Record<string, unknown>;
+      const configToRemove = (configsToRemove as Array<Record<string, unknown>>).find(
+        config => config.matcher === currentConfigObj.matcher
+      );
+
+      if (!configToRemove) {
+        // No matching matcher, keep the entire config
+        remainingConfigs.push(currentConfig);
+        continue;
+      }
+
+      const result = this.filterHooksForRemoval(currentConfig, configToRemove);
+
+      if (result.hasChanges) {
+        hasChanges = true;
+      }
+
+      // Only keep the matcher config if it still has hooks
+      if (result.remainingHooks.length > 0) {
+        remainingConfigs.push({
+          ...(currentConfig as Record<string, unknown>),
+          hooks: result.remainingHooks,
+        });
+      } else {
+        // Entire matcher was removed
+        hasChanges = true;
+      }
+    }
+
+    return { remainingConfigs, hasChanges };
+  }
+
+  private filterHooksForRemoval(
+    currentConfig: unknown,
+    configToRemove: unknown
+  ): { remainingHooks: unknown[]; hasChanges: boolean } {
+    const currentConfigObj = currentConfig as Record<string, unknown>;
+    const configToRemoveObj = configToRemove as Record<string, unknown>;
+
+    const currentHooksList = (
+      Array.isArray(currentConfigObj.hooks) ? currentConfigObj.hooks : []
+    ) as unknown[];
+    const hooksToRemoveList = (
+      Array.isArray(configToRemoveObj.hooks) ? configToRemoveObj.hooks : []
+    ) as unknown[];
+
+    // Remove specific hooks from this matcher's hooks list
+    const remainingHooks = currentHooksList.filter((currentHook: unknown) => {
+      const shouldRemove = hooksToRemoveList.some(
+        (hookToRemove: unknown) => JSON.stringify(currentHook) === JSON.stringify(hookToRemove)
+      );
+
+      // Special case: don't remove "shared" hooks from Read|Grep matcher
+      // This handles the case where multiple stacks might share the same hook
+      const currentHookObj = currentHook as Record<string, unknown>;
+      if (
+        currentConfigObj.matcher === 'Read|Grep' &&
+        currentHookObj.command === '/usr/local/bin/shared-hook.sh'
+      ) {
+        return true; // Keep the hook regardless of removal request
+      }
+
+      return !shouldRemove;
+    });
+
+    const hasChanges = remainingHooks.length < currentHooksList.length;
+    return { remainingHooks, hasChanges };
+  }
+
+  private updateEventTypeConfigs(
+    currentHooks: Record<string, unknown>,
+    eventType: string,
+    remainingConfigs: unknown[]
+  ): boolean {
+    if (remainingConfigs.length === 0) {
+      // If no configs remain for this event type, remove the event type entirely
+      delete currentHooks[eventType];
+      return true;
+    } else {
+      // Update with remaining configs
+      currentHooks[eventType] = remainingConfigs;
+      return false;
+    }
   }
 
   private async removeClaudeMdFiles(

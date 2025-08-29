@@ -16,6 +16,7 @@ export interface StackRegistryEntry {
       type: 'global' | 'local';
       fields: string[];
       permissions?: { allow: string[]; deny: string[]; ask: string[] };
+      hooksMetadata?: Record<string, unknown>;
     }[];
     claudeMd: { type: 'global' | 'local'; path: string }[];
   };
