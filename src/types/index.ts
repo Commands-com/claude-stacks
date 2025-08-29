@@ -1033,19 +1033,19 @@ export interface ExportOptions {
 /**
  * Configuration options for stack restoration operations
  *
- * Controls the behavior of stack restoration from backup files, including
- * what components to restore, conflict resolution, and installation tracking.
- * Used by the restore command to customize the restoration process.
+ * Controls the behavior of stack import from backup files, including
+ * what components to import, conflict resolution, and installation tracking.
+ * Used by the import command to customize the import process.
  *
  * @example
  * ```typescript
- * const restoreOptions: RestoreOptions = {
+ * const importOptions: RestoreOptions = {
  *   overwrite: true,
  *   globalOnly: false,
  *   localOnly: false,
  *   trackInstallation: {
  *     stackId: 'web-toolkit-backup-2024-01-15',
- *     source: 'restore'
+ *     source: 'import'
  *   }
  * };
  * ```
@@ -1055,45 +1055,45 @@ export interface ExportOptions {
  */
 export interface RestoreOptions {
   /**
-   * Whether to overwrite existing files and configurations during restoration
+   * Whether to overwrite existing files and configurations during import
    *
    * @remarks
-   * Controls conflict resolution when restoring files that already exist.
-   * When true, existing files are replaced with backup versions. When false,
-   * restoration skips existing files to avoid data loss.
+   * Controls conflict resolution when importing files that already exist.
+   * When true, existing files are replaced with imported versions. When false,
+   * import skips existing files to avoid data loss.
    */
   overwrite?: boolean;
 
   /**
-   * Whether to restore only global configurations
+   * Whether to import only global configurations
    *
    * @remarks
-   * Limits restoration to global system-wide configurations like global
+   * Limits import to global system-wide configurations like global
    * CLAUDE.md files and global MCP servers. Ignores project-specific
-   * components when true. Useful for system-level configuration recovery.
+   * components when true. Useful for system-level configuration setup.
    */
   globalOnly?: boolean;
 
   /**
-   * Whether to restore only local project-specific configurations
+   * Whether to import only local project-specific configurations
    *
    * @remarks
-   * Limits restoration to local project configurations like local CLAUDE.md
+   * Limits import to local project configurations like local CLAUDE.md
    * files and project-specific settings. Ignores global configurations when
-   * true. Useful for project-specific restoration without affecting system settings.
+   * true. Useful for project-specific import without affecting system settings.
    */
   localOnly?: boolean;
 
   /**
-   * Installation tracking metadata for the restored stack
+   * Installation tracking metadata for the imported stack
    *
    * @remarks
-   * Optional metadata to record the restoration as an installation event.
+   * Optional metadata to record the import as an installation event.
    * Helps maintain stack management history and enables proper update tracking
-   * for restored stacks that may later be updated or managed.
+   * for imported stacks that may later be updated or managed.
    */
   trackInstallation?: {
-    /** Unique identifier for tracking the restored stack installation */
+    /** Unique identifier for tracking the imported stack installation */
     stackId: string;
     /** Source type indicating how the stack was installed */
     source?: 'local-file' | 'restore';

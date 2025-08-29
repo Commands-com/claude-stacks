@@ -285,7 +285,7 @@ describe('StackOperationService', () => {
       expect(mockReadJson).toHaveBeenCalled();
       expect(mockUI.info).toHaveBeenCalledWith('📦 Restoring stack: test-stack');
       expect(mockUI.log).toHaveBeenCalledWith('Description: A test stack\n');
-      expect(mockUI.success).toHaveBeenCalledWith('\n✅ Stack "test-stack" restored successfully!');
+      expect(mockUI.success).toHaveBeenCalledWith('\n✅ Stack "test-stack" imported successfully!');
     });
 
     it('should handle restore with globalOnly option', async () => {
@@ -315,7 +315,7 @@ describe('StackOperationService', () => {
 
       await stackOperationService.performRestore('test-stack.json', options);
 
-      expect(mockUI.success).toHaveBeenCalledWith('\n✅ Stack "test-stack" restored successfully!');
+      expect(mockUI.success).toHaveBeenCalledWith('\n✅ Stack "test-stack" imported successfully!');
     });
 
     it('should handle file read errors', async () => {
@@ -337,7 +337,7 @@ describe('StackOperationService', () => {
       await stackOperationService.performRestore('minimal-stack.json');
 
       expect(mockUI.success).toHaveBeenCalledWith(
-        '\n✅ Stack "minimal-stack" restored successfully!'
+        '\n✅ Stack "minimal-stack" imported successfully!'
       );
     });
 
@@ -469,7 +469,7 @@ describe('StackOperationService', () => {
 
       await stackOperationService.performRestore('empty-stack.json');
 
-      expect(mockUI.success).toHaveBeenCalledWith('\n✅ Stack "test-stack" restored successfully!');
+      expect(mockUI.success).toHaveBeenCalledWith('\n✅ Stack "test-stack" imported successfully!');
     });
 
     it('should handle stack with null/undefined components', async () => {
@@ -487,7 +487,7 @@ describe('StackOperationService', () => {
 
       await stackOperationService.performRestore('null-stack.json');
 
-      expect(mockUI.success).toHaveBeenCalledWith('\n✅ Stack "null-stack" restored successfully!');
+      expect(mockUI.success).toHaveBeenCalledWith('\n✅ Stack "null-stack" imported successfully!');
     });
 
     it('should handle complex restore options combinations', async () => {
@@ -503,7 +503,7 @@ describe('StackOperationService', () => {
 
       await stackOperationService.performRestore('test-stack.json', options);
 
-      expect(mockUI.success).toHaveBeenCalledWith('\n✅ Stack "test-stack" restored successfully!');
+      expect(mockUI.success).toHaveBeenCalledWith('\n✅ Stack "test-stack" imported successfully!');
     });
 
     it('should handle components without filePath', async () => {
@@ -528,7 +528,7 @@ describe('StackOperationService', () => {
 
       await stackOperationService.performRestore('test-stack.json');
 
-      expect(mockUI.success).toHaveBeenCalledWith('\n✅ Stack "test-stack" restored successfully!');
+      expect(mockUI.success).toHaveBeenCalledWith('\n✅ Stack "test-stack" imported successfully!');
     });
   });
 
@@ -996,7 +996,7 @@ describe('StackOperationService', () => {
         await stackOperationService.performRestore('test-stack.json');
 
         expect(mockUI.success).toHaveBeenCalledWith(
-          '\n✅ Stack "test-stack" restored successfully!'
+          '\n✅ Stack "test-stack" imported successfully!'
         );
       });
 

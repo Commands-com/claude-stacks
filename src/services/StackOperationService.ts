@@ -82,7 +82,7 @@ export class StackOperationService {
   }
 
   /**
-   * Perform stack restoration from a stack file
+   * Perform stack import from a stack file
    */
   async performRestore(
     stackFilePath: string,
@@ -117,7 +117,7 @@ export class StackOperationService {
       });
     }
 
-    this.ui.success(`\n✅ Stack "${stack.name}" restored successfully!`);
+    this.ui.success(`\n✅ Stack "${stack.name}" imported successfully!`);
 
     // Display summary
     await this.displayRestoreSummary(stack, options);
@@ -413,7 +413,7 @@ export class StackOperationService {
   }
 
   /**
-   * Restore stack components based on options
+   * Import stack components based on options
    */
   private async restoreComponents(
     stack: DeveloperStack,

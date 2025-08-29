@@ -29,7 +29,7 @@ export interface StackRegistryEntry {
   name: string;
   /** ISO timestamp indicating when the stack was installed (e.g., '2024-01-15T10:30:00Z') */
   installedAt: string;
-  /** Source from which the stack was installed - remote registry, local file, or restore operation */
+  /** Source from which the stack was installed - remote registry, local file, or import operation */
   source: 'commands.com' | 'local-file' | 'restore';
   /** Semantic version of the installed stack (e.g., '1.2.0'), if available from source */
   version?: string;

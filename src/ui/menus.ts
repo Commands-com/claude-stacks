@@ -6,7 +6,7 @@ import { colors } from '../utils/colors.js';
 import { readSingleChar } from '../utils/input.js';
 import { showStackInfo } from './display.js';
 import { deleteAction } from '../actions/delete.js';
-import { restoreAction } from '../actions/restore.js';
+import { importAction } from '../actions/import.js';
 import { installAction } from '../actions/install.js';
 import { publishAction } from '../actions/publish.js';
 import open from 'open';
@@ -52,14 +52,14 @@ function displayLocalStackMetadata(stack: DeveloperStack): void {
   console.log(`${colors.info('File path:')} ${colors.path(stack.filePath)}`);
 }
 
-async function handleRestoreAction(filePath: string): Promise<void> {
-  console.log(colors.info('\n🔄 Restoring stack to current project...'));
+async function handleImportAction(filePath: string): Promise<void> {
+  console.log(colors.info('\n🔄 Importing stack to current project...'));
   try {
-    await restoreAction(filePath, {});
-    console.log(colors.success('✅ Stack restored successfully!'));
+    await importAction(filePath, {});
+    console.log(colors.success('✅ Stack imported successfully!'));
   } catch (error) {
     console.error(
-      colors.error('Restore failed:'),
+      colors.error('Import failed:'),
       error instanceof Error ? error.message : String(error)
     );
   }
@@ -74,7 +74,7 @@ async function handleOverwriteAction(stack: DeveloperStack): Promise<void> {
   if (confirmOverwrite.toLowerCase() === 'y') {
     console.log(colors.info('\n🔄 Overwriting current project with stack...'));
     try {
-      await restoreAction(stack.filePath!, { overwrite: true });
+      await importAction(stack.filePath!, { overwrite: true });
       console.log(colors.success('✅ Stack overwrite completed successfully!'));
     } catch (error) {
       console.error(
@@ -150,7 +150,7 @@ async function handleDeleteAction(stack: DeveloperStack): Promise<boolean> {
 /**
  * Displays local stack details and interactive action menu
  *
- * Shows stack metadata and presents interactive menu with options like restore,
+ * Shows stack metadata and presents interactive menu with options like import,
  * publish, delete, and view details. Handles user input and executes chosen actions.
  *
  * @param stack - Developer stack object containing stack metadata and file path
@@ -168,14 +168,14 @@ export async function showLocalStackDetailsAndActions(stack: DeveloperStack): Pr
   displayLocalStackComponents(stack);
   displayLocalStackMetadata(stack);
 
-  const actionPrompt = `\nActions: ${colors.highlight('(r)')}estore, ${colors.highlight('(o)')}verwrite, ${colors.highlight('(p)')}ublish, ${colors.highlight('(s)')}how details, ${colors.highlight('(d)')}elete file, ${colors.highlight('(b)')}ack`;
+  const actionPrompt = `\nActions: ${colors.highlight('(i)')}mport, ${colors.highlight('(o)')}verwrite, ${colors.highlight('(p)')}ublish, ${colors.highlight('(s)')}how details, ${colors.highlight('(d)')}elete file, ${colors.highlight('(b)')}ack`;
   console.log(actionPrompt);
 
   const action = await readSingleChar(colors.meta('Choose an action: '));
 
   switch (action.toLowerCase()) {
-    case 'r':
-      await handleRestoreAction(stack.filePath!);
+    case 'i':
+      await handleImportAction(stack.filePath!);
       break;
     case 'o':
       await handleOverwriteAction(stack);

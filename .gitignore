@@ -10,3 +10,6 @@ dist/
 
 # Test coverage reports
 coverage/
+
+# Serena cache files
+.serena/

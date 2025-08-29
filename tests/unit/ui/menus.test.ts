@@ -51,8 +51,8 @@ jest.mock('../../../src/actions/delete.js', () => ({
   deleteAction: jest.fn(),
 }));
 
-jest.mock('../../../src/actions/restore.js', () => ({
-  restoreAction: jest.fn(),
+jest.mock('../../../src/actions/import.js', () => ({
+  importAction: jest.fn(),
 }));
 
 jest.mock('../../../src/actions/install.js', () => ({
@@ -82,7 +82,7 @@ describe('ui/menus', () => {
   let mockInput: any;
   let mockDisplay: any;
   let mockDeleteAction: any;
-  let mockRestoreAction: any;
+  let mockImportAction: any;
   let mockInstallAction: any;
   let mockPublishAction: any;
   let mockOpen: any;
@@ -106,7 +106,7 @@ describe('ui/menus', () => {
     mockInput = require('../../../src/utils/input.js');
     mockDisplay = require('../../../src/ui/display.js');
     mockDeleteAction = require('../../../src/actions/delete.js').deleteAction;
-    mockRestoreAction = require('../../../src/actions/restore.js').restoreAction;
+    mockImportAction = require('../../../src/actions/import.js').importAction;
     mockInstallAction = require('../../../src/actions/install.js').installAction;
     mockPublishAction = require('../../../src/actions/publish.js').publishAction;
     mockOpen = require('open');
@@ -116,7 +116,7 @@ describe('ui/menus', () => {
     mockInput.readSingleChar.mockReset();
     mockDisplay.showStackInfo.mockReset();
     mockDeleteAction.mockReset();
-    mockRestoreAction.mockReset();
+    mockImportAction.mockReset();
     mockInstallAction.mockReset();
     mockPublishAction.mockReset();
     mockOpen.mockReset();
@@ -252,32 +252,32 @@ describe('ui/menus', () => {
 
       expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining(
-          'Actions: (r)estore, (o)verwrite, (p)ublish, (s)how details, (d)elete file, (b)ack'
+          'Actions: (i)mport, (o)verwrite, (p)ublish, (s)how details, (d)elete file, (b)ack'
         )
       );
     });
 
     describe('action handling', () => {
-      it('should handle restore action', async () => {
+      it('should handle import action', async () => {
         const stack = createMockLocalStack();
-        mockInput.readSingleChar.mockResolvedValueOnce('r');
-        mockRestoreAction.mockResolvedValue();
+        mockInput.readSingleChar.mockResolvedValueOnce('i');
+        mockImportAction.mockResolvedValue();
 
         await showLocalStackDetailsAndActions(stack);
 
-        expect(mockConsoleLog).toHaveBeenCalledWith('\n🔄 Restoring stack to current project...');
-        expect(mockRestoreAction).toHaveBeenCalledWith('/path/to/test-stack.json', {});
-        expect(mockConsoleLog).toHaveBeenCalledWith('✅ Stack restored successfully!');
+        expect(mockConsoleLog).toHaveBeenCalledWith('\n🔄 Importing stack to current project...');
+        expect(mockImportAction).toHaveBeenCalledWith('/path/to/test-stack.json', {});
+        expect(mockConsoleLog).toHaveBeenCalledWith('✅ Stack imported successfully!');
       });
 
-      it('should handle restore action failure', async () => {
+      it('should handle import action failure', async () => {
         const stack = createMockLocalStack();
-        mockInput.readSingleChar.mockResolvedValueOnce('r');
-        mockRestoreAction.mockRejectedValue(new Error('Restore failed'));
+        mockInput.readSingleChar.mockResolvedValueOnce('i');
+        mockImportAction.mockRejectedValue(new Error('Import failed'));
 
         await showLocalStackDetailsAndActions(stack);
 
-        expect(mockConsoleError).toHaveBeenCalledWith('Restore failed:', 'Restore failed');
+        expect(mockConsoleError).toHaveBeenCalledWith('Import failed:', 'Import failed');
       });
 
       it('should handle overwrite action with confirmation', async () => {
@@ -285,7 +285,7 @@ describe('ui/menus', () => {
         mockInput.readSingleChar
           .mockResolvedValueOnce('o') // Choose overwrite
           .mockResolvedValueOnce('y'); // Confirm overwrite
-        mockRestoreAction.mockResolvedValue();
+        mockImportAction.mockResolvedValue();
 
         await showLocalStackDetailsAndActions(stack);
 
@@ -295,7 +295,7 @@ describe('ui/menus', () => {
         expect(mockConsoleLog).toHaveBeenCalledWith(
           '\n🔄 Overwriting current project with stack...'
         );
-        expect(mockRestoreAction).toHaveBeenCalledWith('/path/to/test-stack.json', {
+        expect(mockImportAction).toHaveBeenCalledWith('/path/to/test-stack.json', {
           overwrite: true,
         });
         expect(mockConsoleLog).toHaveBeenCalledWith('✅ Stack overwrite completed successfully!');
@@ -310,7 +310,7 @@ describe('ui/menus', () => {
         await showLocalStackDetailsAndActions(stack);
 
         expect(mockConsoleLog).toHaveBeenCalledWith('Overwrite cancelled.');
-        expect(mockRestoreAction).not.toHaveBeenCalled();
+        expect(mockImportAction).not.toHaveBeenCalled();
       });
 
       it('should handle publish action with public visibility', async () => {
@@ -427,7 +427,7 @@ describe('ui/menus', () => {
         await showLocalStackDetailsAndActions(stack);
 
         // Should exit without calling any actions
-        expect(mockRestoreAction).not.toHaveBeenCalled();
+        expect(mockImportAction).not.toHaveBeenCalled();
         expect(mockPublishAction).not.toHaveBeenCalled();
         expect(mockDeleteAction).not.toHaveBeenCalled();
       });
@@ -439,7 +439,7 @@ describe('ui/menus', () => {
         await showLocalStackDetailsAndActions(stack);
 
         // Should exit without calling any actions
-        expect(mockRestoreAction).not.toHaveBeenCalled();
+        expect(mockImportAction).not.toHaveBeenCalled();
         expect(mockPublishAction).not.toHaveBeenCalled();
         expect(mockDeleteAction).not.toHaveBeenCalled();
       });

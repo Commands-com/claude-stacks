@@ -191,15 +191,15 @@ describe('CLI End-to-End Workflows', () => {
     });
   });
 
-  describe('Stack Restore Workflow', () => {
-    it('should restore stack from ~/.claude/stacks/', async () => {
-      // First export a stack to create something to restore
+  describe('Stack Import Workflow', () => {
+    it('should import stack from ~/.claude/stacks/', async () => {
+      // First export a stack to create something to import
       await testEnv.createTestStructure(testProjectDir, {
-        'package.json': JSON.stringify({ name: 'restore-source', version: '1.0.0' }),
+        'package.json': JSON.stringify({ name: 'import-source', version: '1.0.0' }),
         'src/main.ts': 'console.log("Source code");',
       });
 
-      const stackName = 'restore-test-stack';
+      const stackName = 'import-test-stack';
       const stackPath = join(process.env.CLAUDE_STACKS_TEST_STACKS_PATH!, `${stackName}.json`);
 
       // Export from source directory
@@ -208,9 +208,9 @@ describe('CLI End-to-End Workflows', () => {
           'export',
           stackName,
           '--name',
-          'Restore Test Stack',
+          'Import Test Stack',
           '--description',
-          'Stack for restore testing',
+          'Stack for import testing',
         ],
         testProjectDir
       );
@@ -221,15 +221,15 @@ describe('CLI End-to-End Workflows', () => {
       }
       expect(exportResult.exitCode).toBe(0);
 
-      // Now try to restore in a different directory
-      const targetDir = await testEnv.createTempDir('restore-target-');
+      // Now try to import in a different directory
+      const targetDir = await testEnv.createTempDir('import-target-');
 
-      // Since restore seems to expect the stack file path directly
-      const restoreResult = await runCliCommand(['restore', stackPath, '--overwrite'], targetDir);
+      // Since import expects the stack file path directly
+      const importResult = await runCliCommand(['import', stackPath, '--overwrite'], targetDir);
 
-      // Note: Restore may be interactive, so we may need to adjust expectations
+      // Note: Import may be interactive, so we may need to adjust expectations
       // For now, let's just verify the command doesn't crash
-      expect(restoreResult.exitCode).toBe(0);
+      expect(importResult.exitCode).toBe(0);
     });
   });
 

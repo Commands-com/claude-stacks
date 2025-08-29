@@ -11,7 +11,7 @@ const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 
 
 // Import action functions
 import { exportAction } from './actions/export.js';
-import { restoreAction } from './actions/restore.js';
+import { importAction } from './actions/import.js';
 import { publishAction } from './actions/publish.js';
 import { browseAction } from './actions/browse.js';
 import { installAction } from './actions/install.js';
@@ -26,7 +26,7 @@ import { listHooksAction, scanHooksAction, viewHookAction } from './actions/hook
 program
   .name('claude-stacks')
   .description(
-    'Share your Claude Code environment in seconds - export and restore development stacks'
+    'Share your Claude Code environment in seconds - export and import development stacks'
   )
   .version(packageJson.version);
 
@@ -50,15 +50,15 @@ program
   .description('Export your Claude Code environment to a shareable stack file')
   .action((filename, options) => exportAction(filename, options));
 
-// Restore command
+// Import command
 program
-  .command('restore')
-  .argument('<filename>', 'Stack file to restore from')
+  .command('import')
+  .argument('<filename>', 'Stack file to import from')
   .option('--overwrite', 'Overwrite existing files (default: add/merge)')
-  .option('--global-only', 'Only restore to global ~/.claude (skip local project files)')
-  .option('--local-only', 'Only restore to local project .claude (skip global files)')
-  .description('Restore a development stack to your current project')
-  .action((filename, options) => restoreAction(filename, options));
+  .option('--global-only', 'Only import to global ~/.claude (skip local project files)')
+  .option('--local-only', 'Only import to local project .claude (skip global files)')
+  .description('Import a local stack to your current project')
+  .action((filename, options) => importAction(filename, options));
 
 // Publish command
 program
