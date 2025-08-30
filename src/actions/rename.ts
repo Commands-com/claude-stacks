@@ -49,6 +49,7 @@ export class RenameAction extends BaseAction {
       await this.metadata.savePublishedStackMetadata(currentDir, {
         stack_id: `${result.organizationUsername}/${result.name}`,
         stack_name: newTitle,
+        description: stack.description ?? '',
         last_published_version: stack.version ?? '1.0.0',
         last_published_at: new Date().toISOString(),
       });

@@ -85,6 +85,7 @@ claude-stacks install org-name/stack-name
 ### Management Commands
 
 - **`list`** - List local stacks
+- **`scan-hooks`** - Scan hooks for potential security issues
 - **`delete <stack-id>`** - Delete published stack from Commands.com
 - **`rename <stack-id>`** - Rename published stack
 - **`clean`** - Clean up local stack metadata
@@ -109,9 +110,32 @@ Claude Stacks captures your Claude Code environment including:
 - **MCP Server Configurations** - All configured MCP servers and their settings
 - **Project Commands** - Custom commands defined for your project
 - **Agent Configurations** - Custom agents and their configurations
+- **Hook Scripts** - User hook scripts with security analysis
 - **Project Settings** - Claude Code project-specific settings
 - **CLAUDE.md Files** - Project instructions (when `--include-claude-md` is used)
 - **Global Configurations** - User-level settings (when `--include-global` is used)
+
+## Hook Safety
+
+Claude Stacks automatically analyzes hook scripts for potential security risks during export:
+
+```bash
+# Scan hooks independently
+claude-stacks scan-hooks
+
+# Security analysis is included during export
+claude-stacks export my-stack.json
+```
+
+**Risk Levels:**
+
+- 🔴 **High** - Dangerous operations (command execution, file deletion)
+- 🟡 **Medium** - Potentially risky operations (network requests, file writes)
+- 🟢 **Low** - Minor concerns (environment variable access)
+
+Supports Python, JavaScript, TypeScript, and Bash hook analysis.
+
+> **⚠️ Important:** Hook analysis provides guidance only. Users install and execute hooks at their own risk. Always review hook code before use, especially from untrusted sources.
 
 ## Authentication
 
@@ -208,6 +232,7 @@ This tool handles your Claude Code configurations and requires network access to
 - HTTPS-only API communication
 - Local credential storage with appropriate permissions
 - Input validation and sanitization
+- Automated security analysis of hook scripts
 
 ## License
 
