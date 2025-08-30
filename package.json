@@ -8,8 +8,10 @@
     "claude-stacks": "./dist/cli.js"
   },
   "scripts": {
-    "build": "tsc && npm run copy-grammars",
+    "build": "tsc && npm run copy-grammars && npm run copy-queries",
     "copy-grammars": "mkdir -p dist/grammars && cp src/grammars/*.wasm dist/grammars/ 2>/dev/null || true",
+    "copy-queries": "mkdir -p dist/queries/python dist/queries/bash dist/queries/js dist/queries/ts && cp src/queries/python/*.scm dist/queries/python/ 2>/dev/null || true && cp src/queries/bash/*.scm dist/queries/bash/ 2>/dev/null || true && cp src/queries/js/*.scm dist/queries/js/ 2>/dev/null || true && cp src/queries/ts/*.scm dist/queries/ts/ 2>/dev/null || true",
+    "scm": "node scripts/validate-queries.mjs",
     "dev": "tsx src/setup.ts",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
@@ -18,7 +20,7 @@
     "typecheck": "tsc --noEmit",
     "quality": "npm run lint && npm run format:check && npm run typecheck",
     "quality:fix": "npm run lint:fix && npm run format",
-    "prepublishOnly": "npm run quality && npm run build",
+    "prepublishOnly": "npm run quality && npm run build && npm run scm",
     "prepare": "husky",
     "pretest": "npm run build",
     "test": "jest --coverage --verbose",

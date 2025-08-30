@@ -16,6 +16,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
 import type { HookScanResult } from '../types/index.js';
+import { fileURLToPath } from 'node:url';
+import { readFileSync, readdirSync } from 'node:fs';
 
 // Tree-sitter is enabled by default with graceful fallback
 function isEnabled(): boolean {
@@ -49,8 +51,8 @@ function resolveGrammarWasm(lang: SupportedLanguage): string | null {
     if (import.meta?.url) {
       // Use import.meta.url resolution in Node.js
       const url = new URL(rel, import.meta.url);
-      // Convert file URL to file path manually (avoiding require in ES module)
-      return url.pathname;
+      // Convert file URL to file path in a cross-platform way
+      return fileURLToPath(url);
     } else {
       // Fallback for test environments or older Node.js
 
@@ -120,208 +122,109 @@ const EXTENSION_MAP: Record<string, SupportedLanguage> = {
 export function detectLanguageFromFilename(filename?: string): SupportedLanguage | null {
   if (!filename) return null;
   const lower = filename.toLowerCase();
-  const ext = lower.substring(lower.lastIndexOf('.'));
+  const dot = lower.lastIndexOf('.');
+  if (dot < 0) return null;
+  const ext = lower.substring(dot);
   return EXTENSION_MAP[ext] ?? null;
 }
 
-// Query bundles for Python and Bash - Refined to reduce false positives
-const PY_QUERIES = [
-  // Dangerous subprocess execution - only flag clearly dangerous patterns
-  `((
-    call
-      function: (attribute
-        object: (identifier) @mod
-        attribute: (identifier) @func)
-      arguments: (argument_list 
-        (list 
-          (identifier) @cmd_var)))
-    (#eq? @mod "subprocess")
-    (#match? @func "^(run|Popen|call|check_call|check_output)$")) @danger.exec`,
+// Query caches
+// - file list cache: language -> list of .scm files
+// - compiled query cache: language -> Query[] compiled for the loaded Language instance
+const queryFileCache: Record<SupportedLanguage, string[] | null> = {
+  python: null,
+  bash: null,
+  js: null,
+  ts: null,
+};
+const compiledQueryCache: Record<SupportedLanguage, any[] | null> = {
+  python: null,
+  bash: null,
+  js: null,
+  ts: null,
+};
 
-  // Subprocess with shell=True and string (very dangerous)
-  `((
-    call
-      function: (attribute
-        object: (identifier) @mod
-        attribute: (identifier) @func)
-      arguments: (argument_list
-        (string) @cmd_str
-        (keyword_argument
-          name: (identifier) @kwarg
-          value: (true))))
-    (#eq? @mod "subprocess")
-    (#match? @func "^(run|Popen|call|check_call|check_output)$")
-    (#eq? @kwarg "shell")) @danger.exec`,
+/**
+ * List all .scm query files for a language, sorted by name
+ */
+function listQueryFiles(lang: SupportedLanguage): string[] {
+  if (queryFileCache[lang]) return queryFileCache[lang] as string[];
+  const files: string[] = [];
+  try {
+    const dirPath = resolveQueryDir(lang);
+    if (!dirPath) return files;
+    const names = readdirSync(dirPath, { withFileTypes: true });
+    for (const ent of names) {
+      if (ent.isFile() && ent.name.endsWith('.scm')) {
+        const p = resolveQueryFile(lang, ent.name);
+        if (p) files.push(p);
+      }
+    }
+    files.sort();
+  } catch {
+    // ignore
+  }
+  queryFileCache[lang] = files;
+  return files;
+}
 
-  // Subprocess with dangerous hardcoded commands
-  `((
-    call
-      function: (attribute
-        object: (identifier) @mod
-        attribute: (identifier) @func)
-      arguments: (argument_list 
-        (list 
-          (string) @cmd)))
-    (#eq? @mod "subprocess")
-    (#match? @func "^(run|Popen|call|check_call|check_output)$")
-    (#match? @cmd "^(rm|rmdir|dd|mkfs|fdisk|sudo|su|chmod|chown|kill|pkill)$")) @danger.exec`,
+/**
+ * Compile and cache queries for a language using the given Language
+ */
+function ensureCompiledQueries(lang: SupportedLanguage, Language: any): any[] {
+  if (compiledQueryCache[lang] && (compiledQueryCache[lang] as any[]).length > 0) {
+    return compiledQueryCache[lang] as any[];
+  }
+  const compiled: any[] = [];
+  const files = listQueryFiles(lang);
+  for (const f of files) {
+    try {
+      const content = readFileSync(f, 'utf-8');
+      const q = Language.query(content);
+      compiled.push(q);
+    } catch {
+      // Skip invalid query files gracefully
+      continue;
+    }
+  }
+  compiledQueryCache[lang] = compiled;
+  return compiled;
+}
 
-  // os.system (always dangerous)
-  `((
-    call
-      function: (attribute
-        object: (identifier) @mod
-        attribute: (identifier) @func))
-    (#eq? @mod "os")
-    (#eq? @func "system")) @danger.exec`,
+/**
+ * Resolve path to a query file
+ * @param lang Language name
+ * @param filename Query filename
+ * @returns Full path to query file, or null if not found
+ */
+function resolveQueryFile(lang: SupportedLanguage, filename: string): string | null {
+  try {
+    // Handle both Node.js and test environments
+    if (import.meta?.url) {
+      // Use import.meta.url resolution in Node.js
+      const url = new URL(`../queries/${lang}/${filename}`, import.meta.url);
+      return fileURLToPath(url);
+    } else {
+      // Fallback for test environments or older Node.js
+      // eslint-disable-next-line no-undef
+      const path = require('path');
+      const __dirname = path.dirname(__filename || '');
+      return path.resolve(__dirname, `../queries/${lang}/${filename}`);
+    }
+  } catch {
+    return null;
+  }
+}
 
-  // eval/exec with variables (dangerous)
-  `((
-    call
-      function: (identifier) @name
-      arguments: (argument_list 
-        (identifier))) 
-    (#match? @name "^(eval|exec)$")) @danger.eval`,
+function resolveQueryDir(lang: SupportedLanguage): string | null {
+  return resolveQueryFile(lang, '.');
+}
 
-  // eval/exec with user input patterns
-  `((
-    call
-      function: (identifier) @name
-      arguments: (argument_list 
-        (subscript))) 
-    (#match? @name "^(eval|exec)$")) @danger.eval`,
-
-  // File operations with variables (potential path injection)
-  `((
-    call
-      function: (identifier) @func
-      arguments: (argument_list 
-        (identifier) @path_var
-        (string) @mode))
-    (#eq? @func "open")
-    (#match? @mode "^[wa]")) @warn.fswrite`,
-
-  // File operations to suspicious paths
-  `((
-    call
-      function: (identifier) @func
-      arguments: (argument_list 
-        (string) @path
-        (string) @mode))
-    (#eq? @func "open")
-    (#match? @mode "^[wa]")
-    (#match? @path "^/(etc|bin|sbin|usr/bin|usr/sbin|root|home/[^/]+/\\.)")) @danger.fswrite`,
-
-  // shutil.rmtree with variables (dangerous)
-  `((
-    call
-      function: (attribute
-        object: (identifier) @mod
-        attribute: (identifier) @func)
-      arguments: (argument_list 
-        (identifier)))
-    (#eq? @mod "shutil")
-    (#eq? @func "rmtree")) @danger.fsdelete`,
-
-  // os file operations with variables
-  `((
-    call
-      function: (attribute
-        object: (identifier) @mod
-        attribute: (identifier) @func)
-      arguments: (argument_list 
-        (identifier)))
-    (#eq? @mod "os")
-    (#match? @func "^(remove|unlink|rmdir)$")) @warn.fs`,
-
-  // Network requests with variable URLs (potential SSRF)
-  `((
-    call
-      function: (attribute
-        object: (identifier) @mod
-        attribute: (identifier) @method)
-      arguments: (argument_list 
-        (identifier) @url_var))
-    (#eq? @mod "requests")
-    (#match? @method "^(get|post|put|delete|patch|head)$")) @warn.net`,
-
-  // Environment access with variables (credential access)
-  `((
-    subscript
-      value: (attribute
-        object: (identifier) @obj
-        attribute: (identifier) @attr)
-      subscript: (identifier) @key_var)
-    (#eq? @obj "os")
-    (#eq? @attr "environ")) @warn.env`,
-
-  // Sensitive environment variables by name
-  `((
-    subscript
-      value: (attribute
-        object: (identifier) @obj
-        attribute: (identifier) @attr)
-      subscript: (string) @key)
-    (#eq? @obj "os")
-    (#eq? @attr "environ")
-    (#match? @key "(?i)(password|secret|key|token|credential|auth)")) @taint.env`,
-
-  // Dynamic imports (code injection risk)
-  `((
-    call
-      function: (identifier) @func
-      arguments: (argument_list 
-        (identifier) @module_var))
-    (#eq? @func "__import__")) @danger.eval`,
-
-  // exec/eval with f-strings or concatenation
-  `((
-    call
-      function: (identifier) @name
-      arguments: (argument_list 
-        (formatted_string)))
-    (#match? @name "^(eval|exec)$")) @danger.eval`,
-];
-
-const BASH_QUERIES = [
-  // curl|wget | sh|bash
-  `((
-    pipeline
-      (command (command_name (word) @cmd1))
-      (command (command_name (word) @cmd2)))
-    (#match? @cmd1 "^(curl|wget)$")
-    (#match? @cmd2 "^(sh|bash)$")) @danger.netexec`,
-  // sh -c "...$VAR..."
-  `((
-    command
-      (command_name (word) @name)
-      (word) @flag)
-    (#match? @name "^(sh|bash)$")
-    (#eq? @flag "-c")) @danger.eval`,
-  // eval builtin
-  `((
-    command (command_name (word) @cmd))
-    (#eq? @cmd "eval")) @danger.eval`,
-  // rm -rf
-  `((
-    command
-      (command_name (word) @cmd)
-      (word) @arg)
-    (#eq? @cmd "rm")
-    (#match? @arg "^-.*r.*f.*$")) @danger.fsdelete`,
-  // unquoted expansions as command/arg
-  `((command (command_name (word (expansion) @exp)))) @danger.unquoted_expansion`,
-  `((command (word (expansion) @exp))) @danger.unquoted_expansion`,
-  // command substitution
-  `((command (command_substitution) @subst)) @danger.subst`,
-  // redirect to sensitive paths
-  `((
-    redirect (word) @target)
-    (#match? @target "^/(etc|dev|proc|sys)\\b")) @danger.fswrite`,
-];
+// Query bundles are now loaded dynamically from directory structure
 
 const SEVERITY_MAP = [
   { prefixes: ['danger.exec', 'danger.netexec', 'danger.eval'], score: 30 },
+  { prefixes: ['danger.import'], score: 20 },
   { prefixes: ['danger.fsdelete', 'danger.fswrite'], score: 25 },
   { prefixes: ['danger.fs', 'danger.net'], score: 20 },
   { prefixes: ['warn.fswrite', 'warn.fs', 'warn.net', 'warn.env'], score: 10 },
@@ -342,6 +245,7 @@ function flagsForCapture(capture: string, results: HookScanResult): void {
   if (capture.includes('fs')) results.hasFileSystemAccess = true;
   if (capture.includes('net')) results.hasNetworkAccess = true;
   if (capture.includes('exec') || capture.includes('eval')) results.hasProcessExecution = true;
+  if (capture.includes('danger.import')) results.hasDangerousImports = true;
   if (capture.includes('taint.env')) results.hasCredentialAccess = true;
 }
 
@@ -367,8 +271,8 @@ export async function scanWithTreeSitter(
   parser.setLanguage(Language);
   const tree = parser.parse(content);
 
-  const queries = lang === 'python' ? PY_QUERIES : lang === 'bash' ? BASH_QUERIES : [];
-  if (queries.length === 0) return null;
+  const compiledQueries = ensureCompiledQueries(lang, Language);
+  if (compiledQueries.length === 0) return null;
 
   const results: HookScanResult = {
     hasFileSystemAccess: false,
@@ -380,13 +284,8 @@ export async function scanWithTreeSitter(
     riskScore: 0,
   };
 
-  for (const q of queries) {
-    let queryObj: any;
-    try {
-      queryObj = Language.query(q);
-    } catch {
-      continue;
-    }
+  const scoredRanges = new Set<string>();
+  for (const queryObj of compiledQueries) {
     const matches = queryObj.matches(tree.rootNode);
     for (const m of matches) {
       // Capture kind and a representative node for location
@@ -397,10 +296,21 @@ export async function scanWithTreeSitter(
 
       const { node } = cap;
       const start = node.startPosition; // {row, column}
+      const startIndex: number = node.startIndex ?? 0;
+      const endIndex: number = node.endIndex ?? startIndex;
+      const rangeKey = `${startIndex}:${endIndex}`;
+      // Extract a short snippet for context
+      const rawSnippet = content.slice(startIndex, Math.min(endIndex, startIndex + 160));
+      const snippet = rawSnippet.replace(/\s+/g, ' ').trim().slice(0, 140);
       const captureId = name;
-      results.suspiciousPatterns.push(`${captureId} at ${start.row + 1}:${start.column + 1}`);
-      results.riskScore += severityForCapture(captureId);
-      flagsForCapture(captureId, results);
+      results.suspiciousPatterns.push(
+        `${captureId} at ${start.row + 1}:${start.column + 1} => ${snippet}`
+      );
+      if (!scoredRanges.has(rangeKey)) {
+        results.riskScore += severityForCapture(captureId);
+        flagsForCapture(captureId, results);
+        scoredRanges.add(rangeKey);
+      }
     }
   }
 
