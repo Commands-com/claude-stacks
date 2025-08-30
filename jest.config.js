@@ -51,6 +51,7 @@ export default {
     '!src/**/*.d.ts',
     '!src/cli.ts', // Entry point excluded from coverage
     '!src/types/**/*', // Type definitions excluded
+    '!src/utils/treeSitterEngine.ts', // Tree-sitter engine excluded (graceful fallback design)
     '!src/**/__tests__/**',
     '!src/**/*.test.ts',
     '!src/**/*.spec.ts',

@@ -995,7 +995,7 @@ async function processHookFile(
   const hookType = inferHookType(hookName);
 
   // Scan for security issues
-  const scanResults = hookScanner.scanHook(content);
+  const scanResults = await hookScanner.scanHook(content, { filename: filePath });
   const riskLevel = getRiskLevel(scanResults.riskScore);
 
   return {

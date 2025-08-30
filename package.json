@@ -8,7 +8,8 @@
     "claude-stacks": "./dist/cli.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run copy-grammars",
+    "copy-grammars": "mkdir -p dist/grammars && cp src/grammars/*.wasm dist/grammars/ 2>/dev/null || true",
     "dev": "tsx src/setup.ts",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
@@ -57,7 +58,8 @@
     "inquirer": "^12.9.4",
     "node-fetch": "^3.3.2",
     "open": "^8.4.2",
-    "ora": "^8.0.1"
+    "ora": "^8.0.1",
+    "web-tree-sitter": "^0.22.6"
   },
   "devDependencies": {
     "@jest/globals": "^30.0.5",
@@ -96,6 +98,7 @@
   },
   "files": [
     "dist/",
+    "src/grammars/",
     "README.md"
   ]
 }

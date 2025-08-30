@@ -12,7 +12,7 @@ Claude Stacks is a CLI tool that allows you to:
 
 - **Export** your Claude Code environment configurations as portable stack files
 - **Share** development stacks with your team or the community via Commands.com
-- **Restore** environments quickly across different projects and machines
+- **Import** environments quickly across different projects and machines
 - **Browse** and install stacks from the Commands.com marketplace
 
 Perfect for sharing MCP server configurations, project setups, and development environments with Claude Code users.
@@ -46,17 +46,17 @@ claude-stacks export --name "My Dev Stack" --description "Full-stack development
 claude-stacks export --include-global my-complete-stack.json
 ```
 
-### Restore from a Stack
+### Import from a Stack
 
 ```bash
-# Restore from a local stack file
-claude-stacks restore my-stack.json
+# Import from a local stack file
+claude-stacks import my-stack.json
 
 # Merge with existing configuration (default)
-claude-stacks restore stack.json
+claude-stacks import stack.json
 
 # Overwrite existing files
-claude-stacks restore --overwrite stack.json
+claude-stacks import --overwrite stack.json
 ```
 
 ### Share via Commands.com
@@ -77,7 +77,7 @@ claude-stacks install org-name/stack-name
 ### Core Commands
 
 - **`export [filename]`** - Export current environment to a stack file
-- **`restore <filename>`** - Restore environment from a stack file
+- **`import <filename>`** - Import environment from a stack file
 - **`publish <filename>`** - Publish stack to Commands.com marketplace
 - **`install <stack-id>`** - Install stack from Commands.com
 - **`browse`** - Browse marketplace stacks interactively
@@ -97,10 +97,10 @@ claude-stacks install org-name/stack-name
 - `--include-global` - Include global `~/.claude` configurations
 - `--include-claude-md` - Include `CLAUDE.md` files
 
-### Restore Options
+### Import Options
 
 - `--overwrite` - Overwrite existing files (default: merge)
-- `--global-only` - Only restore to global `~/.claude`
+- `--global-only` - Only import to global `~/.claude`
 
 ## What Gets Exported?
 

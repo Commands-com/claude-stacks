@@ -10,6 +10,7 @@ import { isTestEnvironment, isTestHost } from './testHelpers.js';
  * Provides enterprise-grade security features including TLS 1.2+ enforcement,
  * hostname allowlisting, certificate validation, and secure connection pooling.
  * All requests are restricted to approved domains and use proper SSL/TLS settings.
+ * In development mode (CLAUDE_STACKS_DEV=true), also allows HTTP requests to localhost.
  *
  * @example
  * ```typescript
@@ -80,7 +81,7 @@ export class SecureHttpClient {
    */
   static async secureRequest(url: string, options: RequestInit = {}): Promise<Response> {
     const parsedUrl = this.validateAndParseUrl(url);
-    const secureOptions = this.prepareSecureOptions(options);
+    const secureOptions = this.prepareSecureOptions(options, parsedUrl);
 
     try {
       const response = await fetch(url, secureOptions);
@@ -99,29 +100,58 @@ export class SecureHttpClient {
       throw new Error(`Invalid URL format: ${url}`);
     }
 
-    // Enforce HTTPS only
-    if (parsedUrl.protocol !== 'https:') {
-      throw new Error('Only HTTPS requests are allowed for security');
-    }
+    this.validateProtocol(parsedUrl);
+    this.validateHostname(parsedUrl);
 
-    // Validate hostname is in allowlist (allow test hosts in test environment)
-    const isAllowedHost =
-      this.ALLOWED_HOSTS.includes(parsedUrl.hostname) ||
-      (isTestEnvironment() && isTestHost(parsedUrl.hostname));
+    return parsedUrl;
+  }
+
+  private static validateProtocol(parsedUrl: URL): void {
+    const isDevelopmentMode = process.env.CLAUDE_STACKS_DEV === 'true';
+    const isLocalhost = this.isLocalhostUrl(parsedUrl);
+
+    // Allow HTTP localhost in development mode, otherwise enforce HTTPS only
+    if (parsedUrl.protocol === 'http:' && !(isDevelopmentMode && isLocalhost)) {
+      throw new Error('Only HTTPS requests are allowed for security');
+    } else if (parsedUrl.protocol !== 'https:' && parsedUrl.protocol !== 'http:') {
+      throw new Error('Only HTTP and HTTPS protocols are supported');
+    }
+  }
+
+  private static validateHostname(parsedUrl: URL): void {
+    const isAllowedHost = this.isHostnameAllowed(parsedUrl);
 
     if (!isAllowedHost) {
       throw new Error(
         `Host not allowed: ${parsedUrl.hostname}. Allowed hosts: ${this.ALLOWED_HOSTS.join(', ')}`
       );
     }
-
-    return parsedUrl;
   }
 
-  private static prepareSecureOptions(options: RequestInit): RequestInit {
+  private static isLocalhostUrl(parsedUrl: URL): boolean {
+    return parsedUrl.hostname === 'localhost' || parsedUrl.hostname === '127.0.0.1';
+  }
+
+  private static isHostnameAllowed(parsedUrl: URL): boolean {
+    const isDevelopmentMode = process.env.CLAUDE_STACKS_DEV === 'true';
+    const isLocalhost = this.isLocalhostUrl(parsedUrl);
+
+    return (
+      this.ALLOWED_HOSTS.includes(parsedUrl.hostname) ||
+      (isTestEnvironment() && isTestHost(parsedUrl.hostname)) ||
+      (isDevelopmentMode && isLocalhost)
+    );
+  }
+
+  private static prepareSecureOptions(options: RequestInit, parsedUrl: URL): RequestInit {
+    const isDevelopmentMode = process.env.CLAUDE_STACKS_DEV === 'true';
+    const isLocalhost = parsedUrl.hostname === 'localhost' || parsedUrl.hostname === '127.0.0.1';
+    const isHttpLocalhost = parsedUrl.protocol === 'http:' && isDevelopmentMode && isLocalhost;
+
     const secureOptions: RequestInit = {
       ...options,
-      agent: this.httpsAgent,
+      // Only use HTTPS agent for HTTPS requests
+      agent: isHttpLocalhost ? undefined : this.httpsAgent,
       headers: {
         'User-Agent': 'claude-stacks-cli/1.3.7',
         Accept: 'application/json',
@@ -271,12 +301,19 @@ export class SecureHttpClient {
   static isUrlAllowed(url: string): boolean {
     try {
       const parsedUrl = new URL(url);
-      const isAllowedHost =
-        this.ALLOWED_HOSTS.includes(parsedUrl.hostname) ||
-        (isTestEnvironment() && isTestHost(parsedUrl.hostname));
-      return parsedUrl.protocol === 'https:' && isAllowedHost;
+      return this.isProtocolAllowed(parsedUrl) && this.isHostnameAllowed(parsedUrl);
     } catch {
       return false;
     }
+  }
+
+  private static isProtocolAllowed(parsedUrl: URL): boolean {
+    const isDevelopmentMode = process.env.CLAUDE_STACKS_DEV === 'true';
+    const isLocalhost = this.isLocalhostUrl(parsedUrl);
+
+    return (
+      parsedUrl.protocol === 'https:' ||
+      (parsedUrl.protocol === 'http:' && isDevelopmentMode && isLocalhost)
+    );
   }
 }

@@ -71,7 +71,7 @@ export async function scanHooksAction(
 
     console.log(ui.colorInfo(`🔍 Scanning ${hooks.length} hooks for security issues...`));
 
-    const scannedHooks = scanAllHooks(hooks);
+    const scannedHooks = await scanAllHooks(hooks);
     const hooksToShow = filterHooksByRisk(scannedHooks, options.showSafe);
 
     displayScanResults(hooksToShow, options.details);
@@ -90,17 +90,16 @@ export async function scanHooksAction(
 /**
  * Scan all hooks for security issues
  */
-function scanAllHooks(hooks: StackHook[]): StackHook[] {
-  const scannedHooks: StackHook[] = [];
-  for (const hook of hooks) {
-    const scanResult = hookScanner.scanHook(hook.content);
-    scannedHooks.push({
+async function scanAllHooks(hooks: StackHook[]): Promise<StackHook[]> {
+  const scanPromises = hooks.map(async hook => {
+    const scanResult = await hookScanner.scanHook(hook.content, { filename: hook.filePath });
+    return {
       ...hook,
       scanResults: scanResult,
       riskLevel: getRiskLevel(scanResult.riskScore),
-    });
-  }
-  return scannedHooks;
+    };
+  });
+  return Promise.all(scanPromises);
 }
 
 /**

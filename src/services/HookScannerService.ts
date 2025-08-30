@@ -56,7 +56,41 @@ export class HookScannerService {
    * @since 1.4.0
    * @public
    */
-  scanHook(content: string): HookScanResult {
+  async scanHook(content: string, options: { filename?: string } = {}): Promise<HookScanResult> {
+    // Try Tree-sitter first for more accurate analysis
+    const treeSitterResult = await this.tryTreeSitterScan(content, options);
+
+    if (treeSitterResult) {
+      // Use Tree-sitter result as primary, with regex as complement
+      const regexResult = this.scanWithRegex(content);
+      return this.mergeResults(treeSitterResult, regexResult);
+    }
+
+    // Fall back to regex-only scanning if Tree-sitter fails
+    return this.scanWithRegex(content);
+  }
+
+  /**
+   * Try Tree-sitter scanning with dynamic import to avoid Jest parsing issues
+   */
+  private async tryTreeSitterScan(
+    content: string,
+    options: { filename?: string } = {}
+  ): Promise<HookScanResult | null> {
+    try {
+      // Use dynamic import to avoid Jest parsing the import.meta syntax
+      const { scanWithTreeSitter } = await import('../utils/treeSitterEngine.js');
+      return await scanWithTreeSitter(content, options);
+    } catch {
+      // Tree-sitter not available or failed to import, gracefully fall back
+      return null;
+    }
+  }
+
+  /**
+   * Legacy regex-based scanning method
+   */
+  private scanWithRegex(content: string): HookScanResult {
     const results: HookScanResult = {
       hasFileSystemAccess: false,
       hasNetworkAccess: false,
@@ -71,6 +105,35 @@ export class HookScannerService {
     results.riskScore = Math.min(results.riskScore, 100);
 
     return results;
+  }
+
+  /**
+   * Merge Tree-sitter and regex results, prioritizing Tree-sitter findings
+   */
+  private mergeResults(
+    treeSitterResult: HookScanResult,
+    regexResult: HookScanResult
+  ): HookScanResult {
+    // Tree-sitter results take precedence for flags
+    const merged: HookScanResult = {
+      hasFileSystemAccess: treeSitterResult.hasFileSystemAccess || regexResult.hasFileSystemAccess,
+      hasNetworkAccess: treeSitterResult.hasNetworkAccess || regexResult.hasNetworkAccess,
+      hasProcessExecution: treeSitterResult.hasProcessExecution || regexResult.hasProcessExecution,
+      hasDangerousImports: treeSitterResult.hasDangerousImports || regexResult.hasDangerousImports,
+      hasCredentialAccess: treeSitterResult.hasCredentialAccess || regexResult.hasCredentialAccess,
+      suspiciousPatterns: [],
+      riskScore: 0,
+    };
+
+    // Merge suspicious patterns, deduplicating
+    const allPatterns = [...treeSitterResult.suspiciousPatterns, ...regexResult.suspiciousPatterns];
+    merged.suspiciousPatterns = Array.from(new Set(allPatterns));
+
+    // Use higher risk score (Tree-sitter is usually more accurate)
+    merged.riskScore = Math.max(treeSitterResult.riskScore, regexResult.riskScore);
+    merged.riskScore = Math.min(merged.riskScore, 100);
+
+    return merged;
   }
 
   private analyzePatterns(content: string, results: HookScanResult): void {
@@ -147,7 +210,7 @@ export class HookScannerService {
    * @since 1.4.0
    * @public
    */
-  scanSettingsHooks(settings: StackSettings): Map<string, HookScanResult> {
+  async scanSettingsHooks(settings: StackSettings): Promise<Map<string, HookScanResult>> {
     const results = new Map<string, HookScanResult>();
 
     if (!this.hasHooksConfig(settings)) {
@@ -155,7 +218,7 @@ export class HookScannerService {
     }
 
     const hooksConfig = settings.hooks as Record<string, unknown>;
-    this.processHooksConfig(hooksConfig, results);
+    await this.processHooksConfig(hooksConfig, results);
 
     return results;
   }
@@ -166,66 +229,67 @@ export class HookScannerService {
     );
   }
 
-  private processHooksConfig(
+  private async processHooksConfig(
     hooksConfig: Record<string, unknown>,
     results: Map<string, HookScanResult>
-  ): void {
-    for (const [eventType, hookConfigs] of Object.entries(hooksConfig)) {
+  ): Promise<void> {
+    const processingPromises = Object.entries(hooksConfig).map(async ([eventType, hookConfigs]) => {
       if (Array.isArray(hookConfigs)) {
-        this.processHookConfigs(eventType, hookConfigs, results);
+        await this.processHookConfigs(eventType, hookConfigs, results);
       }
-    }
+    });
+    await Promise.all(processingPromises);
   }
 
-  private processHookConfigs(
+  private async processHookConfigs(
     eventType: string,
     hookConfigs: unknown[],
     results: Map<string, HookScanResult>
-  ): void {
-    for (let i = 0; i < hookConfigs.length; i++) {
-      const config = hookConfigs[i];
-      this.processHookConfig(eventType, i, config, results);
-    }
+  ): Promise<void> {
+    const configPromises = hookConfigs.map(async (config, i) => {
+      await this.processHookConfig(eventType, i, config, results);
+    });
+    await Promise.all(configPromises);
   }
 
-  private processHookConfig(
+  private async processHookConfig(
     eventType: string,
     index: number,
     config: unknown,
     results: Map<string, HookScanResult>
-  ): void {
+  ): Promise<void> {
     if (!config || typeof config !== 'object') return;
 
     const configObj = config as Record<string, unknown>;
 
     // Scan inline code
     if (typeof configObj.code === 'string') {
-      const scanResult = this.scanHook(configObj.code);
+      const scanResult = await this.scanHook(configObj.code);
       results.set(`${eventType}[${index}].inline`, scanResult);
     }
 
     // Handle matchers with hooks arrays
     if (Array.isArray(configObj.hooks)) {
-      this.processNestedHooks(eventType, index, configObj.hooks, results);
+      await this.processNestedHooks(eventType, index, configObj.hooks, results);
     }
   }
 
-  private processNestedHooks(
+  private async processNestedHooks(
     eventType: string,
     configIndex: number,
     hooks: unknown[],
     results: Map<string, HookScanResult>
-  ): void {
-    for (let j = 0; j < hooks.length; j++) {
-      const hook = hooks[j];
+  ): Promise<void> {
+    const hookPromises = hooks.map(async (hook, j) => {
       if (hook && typeof hook === 'object') {
         const hookObj = hook as Record<string, unknown>;
         if (typeof hookObj.code === 'string') {
-          const scanResult = this.scanHook(hookObj.code);
+          const scanResult = await this.scanHook(hookObj.code);
           results.set(`${eventType}[${configIndex}].hooks[${j}].inline`, scanResult);
         }
       }
-    }
+    });
+    await Promise.all(hookPromises);
   }
 
   /**
