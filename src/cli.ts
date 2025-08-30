@@ -84,8 +84,26 @@ program
   .option('--overwrite', 'Overwrite existing files (default: add/merge)')
   .option('--global-only', 'Only install to global ~/.claude (skip local project files)')
   .option('--local-only', 'Only install to local project .claude (skip global files)')
+  .option('--no-hooks', 'Skip hook installation')
+  .option('--no-settings', 'Skip settings and permissions installation')
+  .option('--no-commands', 'Skip command installation')
+  .option('--no-agents', 'Skip agent installation')
+  .option('--no-mcp', 'Skip MCP server installation')
+  .option('--no-claude-md', 'Skip CLAUDE.md file installation')
   .description('Install a remote stack from the marketplace')
-  .action((stackId, options) => installAction(stackId, options));
+  .action((stackId, options) => {
+    // Transform Commander.js --no-X options to skipX format
+    const transformedOptions = {
+      ...options,
+      skipHooks: !options.hooks,
+      skipSettings: !options.settings,
+      skipCommands: !options.commands,
+      skipAgents: !options.agents,
+      skipMcp: !options.mcp,
+      skipClaudeMd: !options.claudeMd,
+    };
+    return installAction(stackId, transformedOptions);
+  });
 
 // List command
 program

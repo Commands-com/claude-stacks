@@ -423,9 +423,15 @@ export class StackOperationService {
     addedPermissions?: { allow: string[]; deny: string[]; ask: string[] };
     hooksMetadata?: Record<string, unknown>;
   }> {
-    await this.restoreCommandComponents(stack, options);
-    await this.restoreAgentComponents(stack, options);
-    await this.restoreHookComponents(stack);
+    if (!options.skipCommands) {
+      await this.restoreCommandComponents(stack, options);
+    }
+    if (!options.skipAgents) {
+      await this.restoreAgentComponents(stack, options);
+    }
+    if (!options.skipHooks) {
+      await this.restoreHookComponents(stack);
+    }
     const result = await this.restoreOtherComponents(stack, options);
     return result;
   }
@@ -629,7 +635,7 @@ export class StackOperationService {
     addedPermissions?: { allow: string[]; deny: string[]; ask: string[] };
     hooksMetadata?: Record<string, unknown>;
   }> {
-    if (stack.mcpServers && stack.mcpServers.length > 0) {
+    if (!options.skipMcp && stack.mcpServers && stack.mcpServers.length > 0) {
       await this.restoreMcpServers(stack.mcpServers, options);
     }
 
@@ -637,7 +643,7 @@ export class StackOperationService {
     let addedPermissions: { allow: string[]; deny: string[]; ask: string[] } | undefined;
     let hooksMetadata: Record<string, unknown> | undefined;
 
-    if (stack.settings && Object.keys(stack.settings).length > 0) {
+    if (!options.skipSettings && stack.settings && Object.keys(stack.settings).length > 0) {
       const {
         addedFields,
         addedPermissions: permissions,
@@ -648,7 +654,7 @@ export class StackOperationService {
       hooksMetadata = hooks;
     }
 
-    if (stack.claudeMd) {
+    if (!options.skipClaudeMd && stack.claudeMd) {
       await this.restoreClaudeMdFiles(stack.claudeMd, options);
     }
 

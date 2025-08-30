@@ -1098,6 +1098,63 @@ export interface RestoreOptions {
     /** Source type indicating how the stack was installed */
     source?: 'local-file' | 'restore';
   };
+
+  /**
+   * Whether to skip hook installation
+   *
+   * @remarks
+   * When true, hooks from the stack will not be installed. This allows users
+   * to exclude potentially sensitive or unwanted hook configurations while
+   * installing other stack components.
+   */
+  skipHooks?: boolean;
+
+  /**
+   * Whether to skip settings and permissions installation
+   *
+   * @remarks
+   * When true, settings and permission configurations from the stack will not
+   * be installed. Useful for security-conscious users who want to review
+   * settings manually before applying them.
+   */
+  skipSettings?: boolean;
+
+  /**
+   * Whether to skip command installation
+   *
+   * @remarks
+   * When true, custom commands from the stack will not be installed.
+   * Users can exclude commands while keeping other stack components.
+   */
+  skipCommands?: boolean;
+
+  /**
+   * Whether to skip agent installation
+   *
+   * @remarks
+   * When true, agents from the stack will not be installed.
+   * Allows selective installation of other components without agents.
+   */
+  skipAgents?: boolean;
+
+  /**
+   * Whether to skip MCP server installation
+   *
+   * @remarks
+   * When true, MCP servers from the stack will not be installed.
+   * Useful when users want to manually configure MCP servers or
+   * avoid potential conflicts with existing MCP configurations.
+   */
+  skipMcp?: boolean;
+
+  /**
+   * Whether to skip CLAUDE.md file installation
+   *
+   * @remarks
+   * When true, CLAUDE.md files from the stack will not be installed.
+   * Allows users to keep their existing project documentation unchanged.
+   */
+  skipClaudeMd?: boolean;
 }
 
 /**
@@ -1212,36 +1269,9 @@ export interface BrowseOptions {
  * @since 1.0.0
  * @public
  */
-export interface InstallOptions {
-  /**
-   * Whether to overwrite existing components during installation
-   *
-   * @remarks
-   * Controls conflict resolution when installing components that already exist.
-   * When true, existing commands, agents, or configurations are replaced.
-   * When false, installation skips existing components to prevent data loss.
-   */
-  overwrite?: boolean;
-
-  /**
-   * Whether to install only global components
-   *
-   * @remarks
-   * Limits installation to global system-wide components like global CLAUDE.md
-   * files and global MCP servers. Ignores local project-specific components
-   * when true. Useful for system-level tool installation.
-   */
-  globalOnly?: boolean;
-
-  /**
-   * Whether to install only local project-specific components
-   *
-   * @remarks
-   * Limits installation to local project components like local CLAUDE.md files
-   * and project-specific settings. Ignores global configurations when true.
-   * Useful for project-specific tool installation without affecting system settings.
-   */
-  localOnly?: boolean;
+export interface InstallOptions extends RestoreOptions {
+  // InstallOptions inherits all properties from RestoreOptions
+  // No additional properties needed at this time
 }
 
 /**

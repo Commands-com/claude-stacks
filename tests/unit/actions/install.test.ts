@@ -244,4 +244,78 @@ describe('installAction', () => {
       expect(mockConsoleLog).toHaveBeenCalledWith('🔍 Checking dependencies...');
     });
   });
+
+  describe('selective installation options', () => {
+    it('should accept skipHooks option without errors', async () => {
+      const options: InstallOptions = {
+        skipHooks: true,
+      };
+
+      // Should not throw an error and should complete successfully
+      await expect(installAction('test-org/test-stack', options)).resolves.not.toThrow();
+    });
+
+    it('should accept skipSettings option without errors', async () => {
+      const options: InstallOptions = {
+        skipSettings: true,
+      };
+
+      await expect(installAction('test-org/test-stack', options)).resolves.not.toThrow();
+    });
+
+    it('should accept skipCommands option without errors', async () => {
+      const options: InstallOptions = {
+        skipCommands: true,
+      };
+
+      await expect(installAction('test-org/test-stack', options)).resolves.not.toThrow();
+    });
+
+    it('should accept skipAgents option without errors', async () => {
+      const options: InstallOptions = {
+        skipAgents: true,
+      };
+
+      await expect(installAction('test-org/test-stack', options)).resolves.not.toThrow();
+    });
+
+    it('should accept skipMcp option without errors', async () => {
+      const options: InstallOptions = {
+        skipMcp: true,
+      };
+
+      await expect(installAction('test-org/test-stack', options)).resolves.not.toThrow();
+    });
+
+    it('should accept skipClaudeMd option without errors', async () => {
+      const options: InstallOptions = {
+        skipClaudeMd: true,
+      };
+
+      await expect(installAction('test-org/test-stack', options)).resolves.not.toThrow();
+    });
+
+    it('should accept multiple skip options combined without errors', async () => {
+      const options: InstallOptions = {
+        skipHooks: true,
+        skipSettings: true,
+        skipMcp: true,
+      };
+
+      await expect(installAction('test-org/test-stack', options)).resolves.not.toThrow();
+    });
+
+    it('should accept all skip options without errors', async () => {
+      const options: InstallOptions = {
+        skipHooks: true,
+        skipSettings: true,
+        skipCommands: true,
+        skipAgents: true,
+        skipMcp: true,
+        skipClaudeMd: true,
+      };
+
+      await expect(installAction('test-org/test-stack', options)).resolves.not.toThrow();
+    });
+  });
 });
