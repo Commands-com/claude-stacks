@@ -12,6 +12,7 @@ Claude Stacks is a TypeScript CLI tool that allows developers to share their Cla
 - Manage local and remote stacks
 - OAuth authentication with Commands.com
 - Support for both global (~/.claude) and local project configurations
+- Hook system integration for custom command execution
 
 ## Tech Stack
 
@@ -34,3 +35,10 @@ Claude Stacks is a TypeScript CLI tool that allows developers to share their Cla
 - Type-safe interfaces in `src/types/index.ts`
 - Utility modules for cross-cutting concerns (auth, API, colors, etc.)
 - UI components separated into `src/ui/` directory
+
+## Testing
+
+The project has comprehensive test coverage with unit and integration tests covering all major components:
+- **Test Files**: Actions, Services, Controllers, Utils, and UI components
+- **Coverage**: Good test coverage across statements, branches, functions, and lines
+- **Test Categories**: install, export, publish, list, clean, delete, rename, restore, browse actions plus all supporting services

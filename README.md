@@ -4,7 +4,7 @@
 [![npm version](https://badge.fury.io/js/claude-stacks.svg)](https://www.npmjs.com/package/claude-stacks)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Share your Claude Code environment in seconds - export and restore development stacks.
+Share your Claude Code environment in seconds - export and import development stacks.
 
 ## What is Claude Stacks?
 
@@ -36,27 +36,25 @@ npx claude-stacks --help
 ### Export Your Current Setup
 
 ```bash
-# Export current project's Claude Code configuration
-claude-stacks export my-stack.json
+claude-stacks export
+```
 
-# Export with custom metadata
+### List Your Stacks
+
+```bash
+claude-stacks list
+```
+
+### Export with Custom Metadata
+
+```bash
 claude-stacks export --name "My Dev Stack" --description "Full-stack development environment"
-
-# Include global Claude configurations
-claude-stacks export --include-global my-complete-stack.json
 ```
 
 ### Import from a Stack
 
 ```bash
-# Import from a local stack file
 claude-stacks import my-stack.json
-
-# Merge with existing configuration (default)
-claude-stacks import stack.json
-
-# Overwrite existing files
-claude-stacks import --overwrite stack.json
 ```
 
 ### Share via Commands.com
@@ -199,7 +197,7 @@ npm test
 
 ### Testing
 
-The project has comprehensive test coverage (96%+):
+The project has comprehensive test coverage (90%+):
 
 ```bash
 # Run all tests
