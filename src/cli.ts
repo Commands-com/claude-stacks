@@ -21,6 +21,7 @@ import { cleanAction } from './actions/clean.js';
 import { renameAction } from './actions/rename.js';
 import { uninstallAction } from './actions/uninstall.js';
 import { listHooksAction, scanHooksAction, viewHookAction } from './actions/hooks.js';
+import { syncMcpAction } from './actions/sync-mcp.js';
 
 // Set up CLI structure
 program
@@ -172,6 +173,17 @@ program
   .option('--risk-level <level>', 'Filter by risk level (safe, warning, dangerous)')
   .description('List all hooks in a stack or current project')
   .action((stackFile, options) => listHooksAction(stackFile, options));
+
+// Sync MCP command
+program
+  .command('sync')
+  .description('Sync MCP servers from current Claude project to Codex and Gemini')
+  .option('--append', 'Append to existing MCP servers instead of overwriting')
+  .option('--codex-only', 'Only sync to Codex config (~/.codex/config.toml)')
+  .option('--gemini-only', 'Only sync to Gemini config (~/.gemini/settings.json)')
+  .option('--dry-run', 'Show what would be synced without making changes')
+  .option('--force', 'Skip confirmation prompts')
+  .action(options => syncMcpAction(options));
 
 // Parse and execute
 program.parse();

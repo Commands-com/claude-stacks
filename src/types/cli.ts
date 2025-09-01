@@ -655,3 +655,87 @@ export interface CleanArgs extends BaseCommandArgs {
    */
   temp?: boolean;
 }
+
+/**
+ * Command arguments for syncing MCP servers to external tools
+ *
+ * @remarks
+ * Extends base command arguments with sync-specific options. Used by the
+ * CLI parser to validate and type sync-mcp commands. Syncs MCP server
+ * configurations from the current Claude project to other AI tools like
+ * Codex and Gemini, converting between different configuration formats.
+ *
+ * @example
+ * ```typescript
+ * // Sync to both Codex and Gemini (overwrite mode)
+ * const args: SyncMcpArgs = {
+ *   verbose: true
+ * };
+ *
+ * // Append to existing configurations
+ * const appendArgs: SyncMcpArgs = {
+ *   append: true,
+ *   force: false
+ * };
+ *
+ * // Sync only to Codex with dry run
+ * const codexArgs: SyncMcpArgs = {
+ *   codexOnly: true,
+ *   dryRun: true,
+ *   verbose: true
+ * };
+ * ```
+ *
+ * @since 1.4.9
+ * @public
+ */
+export interface SyncMcpArgs extends BaseCommandArgs {
+  /**
+   * Append to existing MCP servers instead of overwriting
+   *
+   * @remarks
+   * When true, adds MCP servers from Claude to existing configurations
+   * without replacing them. When false (default), overwrites existing
+   * MCP server configurations in target tools. Append mode preserves
+   * existing configurations that aren't present in Claude.
+   *
+   * @default false (overwrite existing configurations)
+   */
+  append?: boolean;
+
+  /**
+   * Only sync to Codex configuration (~/.codex/config.toml)
+   *
+   * @remarks
+   * When true, skips syncing to Gemini and only updates Codex config.
+   * Cannot be used together with geminiOnly flag. Useful when only
+   * working with OpenAI Codex and wanting to avoid touching other configs.
+   *
+   * @default false (sync to both Codex and Gemini)
+   */
+  codexOnly?: boolean;
+
+  /**
+   * Only sync to Gemini configuration (~/.gemini/settings.json)
+   *
+   * @remarks
+   * When true, skips syncing to Codex and only updates Gemini config.
+   * Cannot be used together with codexOnly flag. Useful when only
+   * working with Google Gemini and wanting to avoid touching other configs.
+   *
+   * @default false (sync to both Codex and Gemini)
+   */
+  geminiOnly?: boolean;
+
+  /**
+   * Show what would be synced without making changes
+   *
+   * @remarks
+   * When true, displays the planned sync operations without actually
+   * modifying any configuration files. Useful for previewing changes
+   * and understanding what the sync operation would do before committing.
+   *
+   * @default false (perform actual sync operations)
+   */
+  dryRun?: boolean;
+}
